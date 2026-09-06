@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractStatusRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractStatusRecordEntity">
+                <id column="id" property="id" />
+                <result column="contract_code" property="contractCode" />
+                <result column="contract_name" property="contractName" />
+                <result column="client_code" property="clientCode" />
+                <result column="client_name" property="clientName" />
+                <result column="org_id" property="orgId" />
+                <result column="contract_status" property="contractStatus" />
+                <result column="financial_contract_status_update_time" property="financialContractStatusUpdateTime" />
+                <result column="financial_contract_status" property="financialContractStatus" />
+                <result column="transfer_org_id" property="transferOrgId" />
+                <result column="transfer_contract_code" property="transferContractCode" />
+                <result column="transfer_contract_status" property="transferContractStatus" />
+                <result column="operator" property="operator" />
+                <result column="record_status" property="recordStatus" />
+                <result column="create_by" property="createBy" />
+                <result column="create_time" property="createTime" />
+                <result column="update_by" property="updateBy" />
+                <result column="update_time" property="updateTime" />
+                <result column="del_flag" property="delFlag" />
+                <result column="submit_by" property="submitBy" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, contract_code, contract_name, client_code, client_name, org_id, contract_status, financial_contract_status_update_time, financial_contract_status, transfer_org_id, transfer_contract_code, transfer_contract_status, create_by, create_time, update_by, update_time, del_flag
+    </sql>
+
+    <select id="selectContractInfo"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractStatusRecordEntity">
+        select
+        a.id,
+        a.contract_code,
+        a.contract_name,
+        a.client_code,
+        a.client_name,
+        a.org_id,
+        (select t.contract_status from eg_contract t where t.contract_code = a.contract_code and t.org_id =  a.org_id and t.del_flag= '0'
+        and t.contract_status is not null  order by t.create_time desc limit 1) contract_status,
+        a.financial_contract_status_update_time,
+        a.financial_contract_status,
+        a.system_label,
+        a.transfer_org_id,
+        a.transfer_contract_code,
+        a.transfer_contract_status,
+        a.operator,
+        a.record_status,
+        a.submit_by,
+        a.process_instance_id,
+        a.source_from_id,
+        a.source_from_type
+        from eg_contract_status_record a,
+        (
+        select contract_code, org_id, max(financial_contract_status_update_time) financial_contract_status_update_time
+        from eg_contract_status_record
+        where
+        del_flag = '0'
+        <if test="param.startFinancialContractStatusUpdateTime != null ">
+            and to_char(financial_contract_status_update_time,'yyyy-MM-dd') <![CDATA[>=]]> to_char(to_date(#{param.startFinancialContractStatusUpdateTime},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endFinancialContractStatusUpdateTime != null ">
+            and to_char(financial_contract_status_update_time,'yyyy-MM-dd') <![CDATA[<=]]> to_char(to_date(#{param.endFinancialContractStatusUpdateTime},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endDate != null ">
+            and to_char(financial_contract_status_update_time,'yyyy-MM-dd') <![CDATA[<=]]> to_char(to_date(#{param.endDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.contractCode != null and param.contractCode != ''">
+            and contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.recordStatusList != null and param.recordStatusList.size > 0">
+            and record_status in
+            <foreach item="item" index="index" collection="param.recordStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by contract_code, org_id
+        ) b
+        where a.financial_contract_status_update_time = b.financial_contract_status_update_time
+        and a.contract_code = b.contract_code
+        and a.org_id = b.org_id
+        and a.del_flag='0'
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by a.create_time desc,a.financial_contract_status_update_time desc,a.contract_code asc
+    </select>
+
+    <select id="summaryList"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractStatusRecordEntity">
+        select
+        distinct
+        t.id,
+        t.contract_code,
+        t.contract_name,
+        t.client_code,
+        t.client_name,
+        t.org_id,
+        t.financial_contract_status_update_time,
+        t.financial_contract_status,
+        t.transfer_org_id,
+        t.transfer_contract_code,
+        t.transfer_contract_status,
+        t.create_by,
+        t.create_time,
+        t.update_by,
+        t.update_time,
+        t.del_flag,
+        c.contract_status,
+        t.record_status
+        from (
+        select a.*
+        from eg_contract_status_record a,
+        (
+        select contract_code, org_id, max(financial_contract_status_update_time) financial_contract_status_update_time
+        from eg_contract_status_record
+        where
+        del_flag = '0'
+        <if test="param.startFinancialContractStatusUpdateTime != null ">
+            and to_char(financial_contract_status_update_time,'yyyy-MM-dd') <![CDATA[>=]]> to_char(to_date(#{param.startFinancialContractStatusUpdateTime},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endFinancialContractStatusUpdateTime != null ">
+            and to_char(financial_contract_status_update_time,'yyyy-MM-dd') <![CDATA[<=]]> to_char(to_date(#{param.endFinancialContractStatusUpdateTime},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endDate != null ">
+            and to_char(financial_contract_status_update_time,'yyyy-MM-dd') <![CDATA[<=]]> to_char(to_date(#{param.endDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.contractCode != null and param.contractCode != ''">
+            and contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.recordStatusList != null and param.recordStatusList.size > 0">
+            and record_status in
+            <foreach item="item" index="index" collection="param.recordStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by contract_code, org_id
+        ) b
+        where a.financial_contract_status_update_time = b.financial_contract_status_update_time
+        and a.contract_code = b.contract_code
+        and a.org_id = b.org_id
+        and a.del_flag='0'
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by id desc
+        ) t left join eg_contract c on t.contract_code = c.contract_code and c.org_id = t.org_id and c.del_flag ='0'
+    </select>
+
+
+    <select id="getLastByContractCodeAndOrgId"
+            resultType="com.utfinancing.financehub.engine.finance.model.dto.ContractStatusRecordDTO">
+        select *
+        from eg_contract_status_record where
+            contract_code = #{contractCode}
+        and org_id = #{orgId}
+        order by financial_contract_status_update_time desc
+            limit 1
+    </select>
+</mapper>
+

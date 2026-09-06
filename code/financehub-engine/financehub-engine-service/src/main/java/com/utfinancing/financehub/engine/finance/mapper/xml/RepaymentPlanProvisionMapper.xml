@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RepaymentPlanProvisionMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanProvisionEntity">
+                    <id column="id" property="id" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="plan_date" property="planDate" />
+                    <result column="rent_amount" property="rentAmount" />
+                    <result column="principal_amount" property="principalAmount" />
+                    <result column="interest_amount" property="interestAmount" />
+                    <result column="principal_tax" property="principalTax" />
+                    <result column="interest_tax" property="interestTax" />
+                    <result column="outflow_amount" property="outflowAmount" />
+                    <result column="planned_interest" property="plannedInterest" />
+                    <result column="planned_principal" property="plannedPrincipal" />
+                    <result column="cash_flow" property="cashFlow" />
+                    <result column="opening_amortized_cost" property="openingAmortizedCost" />
+                    <result column="ending_amortized_cost" property="endingAmortizedCost" />
+                    <result column="actual_daily_rate" property="actualDailyRate" />
+                    <result column="rental_income" property="rentalIncome" />
+                    <result column="service_fee_amortization_rate" property="serviceFeeAmortizationRate" />
+                    <result column="service_fee_amortization_income" property="serviceFeeAmortizationIncome" />
+                    <result column="xirr_rate" property="xirrRate" />
+                    <result column="actual_repayment_date" property="actualRepaymentDate" />
+                    <result column="actual_repayment_principal_balance" property="actualRepaymentPrincipalBalance" />
+                    <result column="actual_repayment_principal_amount" property="actualRepaymentPrincipalAmount" />
+                    <result column="actual_repayment_interes_balance" property="actualRepaymentInteresBalance" />
+                    <result column="actual_repayment_interes_amount" property="actualRepaymentInteresAmount" />
+                    <result column="recapture_status" property="recaptureStatus" />
+                    <result column="overdue_earnings" property="overdueEarnings" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="comment" property="comment" />
+                    <result column="overdue_days" property="overdueDays" />
+                    <result column="periods" property="periods" />
+                    <result column="pay_method" property="payMethod" />
+                    <result column="message_id" property="messageId" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="rental_income_on_balance" property="rentalIncomeOnBalance" />
+                    <result column="rental_income_off_balance" property="rentalIncomeOffBalance" />
+                    <result column="allocation_method" property="allocationMethod" />
+                    <result column="allocation_ratio" property="allocationRatio" />
+                    <result column="service_fee_received" property="serviceFeeReceived" />
+                    <result column="service_fee_allocation_no_tax" property="serviceFeeAllocationNoTax" />
+                    <result column="last_month_service_fee_allocation_no_tax" property="lastMonthServiceFeeAllocationNoTax" />
+                    <result column="reclassification_adjustment_no_tax_amount" property="reclassificationAdjustmentNoTaxAmount" />
+                    <result column="x_year_month_adjustment_amount" property="xYearMonthAdjustmentAmount" />
+                    <result column="not_accrued_amount" property="notAccruedAmount" />
+                    <result column="accumulated_accrued_amount" property="accumulatedAccruedAmount" />
+                    <result column="accumulated_actual_repayment_interes_amount" property="accumulatedActualRepaymentInteresAmount" />
+                    <result column="paid_in_handling_fees_add_other_income_sub_costs" property="paidInHandlingFeesAddOtherIncomeSubCosts" />
+                    <result column="ta_reclassification" property="taReclassification" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="previous_paid_period" property="previousPaidPeriod" />
+                    <result column="rental_income_before_total" property="rentalIncomeBeforeTotal" />
+                    <result column="rental_income_after_total" property="rentalIncomeAfterTotal" />
+                    <result column="overdue_adjustment_amount" property="overdueAdjustmentAmount" />
+                    <result column="total_recorded_amount" property="totalRecordedAmount" />
+                    <result column="confirmed_actual_receipt" property="confirmedActualReceipt" />
+                    <result column="accrued" property="accrued" />
+                    <result column="income_provision_method" property="incomeProvisionMethod" />
+                    <result column="exception_type" property="exceptionType" />
+                    <result column="rental_income_on_balance_confirmed" property="rentalIncomeOnBalanceConfirmed" />
+                    <result column="rental_income_off_balance_confirmed" property="rentalIncomeOffBalanceConfirmed" />
+                    <result column="actual_repayment_rent_amount" property="actualRepaymentRentAmount" />
+                    <result column="labor_overdue_days" property="laborOverdueDays" />
+                    <result column="before_x_year_month_amount" property="beforeXYearMonthAmount" />
+                    <result column="allocation_after_x_year_month_balance" property="allocationAfterXYearMonthBalance" />
+                    <result column="org_id" property="orgId" />
+                    <result column="labor_overdue_mark" property="laborOverdueMark" />
+                    <result column="process_method" property="processMethod" />
+                    <result column="observed" property="observed" />
+                    <result column="observed_expiration_date" property="observedExpirationDate" />
+                    <result column="last_repayment_date" property="lastRepaymentDate" />
+                    <result column="next_payment_date" property="nextPaymentDate" />
+                    <result column="confirmed_income" property="confirmedIncome" />
+                    <result column="paid_handling_fees" property="paidHandlingFees" />
+                    <result column="other_income" property="otherIncome" />
+                    <result column="paid_other_costs" property="paidOtherCosts" />
+                    <result column="invoicing_flag" property="invoicingFlag" />
+                    <result column="manual_change_mark" property="manualChangeMark" />
+                    <result column="plan_date_period" property="planDatePeriod" />
+                    <result column="amortized" property="amortized" />
+                    <result column="on_and_off_balance_sheet" property="onAndOffBalanceSheet" />
+                    <result column="source_irr_rate" property="sourceIrrRate" />
+            <result column="impairment_third_stage" property="impairmentThirdStage" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, client_code, client_name, contract_code, contract_name, plan_date, rent_amount, principal_amount, interest_amount, principal_tax, interest_tax, outflow_amount, planned_interest, planned_principal, cash_flow, opening_amortized_cost, ending_amortized_cost, actual_daily_rate, rental_income, service_fee_amortization_rate, service_fee_amortization_income, xirr_rate, actual_repayment_date, actual_repayment_principal_balance, actual_repayment_principal_amount, actual_repayment_interes_balance, actual_repayment_interes_amount, recapture_status, overdue_earnings, create_by, create_time, update_by, update_time, del_flag, comment, overdue_days, periods, pay_method, message_id, system_code, rental_income_on_balance, rental_income_off_balance, allocation_method, allocation_ratio, service_fee_received, service_fee_allocation_no_tax, last_month_service_fee_allocation_no_tax, reclassification_adjustment_no_tax_amount, x_year_month_adjustment_amount, not_accrued_amount, accumulated_accrued_amount, accumulated_actual_repayment_interes_amount, paid_in_handling_fees_add_other_income_sub_costs, ta_reclassification, unrealized_revenue, previous_paid_period, rental_income_before_total, rental_income_after_total, overdue_adjustment_amount, total_recorded_amount, confirmed_actual_receipt, accrued, income_provision_method, exception_type, rental_income_on_balance_confirmed, rental_income_off_balance_confirmed, actual_repayment_rent_amount, labor_overdue_days, before_x_year_month_amount, allocation_after_x_year_month_balance, org_id, labor_overdue_mark, process_method, observed, observed_expiration_date, last_repayment_date, next_payment_date, confirmed_income, paid_handling_fees, other_income, paid_other_costs, invoicing_flag, manual_change_mark, plan_date_period, amortized, on_and_off_balance_sheet, source_irr_rate, impairment_third_stage
+        </sql>
+
+        <update id="updateProvisionData">
+            update eg_repayment_plan a
+            inner join eg_repayment_plan_provision b on a.id = b.id
+            set a.accrued = b.accrued,
+                a.exception_type = b.exception_type,
+                a.observed = b.observed,
+                a.observed_expiration_date = b.observed_expiration_date,
+                a.amortized = b.amortized,
+                a.on_and_off_balance_sheet = b.on_and_off_balance_sheet,
+                a.overdue_days = b.overdue_days
+        </update>
+
+
+        <update id="updateProvisionDataByOrgIds" parameterType="java.util.List">
+            update eg_repayment_plan a
+            inner join eg_repayment_plan_provision b on a.id = b.id
+            set a.accrued = b.accrued,
+                a.exception_type = b.exception_type,
+                a.observed = b.observed,
+                a.observed_expiration_date = b.observed_expiration_date,
+                a.amortized = b.amortized,
+                a.on_and_off_balance_sheet = b.on_and_off_balance_sheet,
+                a.overdue_days = b.overdue_days
+            where a.org_id in
+            <foreach collection="orgIds" index="key" item="orgId" open="(" separator="," close=")">
+                #{orgId}
+            </foreach>
+        </update>
+
+        <insert id="repaymentPlanDataBackup">
+            insert into eg_repayment_plan_provision
+            select * from eg_repayment_plan
+        </insert>
+
+        <insert id="repaymentPlanDataRecovery">
+            insert into eg_repayment_plan
+            select * from eg_repayment_plan_provision
+        </insert>
+</mapper>
+

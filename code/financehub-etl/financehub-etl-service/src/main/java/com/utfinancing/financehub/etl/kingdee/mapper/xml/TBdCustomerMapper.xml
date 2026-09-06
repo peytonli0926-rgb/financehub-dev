@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TBdCustomerMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TBdCustomerEntity">
+                    <id column="FID" property="fid" />
+                    <result column="FCREATORID" property="fcreatorid" />
+                    <result column="FCREATETIME" property="fcreatetime" />
+                    <result column="FLASTUPDATEUSERID" property="flastupdateuserid" />
+                    <result column="FLASTUPDATETIME" property="flastupdatetime" />
+                    <result column="FCONTROLUNITID" property="fcontrolunitid" />
+                    <result column="FNAME_L1" property="fnameL1" />
+                    <result column="FNAME_L2" property="fnameL2" />
+                    <result column="FNAME_L3" property="fnameL3" />
+                    <result column="FNUMBER" property="fnumber" />
+                    <result column="FDESCRIPTION_L1" property="fdescriptionL1" />
+                    <result column="FDESCRIPTION_L2" property="fdescriptionL2" />
+                    <result column="FDESCRIPTION_L3" property="fdescriptionL3" />
+                    <result column="FSIMPLENAME" property="fsimplename" />
+                    <result column="FCOUNTRYID" property="fcountryid" />
+                    <result column="FCITYID" property="fcityid" />
+                    <result column="FPROVINCE" property="fprovince" />
+                    <result column="FREGIONID" property="fregionid" />
+                    <result column="FTAXDATAID" property="ftaxdataid" />
+                    <result column="FUSEDSTATUS" property="fusedstatus" />
+                    <result column="FBIZANALYSISCODEID" property="fbizanalysiscodeid" />
+                    <result column="FINDUSTRYID" property="findustryid" />
+                    <result column="FINTERNALCOMPANYID" property="finternalcompanyid" />
+                    <result column="FFREEZEORGUNITID" property="ffreezeorgunitid" />
+                    <result column="FBROWSEGROUPID" property="fbrowsegroupid" />
+                    <result column="FARTIFICIALPERSON" property="fartificialperson" />
+                    <result column="FBIZREGISTERNO" property="fbizregisterno" />
+                    <result column="FISINTERNALCOMPANY" property="fisinternalcompany" />
+                    <result column="FTXREGISTERNO" property="ftxregisterno" />
+                    <result column="FVERSION" property="fversion" />
+                    <result column="FEFFECTEDSTATUS" property="feffectedstatus" />
+                    <result column="FSUPERIORUNIT" property="fsuperiorunit" />
+                    <result column="FBARCODE" property="fbarcode" />
+                    <result column="FMNEMONICCODE" property="fmnemoniccode" />
+                    <result column="FBUSILICENCE" property="fbusilicence" />
+                    <result column="FBUSIEXEQUATUR" property="fbusiexequatur" />
+                    <result column="FGSPAUTHENTICATION" property="fgspauthentication" />
+                    <result column="FCUSTOMERKIND" property="fcustomerkind" />
+                    <result column="FFOREIGNNAME" property="fforeignname" />
+                    <result column="FADMINCUID" property="fadmincuid" />
+                    <result column="FADDRESS" property="faddress" />
+                    <result column="FPARENTID" property="fparentid" />
+                    <result column="FINVOICETYPE" property="finvoicetype" />
+                    <result column="FISCREDITED" property="fiscredited" />
+                    <result column="FTAXRATE" property="ftaxrate" />
+                    <result column="FISMULTICOPY" property="fismulticopy" />
+                    <result column="FISSWITCH" property="fisswitch" />
+                    <result column="FOLDNUMBER" property="foldnumber" />
+                    <result column="FNAMEPINYIN" property="fnamepinyin" />
+                    <result column="FNAMESHORTPINYIN" property="fnameshortpinyin" />
+                    <result column="FINTERNALPROFITCENTER" property="finternalprofitcenter" />
+                    <result column="FINTERNALCUSTOMERTYPE" property="finternalcustomertype" />
+                    <result column="CFGBINDUSTRY" property="cfgbindustry" />
+                    <result column="CFHT_LISTED_INFOID" property="cfhtListedInfoid" />
+                    <result column="CFHT_CUST_NATUREID" property="cfhtCustNatureid" />
+                    <result column="CFGLKH" property="cfglkh" />
+                    <result column="FTAXPAYERTYPE" property="ftaxpayertype" />
+                    <result column="CFISAFFILIATEDCOMPNAY" property="cfisaffiliatedcompnay" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            FID, FCREATORID, FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME, FCONTROLUNITID, FNAME_L1, FNAME_L2, FNAME_L3, FNUMBER, FDESCRIPTION_L1, FDESCRIPTION_L2, FDESCRIPTION_L3, FSIMPLENAME, FCOUNTRYID, FCITYID, FPROVINCE, FREGIONID, FTAXDATAID, FUSEDSTATUS, FBIZANALYSISCODEID, FINDUSTRYID, FINTERNALCOMPANYID, FFREEZEORGUNITID, FBROWSEGROUPID, FARTIFICIALPERSON, FBIZREGISTERNO, FISINTERNALCOMPANY, FTXREGISTERNO, FVERSION, FEFFECTEDSTATUS, FSUPERIORUNIT, FBARCODE, FMNEMONICCODE, FBUSILICENCE, FBUSIEXEQUATUR, FGSPAUTHENTICATION, FCUSTOMERKIND, FFOREIGNNAME, FADMINCUID, FADDRESS, FPARENTID, FINVOICETYPE, FISCREDITED, FTAXRATE, FISMULTICOPY, FISSWITCH, FOLDNUMBER, FNAMEPINYIN, FNAMESHORTPINYIN, FINTERNALPROFITCENTER, FINTERNALCUSTOMERTYPE, CFGBINDUSTRY, CFHT_LISTED_INFOID, CFHT_CUST_NATUREID, CFGLKH, FTAXPAYERTYPE, CFISAFFILIATEDCOMPNAY
+        </sql>
+</mapper>
+

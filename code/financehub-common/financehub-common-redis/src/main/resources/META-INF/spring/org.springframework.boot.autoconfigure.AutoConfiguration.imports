@@ -1,0 +1,2 @@
+com.utfinancing.financehub.common.redis.configure.RedisConfig
+com.utfinancing.financehub.common.redis.service.RedisService

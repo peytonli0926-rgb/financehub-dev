@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.admin.mapper.SysInternalUserMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.admin.entity.SysInternalUserEntity">
+                    <id column="id" property="id" />
+                    <result column="user_code" property="userCode" />
+                    <result column="user_name" property="userName" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, user_code, user_name, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectByCondition" resultType="com.utfinancing.financehub.admin.model.vo.SysInternalUserVO">
+        select
+            x.*,
+            sir.role_name
+        from
+            sys_internal_user x
+                inner join sys_internal_role_user siru on
+                x.id = siru.sys_user_id
+                left join sys_internal_role sir on
+                siru.role_id = sir.id
+        where
+            1 = 1
+          and x.del_flag = '0'
+          and siru.del_flag = '0'
+          and sir.del_flag = '0'
+        <if test="condition.roleId !=null">
+            and siru.role_id = #{condition.roleId}
+        </if>
+        <if test="condition.userCode !=null">
+            and x.user_code = #{condition.userCode}
+        </if>
+        <if test="condition.userName !=null and condition.userName !=''">
+            and x.user_name like concat('%',#{condition.userName}::text,'%')
+        </if>
+    </select>
+    <select id="getReviewSubUser" resultType="com.utfinancing.financehub.admin.api.model.SysInternalUser">
+        select
+            distinct
+            u.user_code,
+            u.user_name
+        from
+            sys_internal_sub_user sisu
+                inner join sys_internal_user x on
+                sisu.parent_user_id = x.id
+                inner join sys_internal_role_user siru on
+                x.id = siru.sys_user_id
+                inner join sys_internal_role sir on
+                siru.role_id = sir.id
+                left join sys_internal_user u on
+                sisu.sub_user_id = u.id
+        where
+            1 = 1
+          and sisu.del_flag = '0'
+          and x.del_flag = '0'
+          and siru.del_flag = '0'
+          and siru.status = '0'
+          and sir.del_flag = '0'
+          and sir.status = '0'
+        <if test="condition.roleCode !=null and condition.roleCode !=''">
+            and sir.role_code = #{condition.roleCode}
+        </if>
+        <if test="condition.userCode !=null and condition.userCode !=''">
+            and x.user_code = #{condition.userCode}
+        </if>
+    </select>
+</mapper>
+

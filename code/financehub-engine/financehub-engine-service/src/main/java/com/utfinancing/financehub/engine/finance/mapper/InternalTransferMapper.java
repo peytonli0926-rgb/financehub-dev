@@ -1,0 +1,16 @@
+package com.utfinancing.financehub.engine.finance.mapper;
+
+import com.utfinancing.financehub.engine.finance.entity.InternalTransferEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+/**
+ * <p>
+ * 资产转让-内部调拨 Mapper 接口
+ * </p>
+ *
+ * @author wenbin
+ * @since 2024-04-17
+ */
+public interface InternalTransferMapper extends BaseMapper<InternalTransferEntity> {
+
+}

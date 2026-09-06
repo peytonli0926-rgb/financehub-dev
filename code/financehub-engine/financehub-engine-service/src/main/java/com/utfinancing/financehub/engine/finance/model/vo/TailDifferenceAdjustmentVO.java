@@ -1,0 +1,70 @@
+package com.utfinancing.financehub.engine.finance.model.vo;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * @Author : bruyang
+ * @Date : Create in 2024-03-05
+ * @Description : 尾差调整VO对象
+ * @Modified :
+ */
+@Data
+public class TailDifferenceAdjustmentVO implements Serializable{
+    private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty(value = "ID")
+    private Long id;
+
+    @ApiModelProperty(value = "签约主体")
+    private String orgId;
+
+    @ApiModelProperty(value = "科目编码")
+    private String accountCode;
+
+    @ApiModelProperty(value = "科目名称")
+    private String accountName;
+
+    @ApiModelProperty(value = "业务日期")
+    private LocalDateTime businessDate;
+
+    @ApiModelProperty(value = "记账日期")
+    private LocalDateTime accountDate;
+
+    @ApiModelProperty(value = "流程id")
+    private Long processInstanceId;
+
+    @ApiModelProperty(value = "1:已录入,2:已提交,3:已复核,4:已传至金蝶,5:已拒绝")
+    private String processStatus;
+
+    @ApiModelProperty(value = "是否删除（0：未删除1：删除）默认0")
+    private String delFlag;
+
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    @ApiModelProperty(value = "创建时间")
+    private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "是否已生成凭证（0：未生成1：已生成）默认0")
+    private String isGenerateVoucher;
+
+    @ApiModelProperty(value = "更新人")
+    private String updateBy;
+
+    @ApiModelProperty(value = "更新时间")
+    private LocalDateTime updateTime;
+
+    @ApiModelProperty("审批报错信息")
+    private String approveErrorInfo;
+
+    //详情中的科目余额汇总金额
+    @ApiModelProperty(value = "尾差余额")
+    private BigDecimal tailDifferenceBalance;
+
+    @ApiModelProperty(value = "批次类型")
+    private String batchType;
+
+}

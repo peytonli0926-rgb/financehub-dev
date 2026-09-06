@@ -1,0 +1,1128 @@
+{
+    "role": [
+                {
+                    "roleNo": "admin",
+                    "roleName": "系统管理员"
+                },
+                {
+                    "roleNo": "1002",
+                    "roleName": "查询权限"
+                },
+                {
+                    "roleNo": "1003",
+                    "roleName": "全部功能复核权限"
+                }
+            ],
+    "data": [
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [],
+                            "menuType": 3,
+                            "menu": "homePage"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "homePageIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "bill_btn_T_view"
+                                },
+                                {
+                                    "name": "bill_btn_T_viewVoucher"
+                                },
+                                {
+                                    "name": "bill_btn_S_reject"
+                                },
+                                {
+                                    "name": "bill_btn_S_voucher"
+                                },
+                                {
+                                    "name": "bill_btn_S_agree"
+                                },
+                                {
+                                    "name": "bill_btn_F_view"
+                                },
+                                {
+                                    "name": "bill_btn_S_rejectAll"
+                                },
+                                {
+                                    "name": "bill_btn_S_view"
+                                },
+                                {
+                                    "name": "bill_btn_S_agreeAll"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "billList"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 2,
+                    "menu": "billListIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 1,
+            "menu": "portalEntry"
+        },
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "user_btn_edit"
+                                },
+                                {
+                                    "name": "user_btn_delete"
+                                },
+                                {
+                                    "name": "user_btn_add"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "users"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "usersIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "usersManage_btn_edit"
+                                },
+                                {
+                                    "name": "usersManage_btn_add"
+                                },
+                                {
+                                    "name": "usersManage_btn_delete"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "usersManage"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "usersManageIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "rolesUser_btn_delete"
+                                },
+                                {
+                                    "name": "rolesUser_btn_edit"
+                                },
+                                {
+                                    "name": "rolesUser_btn_add"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "rolesUserAuth"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "rolesUserAuthIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "roles_btn_delete"
+                                },
+                                {
+                                    "name": "roles_btn_edit"
+                                },
+                                {
+                                    "name": "roles_btn_add"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "roles"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 2,
+                    "menu": "rolesIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "rolesAuth_btn_add"
+                                },
+                                {
+                                    "name": "rolesAuth_btn_edit"
+                                },
+                                {
+                                    "name": "rolesAuth_btn_delete"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "rolesDataAuth"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "rolesDataAuthIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [],
+                            "menuType": 3,
+                            "menu": "exceptionMessage"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 5,
+                    "menu": "exceptionMessageIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 10,
+            "menu": "system"
+        },
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "rules_btn_submit"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "rulesConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "rulesConfigIndex"
+                },
+                {
+                    "children": null,
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "guideConfig"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "mapping_btn_add"
+                                },
+                                {
+                                    "name": "mapping_btn_delete"
+                                },
+                                {
+                                    "name": "mapping_btn_edit"
+                                },
+                                {
+                                    "name": "mapping_btn_submit"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "mappingConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 10,
+                    "menu": "mappingConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "dict_btn_add"
+                                },
+                                {
+                                    "name": "dict_btn_redirect"
+                                },
+                                {
+                                    "name": "dict_btn_submit"
+                                },
+                                {
+                                    "name": "dict_btn_edit"
+                                },
+                                {
+                                    "name": "dict_btn_delete"
+                                },
+                                {
+                                    "name": "dict_btn_enable"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "dictConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 2,
+                    "menu": "dictConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "scene_btn_enable"
+                                },
+                                {
+                                    "name": "scene_btn_add"
+                                },
+                                {
+                                    "name": "scene_btn_editrule"
+                                },
+                                {
+                                    "name": "scene_btn_delete"
+                                },
+                                {
+                                    "name": "scene_btn_scenename"
+                                },
+                                {
+                                    "name": "scene_btn_edit"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "sceneConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "sceneConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [],
+                            "menuType": 3,
+                            "menu": "sceneKeyConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "sceneKeyConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "dict_detail_btn_delete"
+                                },
+                                {
+                                    "name": "dict_detail_btn_add"
+                                },
+                                {
+                                    "name": "dict_detail_btn_submit"
+                                },
+                                {
+                                    "name": "dict_detail_btn_edit"
+                                },
+                                {
+                                    "name": "dict_detail_btn_enable"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "dictDetail"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "dictDetailIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "business_btn_add"
+                                },
+                                {
+                                    "name": "business_btn_rename"
+                                },
+                                {
+                                    "name": "business_btn_delete"
+                                },
+                                {
+                                    "name": "business_btn_submit"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "businessConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 4,
+                    "menu": "businessConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "subject_btn_edit"
+                                },
+                                {
+                                    "name": "subject_btn_add"
+                                },
+                                {
+                                    "name": "subject_btn_submit"
+                                },
+                                {
+                                    "name": "subject_btn_delete"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "subjectConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 5,
+                    "menu": "subjectConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "tax_btn_edit"
+                                },
+                                {
+                                    "name": "tax_btn_delete"
+                                },
+                                {
+                                    "name": "tax_btn_submit"
+                                },
+                                {
+                                    "name": "tax_btn_add"
+                                },
+                                {
+                                    "name": "tax_btn_enable"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "taxConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 7,
+                    "menu": "taxConfigIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [],
+                            "menuType": 3,
+                            "menu": "generateVoucher"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 8,
+                    "menu": "generateVoucherIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 3,
+            "menu": "engineConfig"
+        },
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "subjectDeatil_btn_dataAsync"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "subjectDeatil"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "subjectDeatilIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "payableMargin_btn_c_export"
+                                },
+                                {
+                                    "name": "payableMargin_btn_c_dataAsync"
+                                },
+                                {
+                                    "name": "payableMargin_btn_h_export"
+                                },
+                                {
+                                    "name": "payableMargin_btn_h_dataAsync"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "payableMargin"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 10,
+                    "menu": "payableMarginIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "accountPayEquip_btn_dataAsync"
+                                },
+                                {
+                                    "name": "accountPayEquip_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "accountPayEquip"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 11,
+                    "menu": "accountPayEquipIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "subjectKingdee_btn_dataAsync"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "subjectKingdee"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 2,
+                    "menu": "subjectKingdeeIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "OutputTaxR_btn_dataAsync"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "OutputTaxReceivable"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 5,
+                    "menu": "OutputTaxReceivableIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "leaseReceivables_btn_dataAsync"
+                                },
+                                {
+                                    "name": "leaseReceivables_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "leaseReceivables"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 6,
+                    "menu": "leaseReceivablesIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "premiumsPayable_btn_export"
+                                },
+                                {
+                                    "name": "premiumsPayable_btn_dataAsync"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "insurancePremiumsPayable"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 7,
+                    "menu": "insurancePremiumsPayableIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "dealWithOtherCost_btn_dataAsync"
+                                },
+                                {
+                                    "name": "dealWithOtherCost_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "dealWithOtherCosts"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 8,
+                    "menu": "dealWithOtherCostsIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "consultServiceFee_btn_dataAsync"
+                                },
+                                {
+                                    "name": "consultServiceFee_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "consultServiceFee"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 9,
+                    "menu": "consultServiceFeeIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "sendKingdeeException_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "sendKingdeeExceptionReport"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 11,
+                    "menu": "sendKingdeeExceptionReportIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 9,
+            "menu": "reconciliationReports"
+        },
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "interface_btn_submit"
+                                },
+                                {
+                                    "name": "interface_btn_delete"
+                                },
+                                {
+                                    "name": "interface_btn_add"
+                                },
+                                {
+                                    "name": "interface_btn_edit"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "interfaceConfig"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 2,
+                    "menu": "interfaceConfigIndex"
+                },
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 2,
+            "menu": "interfaceEngine"
+        },
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "jzjt_btn_exportlist"
+                                },
+                                {
+                                    "name": "jzjt_btn_submit"
+                                },
+                                {
+                                    "name": "jzjt_btn_view"
+                                },
+                                {
+                                    "name": "jzjt_btn_viewReport"
+                                },
+                                {
+                                    "name": "jzjt_btn_import"
+                                },
+                                {
+                                    "name": "jzjt_btn_writeOff"
+                                },
+                                {
+                                    "name": "jzjt_btn_export"
+                                },
+                                {
+                                    "name": "jzjt_btn_viewTask"
+                                },
+                                {
+                                    "name": "jzjt_btn_viewVoucher"
+                                },
+                                {
+                                    "name": "jzjt_btn_voucher"
+                                },
+                                {
+                                    "name": "jzjt_btn_withdraw"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "impairmentBusinessIndex"
+                        },
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "jzjtDetail_btn_viewVoucher"
+                                },
+                                {
+                                    "name": "jzjtDetail_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "impairmentBusinessDetail"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "impairmentBusiness"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "income_btn_viewVoucher"
+                                },
+                                {
+                                    "name": "income_btn_month"
+                                },
+                                {
+                                    "name": "income_btn_view"
+                                },
+                                {
+                                    "name": "income_btn_withdraw"
+                                },
+                                {
+                                    "name": "income_btn_voucher"
+                                },
+                                {
+                                    "name": "income_btn_delete"
+                                },
+                                {
+                                    "name": "income_btn_import"
+                                },
+                                {
+                                    "name": "income_btn_submit"
+                                },
+                                {
+                                    "name": "income_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "incomeProvision"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 2,
+                    "menu": "incomeProvisionIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "incomeDetail_btn_viewVoucher"
+                                },
+                                {
+                                    "name": "incomeDetail_btn_view"
+                                },
+                                {
+                                    "name": "incomeDetail_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "incomeProvisionDetail"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "incomeProvisionDetailIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "conDetail_btn_view"
+                                },
+                                {
+                                    "name": "conDetail_btn_viewVoucher"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "consultationFeesDetail"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "consultationFeesDetailIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "fees_btn_desVoucher"
+                                },
+                                {
+                                    "name": "fees_btn_export"
+                                },
+                                {
+                                    "name": "fees_btn_delete"
+                                },
+                                {
+                                    "name": "fees_btn_voucher"
+                                },
+                                {
+                                    "name": "fees_btn_cesuan"
+                                },
+                                {
+                                    "name": "fees_btn_import"
+                                },
+                                {
+                                    "name": "fees_btn_viewVoucher"
+                                },
+                                {
+                                    "name": "fees_btn_view"
+                                },
+                                {
+                                    "name": "fees_btn_submit"
+                                },
+                                {
+                                    "name": "fees_btn_withdraw"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "consultationFees"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "consultationFeesIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 4,
+            "menu": "measurementEngine"
+        },
+        {
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "currentAmount_btn_export"
+                                },
+                                {
+                                    "name": "currentAmount_btn_viewVoucher"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "currentAmount"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "currentAmountIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "contract_btn_export"
+                                },
+                                {
+                                    "name": "contract_btn_view"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "contractBusiness"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "contractBusinessIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "contract_btn_T_export"
+                                },
+                                {
+                                    "name": "contract_btn_S_export"
+                                },
+                                {
+                                    "name": "contract_btn_Fi_viewVoucher"
+                                },
+                                {
+                                    "name": "contract_btn_T_viewVoucher"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "contractBusinessDetail"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "contractBusinessDetailIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "accountingBalanceForm_btn_export"
+                                },
+                                {
+                                    "name": "accountingForm_btn_fileListBtn"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "accountingBalanceForm"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 11,
+                    "menu": "accountingBalanceFormIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "subjectBusiness_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "subjectBusiness"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "subjectBusinessIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [],
+                            "menuType": 3,
+                            "menu": "customerBusiness"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 3,
+                    "menu": "customerBusinessIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "voucherBusiness_btn_copy"
+                                },
+                                {
+                                    "name": "voucherBusiness_btn_export"
+                                },
+                                {
+                                    "name": "voucherBusiness_btn_writeOff"
+                                },
+                                {
+                                    "name": "voucherBusiness_btn_edit"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "voucherBusiness"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 5,
+                    "menu": "voucherBusinessIndex"
+                },
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "batchSearch_btn_import"
+                                },
+                                {
+                                    "name": "batchSearch_btn_fileList"
+                                },
+                                {
+                                    "name": "batchSearch_btn_export"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "batchSearch"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 5,
+                    "menu": "batchSearchIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 4,
+            "menu": "searchBusiness"
+        },
+        {
+            "children": null,
+            "elements": [],
+            "menuType": 5,
+            "sort": 5,
+            "menu": "login"
+        }
+    ]
+}

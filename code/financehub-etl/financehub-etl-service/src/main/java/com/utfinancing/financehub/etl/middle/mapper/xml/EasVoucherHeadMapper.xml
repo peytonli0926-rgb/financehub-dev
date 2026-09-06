@@ -1,0 +1,543 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.middle.mapper.EasVoucherHeadMapper">
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID_, SYSTEM_, PRIORITY, MODELNAME, ORGNUMBER, BZPROCID, VOUCHERNUMBER, BZDATE, FINANCIALDATE, PERIODYEAR,
+        PERIODMONTH, VOUCHERTYPE, CONTRACTID, BILLSTATUS, STATUS, MEMO, CREATOR, CREATE_DATE, MODIFICATOR, MODIFY_DATE,
+        EASFLAG, EASREASON, EASOPTIME, EASBZCODE, BZFLAG, BZREASON, BZOPTIME, DESCRIPTION, EAS_VOUCHERNUMBER, BX_BILLID,
+        BX_MAINID
+    </sql>
+    
+    <select id="selectMidVoucherHeaderByDate" resultType="com.utfinancing.financehub.etl.middle.entity.EasVoucherHeadEntity">
+        select <include refid="Base_Column_List"/>
+        from FINANCINGSYS.EAS_VOUCHER_HEAD
+        where PERIODYEAR=#{periodYear} and PERIODMONTH=#{periodMonth} and to_char(FINANCIALDATE, 'yyyy-mm-dd') = #{voucherDate} and EASBZCODE is not null
+        order by create_date asc
+    </select>
+
+
+
+    <select id="selectMidVoucherEntryByDate" resultType="com.utfinancing.financehub.etl.middle.model.dto.MidVoucherEntryDTO">
+        SELECT
+            TO_char(evh.BZDATE,'yyyy-MM-dd') business_date,
+            TO_char(evh.FINANCIALDATE,'yyyy-MM-dd') voucher_date,
+            evh.VOUCHERNUMBER as voucher_number,
+            evh.SYSTEM_ system_code,
+            evh.MODELNAME scene_name,
+            evh.ORGNUMBER org_id,
+            evh.CONTRACTID contract_code,
+            eve.ACCOUNTNUMBER account_code,
+            eve.DEBITAMOUNT debit_amount,
+            eve.CREDITAMOUNT credit_amount
+        FROM FINANCINGSYS.EAS_VOUCHER_HEAD evh,FINANCINGSYS.EAS_VOUCHER_ENTRY eve
+        WHERE evh.VOUCHERNUMBER =eve.EAS_VOUCHER_ID
+        AND evh.PERIODYEAR = #{periodYear} AND evh.PERIODMONTH = #{periodMonth} AND TO_char(evh.BZDATE,'yyyy-MM-dd')=#{voucherDate}
+        order by 1,2,3,4,5,6,7
+    </select>
+
+    <select id="selectMidVoucherIncloudAsscateByDate" resultType="java.util.Map">
+        SELECT
+            TO_char(evh.BZDATE,'yyyy-MM-dd') business_date,
+            TO_char(evh.FINANCIALDATE,'yyyy-MM-dd') voucher_date,
+            evh.VOUCHERNUMBER as voucher_number,
+            evh.SYSTEM_ system_code,
+            evh.MODELNAME scene_name,
+            evh.ORGNUMBER org_id,
+            evh.CONTRACTID contract_code,
+            eve.ACCOUNTNUMBER account_code,
+            eve.DEBITAMOUNT debit_amount,
+            eve.CREDITAMOUNT credit_amount,
+            eva.ASSTACTTYPENAME asstact_type_name,
+            eva.ASSTACTNUMBER asstact_number,
+            eva.AMOUNT amount
+        FROM EAS_VOUCHER_HEAD evh
+        LEFT OUTER JOIN EAS_VOUCHER_ENTRY eve ON evh.VOUCHERNUMBER =eve.EAS_VOUCHER_ID
+        LEFT OUTER JOIN EAS_VOUCHER_ASSTACT EVA ON eva.EAS_VOUCHER_ID =eve.EAS_VOUCHER_ID
+        AND eva.EAS_VOUCHER_ENTRY_ID =eve.ENTRYSEQ AND eva.ASSTACTTYPE ='002'
+        WHERE evh.PERIODYEAR = #{periodYear} AND evh.PERIODMONTH = #{periodMonth} AND TO_char(evh.BZDATE,'yyyy-MM-dd')=#{voucherDate}
+        order by 1,2,3,4,5,6,7
+    </select>
+    
+    
+    <select id="selectMidVoucherAsstactByDate" resultType="java.util.Map">
+        SELECT evh.VOUCHERNUMBER,eva.*
+            FROM EAS_VOUCHER_HEAD evh,EAS_VOUCHER_ASSTACT eva
+        WHERE evh.VOUCHERNUMBER =eva.EAS_VOUCHER_ID
+        AND evh.PERIODYEAR =#{periodYear} AND evh.PERIODMONTH =#{periodMonth} AND TO_char(evh.BZDATE,'yyyy-MM-dd')=#{voucherDate}
+    </select>
+
+    <select id="selectMiddleData" resultType="java.util.Map">
+        ${statement}
+    </select>
+    <select id="selectMiddleEasVoucher"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        SELECT
+        eve.ID_ AS fid,
+        '0' as isStage,
+        '过账' as dataStatus,
+        evh.ORGNUMBER "companyNumber",
+        evh.VOUCHERNUMBER "voucherNumber",
+        evh.SYSTEM_ || evh.VOUCHERNUMBER "importKey",
+        evh.PERIODYEAR "periodYear",
+        evh.PERIODMONTH "periodNumber",
+        evh.FINANCIALDATE "bookedDate",
+        evh.BZDATE "bizDate",
+        evh.VOUCHERTYPE "voucherType",
+        eve.VOUCHERABSTRACT "description",
+        eve.VOUCHERABSTRACT "voucherAbstract",
+        '' "attaches",
+        'false' "isCheck",
+        '100343' "creator",
+        '101431' "auditor",
+        '101431' "poster",
+        '' "cashier",
+        '' "importKey",
+        evh.ID_ "sourceBillId",
+        evh.SYSTEM_ "sourceSysNo",
+        '' "v.sourceSysBillUrl" ,
+        eve.ENTRYSEQ "entrySeq",
+        evh.ORGNUMBER "profitCenterNumber",
+        eve.ACCOUNTNUMBER "accountNumber",
+        eve.CURRENCYNUMBER "currencyNumber" ,
+        eve.ENTRYDC "entryDC",
+        '' "measurement",
+        '0' "cussent",
+        eve.RATE "localRate",
+        eve.ORIGINALAMOUNT "originalAmount",
+        eve.debitamount "debitAmount",
+        eve.creditamount  "creditAmount",
+        '' "qty",
+        '' "price",
+        eve.ENTRYSEQ "asstSeq",
+        eve.VOUCHERABSTRACT "assistAbstract",
+        evh.BZDATE "assistBizDate",
+        '' "assistEndDate",
+        '' "settlementType",
+        '' "settlementNumber",
+        '' "bizNumber",
+        '' "ticketNumber",
+        '' "invoiceNumber",
+        '物料' "asstActType1",
+        eva1.ASSTACTNUMBER "asstActNumber1",
+        eva1.ASSTACTNUMBER "asstActName1",
+        '客户' "asstActType2",
+        eva2.ASSTACTNUMBER "asstActNumber2",
+        eva2.ASSTACTNUMBER "asstActName2" ,
+        '银行账户' "asstActType3",
+        eva3.ASSTACTNUMBER "asstActNumber3",
+        eva3.ASSTACTNUMBER "asstActName3",
+        '金融机构' "asstActType4",
+        eva4.ASSTACTNUMBER "asstActNumber4",
+        eva4.ASSTACTNUMBER "asstActName4",
+        '成本中心' "asstActType6",
+        eva5.ASSTACTNUMBER "asstActNumber6",
+        eva5.ASSTACTNUMBER "asstActName6" ,
+        '职员' "asstActType7",
+        eva6.ASSTACTNUMBER "asstActNumber7",
+        eva6.ASSTACTNUMBER "asstActName7",
+        '费用类型' "asstActType8",
+        eva7.ASSTACTNUMBER "asstActNumber8",
+        eva7.ASSTACTNUMBER "asstActName8",
+        '借据号' "asstActType9",
+        eva8.ASSTACTNUMBER "asstActNumber9",
+        eva8.ASSTACTNUMBER "asstActName9",
+        '借款合同编号' "asstActType10",
+        eva9.ASSTACTNUMBER "asstActNumber10",
+        eva9.ASSTACTNUMBER "asstActName10",
+        '衍生合约编号' "asstActType12",
+        eva10.ASSTACTNUMBER "asstActNumber12",
+        eva10.ASSTACTNUMBER "asstActName12",
+        '批次号' "asstActType14",
+        eva11.ASSTACTNUMBER "asstActNumber12",
+        eva11.ASSTACTNUMBER "asstActName12"
+        FROM
+        FINANCINGSYS.EAS_VOUCHER_HEAD evh
+        INNER JOIN FINANCINGSYS.EAS_VOUCHER_ENTRY eve ON
+        evh.VOUCHERNUMBER = eve.EAS_VOUCHER_ID
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA1 ON
+        eva1.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva1.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND EVA1.ASSTACTTYPENAME = '合同号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA2 ON
+        eva2.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva2.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva2.ASSTACTTYPENAME = '客户'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA3 ON
+        eva3.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva3.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva3.ASSTACTTYPENAME = '银行账户'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA4 ON
+        eva4.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva4.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva4.ASSTACTTYPENAME = '金融机构'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA5 ON
+        eva5.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva5.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva5.ASSTACTTYPENAME = '成本中心'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA6 ON
+        eva6.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva6.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva6.ASSTACTTYPENAME = '职员'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA7 ON
+        eva7.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva7.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva7.ASSTACTTYPENAME = '费用类型'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA8 ON
+        eva8.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva8.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva8.ASSTACTTYPENAME = '借据号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA9 ON
+        eva9.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva9.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva9.ASSTACTTYPENAME = '借款合同编号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA10 ON
+        eva10.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva10.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva10.ASSTACTTYPENAME = '衍生合约编号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA11 ON
+        eva11.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva11.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva11.ASSTACTTYPENAME = '批次号'
+        -- AND eva.EAS_VOUCHER_ENTRY_ID =eve.ENTRYSEQ AND eva.ASSTACTTYPE ='002' */
+        WHERE
+        evh.SYSTEM_ IN ('GYLBL','FK' )
+        AND evh.EASFLAG = 1
+        AND evh.PERIODYEAR = #{periodYear} AND evh.PERIODMONTH = #{periodMonth}
+        AND TO_char(evh.BZDATE,'yyyy-MM-dd')=#{voucherDate}
+        ORDER BY evh.EAS_VOUCHERNUMBER,evh.ORGNUMBER,evh.PERIODYEAR,evh.PERIODMONTH,evh.VOUCHERTYPE,eve.ENTRYSEQ
+    </select>
+    <select id="selectStageMiddleEasVoucher"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        SELECT
+        eve.ID_ AS fid,
+        '1' as isStage,
+        '暂存' as dataStatus,
+        evh.ORGNUMBER "companyNumber",
+        evh.VOUCHERNUMBER "voucherNumber",
+        evh.SYSTEM_ || evh.VOUCHERNUMBER "importKey",
+        evh.PERIODYEAR "periodYear",
+        evh.PERIODMONTH "periodNumber",
+        evh.FINANCIALDATE "bookedDate",
+        evh.BZDATE "bizDate",
+        evh.VOUCHERTYPE "voucherType",
+        eve.VOUCHERABSTRACT "description",
+        eve.VOUCHERABSTRACT "voucherAbstract",
+        '' "attaches",
+        'false' "isCheck",
+        '888888' "creator",
+        '' "auditor",
+        '' "poster",
+        '' "cashier",
+        '' "importKey",
+        evh.BX_BILLID "sourceBillId",
+        evh.SYSTEM_ "sourceSysNo",
+        '' "v.sourceSysBillUrl" ,
+        eve.ENTRYSEQ "entrySeq",
+        evh.ORGNUMBER "profitCenterNumber",
+        eve.ACCOUNTNUMBER "accountNumber",
+        eve.CURRENCYNUMBER "currencyNumber" ,
+        eve.ENTRYDC "entryDC",
+        '' "measurement",
+        '0' "cussent",
+        eve.RATE "localRate",
+        eve.ORIGINALAMOUNT "originalAmount",
+        eve.debitamount "debitAmount",
+        eve.creditamount  "creditAmount",
+        '' "qty",
+        '' "price",
+        eve.ENTRYSEQ "asstSeq",
+        eve.VOUCHERABSTRACT "assistAbstract",
+        evh.BZDATE "assistBizDate",
+        '' "assistEndDate",
+        '' "settlementType",
+        '' "settlementNumber",
+        '' "bizNumber",
+        '' "ticketNumber",
+        '' "invoiceNumber",
+        '物料' "asstActType1",
+        eva1.ASSTACTNUMBER "asstActNumber1",
+        eva1.ASSTACTNUMBER "asstActName1",
+        '客户' "asstActType2",
+        eva2.ASSTACTNUMBER "asstActNumber2",
+        eva2.ASSTACTNUMBER "asstActName2" ,
+        '银行账户' "asstActType3",
+        eva3.ASSTACTNUMBER "asstActNumber3",
+        eva3.ASSTACTNUMBER "asstActName3",
+        '金融机构' "asstActType4",
+        eva4.ASSTACTNUMBER "asstActNumber4",
+        eva4.ASSTACTNUMBER "asstActName4",
+        '成本中心' "asstActType6",
+        eva5.ASSTACTNUMBER "asstActNumber6",
+        eva5.ASSTACTNUMBER "asstActName6" ,
+        '职员' "asstActType7",
+        eva6.ASSTACTNUMBER "asstActNumber7",
+        eva6.ASSTACTNUMBER "asstActName7",
+        '费用类型' "asstActType8",
+        eva7.ASSTACTNUMBER "asstActNumber8",
+        eva7.ASSTACTNUMBER "asstActName8",
+        '借据号' "asstActType9",
+        eva8.ASSTACTNUMBER "asstActNumber9",
+        eva8.ASSTACTNUMBER "asstActName9",
+        '借款合同编号' "asstActType10",
+        eva9.ASSTACTNUMBER "asstActNumber10",
+        eva9.ASSTACTNUMBER "asstActName10",
+        '衍生合约编号' "asstActType12",
+        eva10.ASSTACTNUMBER "asstActNumber12",
+        eva10.ASSTACTNUMBER "asstActName12",
+        '批次号' "asstActType14",
+        eva11.ASSTACTNUMBER "asstActNumber12",
+        eva11.ASSTACTNUMBER "asstActName12"
+        FROM
+        FINANCINGSYS.EAS_VOUCHER_HEAD evh
+        INNER JOIN FINANCINGSYS.EAS_VOUCHER_ENTRY eve ON
+        evh.VOUCHERNUMBER = eve.EAS_VOUCHER_ID
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA1 ON
+        eva1.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva1.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND EVA1.ASSTACTTYPENAME = '合同号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA2 ON
+        eva2.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva2.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva2.ASSTACTTYPENAME = '客户'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA3 ON
+        eva3.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva3.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva3.ASSTACTTYPENAME = '银行账户'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA4 ON
+        eva4.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva4.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva4.ASSTACTTYPENAME = '金融机构'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA5 ON
+        eva5.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva5.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva5.ASSTACTTYPENAME = '成本中心'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA6 ON
+        eva6.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva6.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva6.ASSTACTTYPENAME = '职员'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA7 ON
+        eva7.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva7.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva7.ASSTACTTYPENAME = '费用类型'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA8 ON
+        eva8.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva8.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva8.ASSTACTTYPENAME = '借据号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA9 ON
+        eva9.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva9.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva9.ASSTACTTYPENAME = '借款合同编号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA10 ON
+        eva10.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva10.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva10.ASSTACTTYPENAME = '衍生合约编号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA11 ON
+        eva11.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva11.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva11.ASSTACTTYPENAME = '批次号'
+        -- AND eva.EAS_VOUCHER_ENTRY_ID =eve.ENTRYSEQ AND eva.ASSTACTTYPE ='002' */
+        WHERE 1=1
+        and (evh.SYSTEM_ = 'SC' or (evh.SYSTEM_ = 'EAS' and (evh.ORGNUMBER not in ('01-C0001','02-C0001','30001','80001') or evh.description='autoSubmitor_tq') ))
+        AND evh.EASFLAG = 1
+        AND evh.PERIODYEAR = #{periodYear} AND evh.PERIODMONTH = #{periodMonth}
+        AND TO_char(evh.BZDATE,'yyyy-MM-dd')=#{voucherDate}
+        ORDER BY evh.EAS_VOUCHERNUMBER,evh.ORGNUMBER,evh.PERIODYEAR,evh.PERIODMONTH,evh.VOUCHERTYPE,eve.ENTRYSEQ
+    </select>
+    <select id="selectStageZJXTMiddleEasVoucher"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        SELECT
+        eve.ID_ AS fid,
+        '1' as isStage,
+        '暂存' as dataStatus,
+        evh.ORGNUMBER "companyNumber",
+        evh.VOUCHERNUMBER "voucherNumber",
+        evh.SYSTEM_ || evh.VOUCHERNUMBER "importKey",
+        evh.PERIODYEAR "periodYear",
+        evh.PERIODMONTH "periodNumber",
+        evh.FINANCIALDATE "bookedDate",
+        evh.BZDATE "bizDate",
+        evh.VOUCHERTYPE "voucherType",
+        eve.VOUCHERABSTRACT "description",
+        eve.VOUCHERABSTRACT "voucherAbstract",
+        '' "attaches",
+        'false' "isCheck",
+        '888888' "creator",
+        '' "auditor",
+        '' "poster",
+        '' "cashier",
+        '' "importKey",
+        evh.BX_BILLID "sourceBillId",
+        evh.SYSTEM_ "sourceSysNo",
+        '' "v.sourceSysBillUrl" ,
+        eve.ENTRYSEQ "entrySeq",
+        evh.ORGNUMBER "profitCenterNumber",
+        eve.ACCOUNTNUMBER "accountNumber",
+        eve.CURRENCYNUMBER "currencyNumber" ,
+        eve.ENTRYDC "entryDC",
+        '' "measurement",
+        '0' "cussent",
+        eve.RATE "localRate",
+        eve.ORIGINALAMOUNT "originalAmount",
+        eve.debitamount "debitAmount",
+        eve.creditamount  "creditAmount",
+        '' "qty",
+        '' "price",
+        eve.ENTRYSEQ "asstSeq",
+        eve.VOUCHERABSTRACT "assistAbstract",
+        evh.BZDATE "assistBizDate",
+        '' "assistEndDate",
+        '' "settlementType",
+        '' "settlementNumber",
+        '' "bizNumber",
+        '' "ticketNumber",
+        '' "invoiceNumber",
+        '物料' "asstActType1",
+        eva1.ASSTACTNUMBER "asstActNumber1",
+        eva1.ASSTACTNUMBER "asstActName1",
+        '客户' "asstActType2",
+        eva2.ASSTACTNUMBER "asstActNumber2",
+        eva2.ASSTACTNUMBER "asstActName2" ,
+        '银行账户' "asstActType3",
+        eva3.ASSTACTNUMBER "asstActNumber3",
+        eva3.ASSTACTNUMBER "asstActName3",
+        '金融机构' "asstActType4",
+        eva4.ASSTACTNUMBER "asstActNumber4",
+        eva4.ASSTACTNUMBER "asstActName4",
+        '成本中心' "asstActType6",
+        eva5.ASSTACTNUMBER "asstActNumber6",
+        eva5.ASSTACTNUMBER "asstActName6" ,
+        '职员' "asstActType7",
+        eva6.ASSTACTNUMBER "asstActNumber7",
+        eva6.ASSTACTNUMBER "asstActName7",
+        '费用类型' "asstActType8",
+        eva7.ASSTACTNUMBER "asstActNumber8",
+        eva7.ASSTACTNUMBER "asstActName8",
+        '借据号' "asstActType9",
+        eva8.ASSTACTNUMBER "asstActNumber9",
+        eva8.ASSTACTNUMBER "asstActName9",
+        '借款合同编号' "asstActType10",
+        eva9.ASSTACTNUMBER "asstActNumber10",
+        eva9.ASSTACTNUMBER "asstActName10",
+        '衍生合约编号' "asstActType12",
+        eva10.ASSTACTNUMBER "asstActNumber12",
+        eva10.ASSTACTNUMBER "asstActName12",
+        '批次号' "asstActType14",
+        eva11.ASSTACTNUMBER "asstActNumber12",
+        eva11.ASSTACTNUMBER "asstActName12"
+        FROM
+        FINANCINGSYS.EAS_VOUCHER_HEAD evh
+        INNER JOIN FINANCINGSYS.EAS_VOUCHER_ENTRY eve ON
+        evh.VOUCHERNUMBER = eve.EAS_VOUCHER_ID
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA1 ON
+        eva1.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva1.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND EVA1.ASSTACTTYPENAME = '合同号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA2 ON
+        eva2.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva2.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva2.ASSTACTTYPENAME = '客户'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA3 ON
+        eva3.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva3.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva3.ASSTACTTYPENAME = '银行账户'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA4 ON
+        eva4.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva4.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva4.ASSTACTTYPENAME = '金融机构'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA5 ON
+        eva5.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva5.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva5.ASSTACTTYPENAME = '成本中心'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA6 ON
+        eva6.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva6.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva6.ASSTACTTYPENAME = '职员'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA7 ON
+        eva7.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva7.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva7.ASSTACTTYPENAME = '费用类型'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA8 ON
+        eva8.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva8.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva8.ASSTACTTYPENAME = '借据号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA9 ON
+        eva9.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva9.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva9.ASSTACTTYPENAME = '借款合同编号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA10 ON
+        eva10.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva10.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva10.ASSTACTTYPENAME = '衍生合约编号'
+        LEFT OUTER JOIN FINANCINGSYS.EAS_VOUCHER_ASSTACT EVA11 ON
+        eva11.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        AND eva11.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        AND eva11.ASSTACTTYPENAME = '批次号'
+        -- AND eva.EAS_VOUCHER_ENTRY_ID =eve.ENTRYSEQ AND eva.ASSTACTTYPE ='002' */
+        WHERE
+        evh.SYSTEM_ IN ('ZJXT')
+        AND ((EVH.MODELNAME NOT IN ('网银上传','新开票','票据背书') AND EVH.MODELNAME NOT LIKE '付款%')
+        OR (EVH.MODELNAME like  '付款%'
+        AND instr(eve.VOUCHERABSTRACT, '报销')>0)
+        OR (EVH.MODELNAME ='付款'
+        AND instr(evh.bzprocid, 'ZJ')=0)
+        OR (EVH.MODELNAME LIKE '付款%'
+        AND instr(evh.bzprocid, 'ZJ')>0))
+        AND evh.EASFLAG = 1
+        AND evh.PERIODYEAR = #{periodYear} AND evh.PERIODMONTH = #{periodMonth}
+        AND TO_char(evh.BZDATE,'yyyy-MM-dd')=#{voucherDate}
+        ORDER BY evh.EAS_VOUCHERNUMBER,evh.ORGNUMBER,evh.PERIODYEAR,evh.PERIODMONTH,evh.VOUCHERTYPE,eve.ENTRYSEQ
+    </select>
+    <select id="selectKingdeeMiddleGaxdVoucher"
+            resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeMiddleVoucherEntity">
+        select
+        evh.BZDATE businessDate,
+        evh.FINANCIALDATE voucherDate,
+        evh.VOUCHERNUMBER voucherNumber,
+        evh.EASFLAG easFlag,
+        evh.id_ easbzCode,
+        evh.CREATE_DATE createDate,
+        evh.SYSTEM_ systemCode,
+        evh.MODELNAME sceneName,
+        evh.ORGNUMBER orgId,
+        eve.ACCOUNTNUMBER accountCode,
+        eve.currencynumber currencyNumber,
+        eve.DEBITAMOUNT debitAmount,
+        eve.CREDITAMOUNT creditAmount,
+        eve.voucherabstract voucherAbstract,
+        eva1.ASSTACTNUMBER contractCode,
+        eva2.ASSTACTNUMBER clientCode,
+        eva3.ASSTACTNUMBER ebankNo
+        from
+        EAS_VOUCHER_HEAD evh
+        inner join EAS_VOUCHER_ENTRY eve on
+        evh.VOUCHERNUMBER = eve.EAS_VOUCHER_ID
+        left outer join EAS_VOUCHER_ASSTACT EVA1 on
+        eva1.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        and eva1.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        and eva1.ASSTACTTYPENAME = '合同号'
+        left outer join EAS_VOUCHER_ASSTACT EVA2 on
+        eva2.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        and eva2.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        and eva2.ASSTACTTYPENAME = '客户'
+        left outer join EAS_VOUCHER_ASSTACT EVA3 on
+        eva3.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+        and eva3.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+        and eva3.ASSTACTTYPENAME = '银行账户'
+        where
+        evh.system_ in ('GAXT', 'HY-XDWL')
+        and evh.ORGNUMBER in ('01-C0001', '02-C0001', '30001', '80001')
+        and evh.modelname not in('已开票增值税发票回导')
+        and evh.PERIODYEAR = #{year}
+        and evh.PERIODMONTH = #{month}
+        and TO_char(evh.FINANCIALDATE, 'yyyy-MM-dd')= #{voucherDate}
+        order by
+        EVH.VOUCHERNUMBER,
+        EVH.CREATE_DATE ,
+        EVA1.ASSTACTNUMBER
+    </select>
+
+</mapper>
+

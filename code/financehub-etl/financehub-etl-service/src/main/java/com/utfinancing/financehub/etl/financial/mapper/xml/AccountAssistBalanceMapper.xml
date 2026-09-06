@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.AccountAssistBalanceMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.AccountAssistBalanceEntity">
+                    <id column="id" property="id" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="bill_contract_code" property="billContractCode" />
+                    <result column="currency_code" property="currencyCode" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_name" property="accountName" />
+                    <result column="year_begin_debit_balance" property="yearBeginDebitBalance" />
+                    <result column="year_begin_credit_balance" property="yearBeginCreditBalance" />
+                    <result column="month_begin_debit_balance" property="monthBeginDebitBalance" />
+                    <result column="month_begin_credit_balance" property="monthBeginCreditBalance" />
+                    <result column="month_debit_amount" property="monthDebitAmount" />
+                    <result column="month_credit_amount" property="monthCreditAmount" />
+                    <result column="year_debit_amount" property="yearDebitAmount" />
+                    <result column="year_credit_amount" property="yearCreditAmount" />
+                    <result column="month_end_debit_balance" property="monthEndDebitBalance" />
+                    <result column="month_end_credit_balance" property="monthEndCreditBalance" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, period_code, contract_code, client_code, business_code, org_id, bill_contract_code, currency_code, account_code, account_name, year_begin_debit_balance, year_begin_credit_balance, month_begin_debit_balance, month_begin_credit_balance, month_debit_amount, month_credit_amount, year_debit_amount, year_credit_amount, month_end_debit_balance, month_end_credit_balance, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+
+        <delete id="removeAssistBalanceCurrentMonth">
+            truncate table eg_account_assist_balance_partition_${periodCode}
+        </delete>
+
+        <select id="syncAssistBalanceCurrentMonth" resultType="com.utfinancing.financehub.etl.financial.entity.AccountAssistBalanceTempClosePeriodEntity">
+            with ev_eve as (
+                select ev.contract_code ,ev.org_id ,eve.account_code, eve.bill_contract_code,ev.currency,eve.client_code ,eve.account_name,
+                       sum(eve.debit_amount) debit_amount, sum(eve.credit_amount) credit_amount
+                from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+                where 1=1
+                  and ev.period_code = #{periodCode}
+                  and eve.period_code = #{periodCode}
+                group by ev.contract_code ,ev.org_id ,eve.account_code ,eve.bill_contract_code,ev.currency,eve.client_code ,eve.account_name
+            )
+               ,em_emv as (
+                select emv.contract_code ,em.org_id ,emv.account_code, emv.loans_contract_code bill_contract_code,em.currency_code,emv.client_code ,emv.account_name
+                     ,sum(emv.debit_amount) debit_amount,sum(emv.credit_amount) credit_amount
+                from eg_manual em join eg_manual_voucher emv on em.id = emv.manual_id
+                where 1=1
+                  and em.period_code = #{periodCode}
+                  and emv.period_code = #{periodCode}
+                  and em.process_status = '1'
+                group by emv.contract_code ,em.org_id ,emv.account_code ,emv.loans_contract_code,em.currency_code,emv.client_code ,emv.account_name
+            )
+            insert into eg_account_assist_balance_temp_close_period(id,period_code ,contract_code,client_code,business_code ,org_id ,bill_contract_code,currency_code,account_code,account_name,
+            year_begin_debit_balance ,year_begin_credit_balance ,month_begin_debit_balance, month_begin_credit_balance,month_debit_amount,month_credit_amount,year_debit_amount,year_credit_amount,month_end_debit_balance,month_end_credit_balance)
+            select
+                nextval('account_assist_close_period_seq'),
+                ${periodCode} period_code,
+                coalesce(eaab.contract_code,ev_eve.contract_code,em_emv.contract_code,null) contract_code ,
+                coalesce(eaab.client_code,ev_eve.client_code,em_emv.client_code,null) client_code,
+                eaab.business_code,
+                coalesce(eaab.org_id,ev_eve.org_id,em_emv.org_id,'') org_id,
+                coalesce(eaab.bill_contract_code,ev_eve.bill_contract_code,em_emv.bill_contract_code,'') bill_contract_code,
+                coalesce(eaab.currency_code,ev_eve.currency,em_emv.currency_code,'') currency_code,
+                coalesce(eaab.account_code,ev_eve.account_code,em_emv.account_code,'') account_code,
+                coalesce(eaab.account_name,ev_eve.account_name,em_emv.account_name,'') account_name,
+                coalesce(case when substring(202405::text,5,2) != '01' then eaab.year_begin_debit_balance
+                              else eaab.month_end_debit_balance end,0) year_begin_debit_balance,
+                coalesce(case when substring(202405::text,5,2) != '01' then eaab.year_begin_credit_balance
+                              else eaab.month_end_credit_balance end,0) year_begin_credit_balance,
+                coalesce(eaab.month_end_debit_balance,0) month_begin_debit_balance,
+                coalesce(eaab.month_end_credit_balance,0) month_begin_credit_balance,
+                coalesce(ev_eve.debit_amount,0) + coalesce(em_emv.debit_amount,0) month_debit_amount,
+                coalesce(ev_eve.credit_amount,0) + coalesce(em_emv.credit_amount,0) month_credit_amount,
+                coalesce(eaab.year_debit_amount,0) + coalesce(ev_eve.debit_amount,0) + coalesce(em_emv.debit_amount,0) year_debit_amount,
+                coalesce(eaab.year_credit_amount,0) + coalesce(ev_eve.credit_amount,0) + coalesce(em_emv.credit_amount,0) year_credit_amount,
+                coalesce(eaab.month_end_debit_balance,0) + coalesce(ev_eve.debit_amount,0) + coalesce(em_emv.debit_amount,0) month_end_debit_balance,
+                coalesce(eaab.month_end_credit_balance,0) + coalesce(ev_eve.credit_amount,0) + coalesce(em_emv.credit_amount,0) month_end_credit_balance
+            from eg_account_assist_balance eaab
+                     full outer join ev_eve on coalesce(eaab.contract_code,'') = coalesce(ev_eve.contract_code ,'') and coalesce(eaab.client_code,'') = coalesce(ev_eve.client_code ,'')
+                and coalesce(eaab.org_id,'') = coalesce(ev_eve.org_id,'') and coalesce(eaab.bill_contract_code,'') = coalesce(ev_eve.bill_contract_code ,'')
+                and coalesce(eaab.currency_code,'') = coalesce(ev_eve.currency,'') and coalesce(eaab.account_code,'') = coalesce(ev_eve.account_code,'')
+                     full outer join em_emv on coalesce(eaab.contract_code,'') = coalesce(em_emv.contract_code ,'') and coalesce(eaab.client_code,'') = coalesce(em_emv.client_code ,'')
+                and coalesce(eaab.org_id,'') = coalesce(em_emv.org_id,'') and coalesce(eaab.bill_contract_code,'') = coalesce(em_emv.bill_contract_code ,'')
+                and coalesce(eaab.currency_code,'') = coalesce(em_emv.currency_code,'') and coalesce(eaab.account_code,'') = coalesce(em_emv.account_code,'')
+            where eaab.period_code = #{prevPeriodCode}
+        </select>
+
+        <select id="syncAssistBalanceNextMonth" resultType="com.utfinancing.financehub.etl.financial.entity.AccountAssistBalanceTempClosePeriodEntity">
+            insert into eg_account_assist_balance_temp_close_period(id,period_code ,contract_code,client_code,business_code ,org_id ,bill_contract_code,currency_code,account_code,account_name,
+            year_begin_debit_balance ,year_begin_credit_balance ,month_begin_debit_balance, month_begin_credit_balance,month_debit_amount,month_credit_amount,year_debit_amount,year_credit_amount,month_end_debit_balance,month_end_credit_balance)
+
+            select
+                nextval('account_assist_close_period_seq'),
+                ${nextPeriodCode} period_code,
+                eaab.contract_code,
+                eaab.client_code,
+                eaab.business_code,
+                eaab.org_id,
+                eaab.bill_contract_code,
+                eaab.currency_code,
+                eaab.account_code,
+                eaab.account_name,
+                case when substring(#{periodCode}::text,5,2) != '01' then eaab.year_begin_debit_balance
+                     else eaab.month_end_debit_balance end as year_begin_debit_balance,
+                case when substring(#{periodCode}::text,5,2) != '01' then eaab.year_begin_credit_balance
+                     else eaab.month_end_credit_balance end as year_begin_credit_balance,
+                eaab.month_end_debit_balance month_begin_debit_balance,
+                eaab.month_end_credit_balance month_begin_credit_balance,
+                0 month_debit_amount,
+                0 month_credit_amount,
+                0 year_debit_amount,
+                0 year_credit_amount,
+                eaab.month_end_debit_balance month_end_debit_balance,
+                eaab.month_end_credit_balance month_end_credit_balance
+            from eg_account_assist_balance eaab
+            where eaab.period_code = #{periodCode}
+        </select>
+
+        <select id="getNextClosePeriodSeqVal" resultType="java.util.Map">
+            select max(id)+1 as next_val from eg_account_assist_balance eaab
+        </select>
+
+        <update id="setClosePeriodSeqVal">
+            ALTER SEQUENCE account_assist_close_period_seq RESTART WITH ${nextVal};
+        </update>
+</mapper>
+

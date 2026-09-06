@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.BusinessClaimRepaymentRecordMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.BusinessClaimRepaymentRecordEntity">
+                    <id column="id" property="id" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="deduct_batch_no" property="deductBatchNo" />
+                    <result column="claim_amount" property="claimAmount" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="order_id" property="orderId" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="org_id" property="orgId" />
+                    <result column="org_name" property="orgName" />
+                    <result column="scene_code" property="sceneCode" />
+                    <result column="scene_name" property="sceneName" />
+                    <result column="batch_no" property="batchNo" />
+                    <result column="operation_type" property="operationType" />
+                    <result column="non_confirm_second_detail_id" property="nonConfirmSecondDetailId"/>
+                    <result column="process_status" property="processStatus"/>
+                    <result column="remark" property="remark"/>
+            <result column="new_ebank_serial_number" property="newEbankSerialNumber"/>
+            <result column="income_ym_old" property="incomeYmOld"/>
+            <result column="is_cross_org" property="isCrossOrg"/>
+            <result column="voucher_ids" property="voucherIds"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, system_code, ebank_serial_number, claim_amount, create_by, create_time, update_by, update_time, del_flag, client_code, contract_code, currency_type, order_id, business_date, org_id, org_name, scene_code, scene_name, batch_no, operation_type, non_confirm_second_detail_id, process_status, remark, new_ebank_serial_number, income_ym_old, is_cross_org, voucher_ids
+        </sql>
+
+        <select id="selectClaimByClientCode" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectClaimByClientCodeDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.SelectClaimByClientCodeDTO">
+            select
+                cs.client_code,
+                cs.bank_amount,
+                cd.claim_amount
+            from (
+                select
+                    cs.client_code ,
+                    coalesce(sum(cs.bank_amount), 0) bank_amount
+                from
+                    eg_non_confirm_collection_sum cs
+                where
+                    cs.del_flag = '0'
+                    and cs.client_code =#{params.clientCode}
+                group by
+                    cs.client_code
+            ) cs
+            inner join (
+                select
+                    cs.client_code ,
+                    coalesce(sum(crr.claim_amount), 0) claim_amount
+                from
+                    eg_non_confirm_collection_sum cs
+                left join
+                    eg_business_claim_repayment_record crr on crr.ebank_serial_number = ANY(STRING_TO_ARRAY(cs.ebank_serial_number , ',')) and crr.del_flag ='0' and crr.process_status in ('3','4')
+                where
+                    cs.del_flag ='0'
+                    and cs.client_code =#{params.clientCode}
+                group by
+                    cs.client_code
+            ) cd on cs.client_code = cd.client_code
+        </select>
+
+    <select id="selectIncomeDateInfo" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectIncomeDateInfoInputDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.SelectIncomeDateInfoOutputDTO">
+        with claimTable as (
+            select
+                sumt.ebank_serial_number, sum(ebcrr.claim_amount) claim_amount
+            from eg_non_confirm_collection_sum sumt
+            inner join eg_business_claim_repayment_record ebcrr on  ebcrr.ebank_serial_number = ANY(STRING_TO_ARRAY(sumt.ebank_serial_number, ',')) and ebcrr.del_flag ='0' and ebcrr.process_status in ('3', '4')
+            where sumt.del_flag ='0'
+            group by sumt.ebank_serial_number
+        )
+        select
+            *
+        from (
+            select
+                cre.id,
+                cre.system_code,
+                case when ehfobbnm.online_bank_no is not null then ehfobbnm.online_bank_no
+                    else cre.ebank_serial_number
+                end as business_ebank_number ,
+                cre.ebank_serial_number,
+                cre.claim_amount ,
+                cre.process_status ,
+                cre.voucher_ids businessVoucherIds,
+                cre.business_date ,
+                cre.client_code,
+                cre.contract_code,
+                cre.currency_type,
+                cre.order_id,
+                cre.org_id,
+                cre.org_name,
+                cre.new_ebank_serial_number,
+                cre.is_cross_org,
+                csd.id detailId,
+                ccs.id sum_id,
+                csd.system_name,
+                csd.business_date systemDate,
+                csd.business_happen_date,
+                ccs.bank_amount,
+                csd.remain_non_confirm_amount,
+                csd.confirm_amount,
+                csd.write_off_voucher_id,
+                csd.manual_voucher_ids,
+                csd.voucher_ids,
+                csd.cur_claim_amount,
+                csd.is_relate_client_auxiliary_account,
+                coalesce(ct.claim_amount,0) claimAmountTotal
+            from eg_business_claim_repayment_record  cre
+            inner join eg_non_confirm_collection_sum ccs on cre.ebank_serial_number = ANY(STRING_TO_ARRAY(ccs.ebank_serial_number, ',')) and ccs.del_flag ='0'
+            inner join claimTable ct on ct.ebank_serial_number = ccs.ebank_serial_number
+            left join eg_non_confirm_collection_second_detail csd on csd.id = cre.non_confirm_second_detail_id and csd.del_flag  = '0'
+            left join eg_hy_full_online_bank_batch_no_mapping ehfobbnm on ehfobbnm.deduct_batch_no=cre.ebank_serial_number
+            where
+                cre.del_flag = '0'
+                and cre.process_status in ('3','4')
+        ) a
+        where 1=1
+        <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
+            and a.business_ebank_number = #{params.businessEbankNumber}
+        </if>
+        <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
+            and a.ebank_serial_number = #{params.ebankSerialNumber}
+        </if>
+        <if test="params.incomeDateString != null and params.incomeDateString != ''">
+            and to_char(a.business_date, 'yyyy-mm') = #{params.incomeDateString}
+        </if>
+    </select>
+
+    <select id="selectClaimDataByContract" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectClaimDataByConstractInputDTO" resultMap="BaseResultMap">
+        select
+            sum(claim_amount) claim_amount,
+            contract_code
+        from (
+            select
+                a.claim_amount ,
+                a.contract_code
+            from eg_business_claim_repayment_record a
+            inner join eg_non_confirm_collection_sum ccs
+                on a.ebank_serial_number = ANY(STRING_TO_ARRAY(ccs.ebank_serial_number, ',')) and ccs.del_flag ='0'
+                and ccs.business_date > #{params.businessDate}
+            where a.operation_type  !='BUSINESS_AUTO_CLAIM'
+                and a.contract_code = #{params.contractCode}
+            union all
+            select
+                a.claim_amount ,
+                a.contract_code
+            from eg_business_claim_repayment_record a
+            where a.operation_type  ='BUSINESS_AUTO_CLAIM'
+                and a.business_date > #{params.businessDate}
+                and a.contract_code = #{params.contractCode}
+        ) t
+        group by contract_code
+    </select>
+</mapper>
+

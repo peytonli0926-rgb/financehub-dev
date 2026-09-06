@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ServiceNoAmortizationMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ServiceNoAmortizationEntity">
+                    <id column="contract_code" property="contractCode" />
+                    <result column="service_no_amortization_amout" property="serviceNoAmortizationAmout" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            contract_code, service_no_amortization_amout
+        </sql>
+
+    <select id="selectAssessedAmount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectAssessedAmountInputDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.SelectAssessedAmountOutputDTO">
+        select
+            a.contract_code as contractCode,
+            (coalesce(a.end_balance_for,0) + coalesce(b.service_no_amortization_amout, 0)) * -1 as assessedAmount
+        from eg_outstanding_amount_init a
+        left join eg_service_no_amortization b on a.contract_code = b.contract_code
+        where
+            a.account_number in  ('1532.01', '1505.03.02')
+            <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+                and a.contract_code in
+                <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+    </select>
+</mapper>
+

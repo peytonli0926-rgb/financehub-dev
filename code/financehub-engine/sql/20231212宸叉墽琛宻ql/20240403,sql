@@ -1,0 +1,3 @@
+--新增索引
+CREATE INDEX eg_raw_transaction_data_message_status_idx ON financialdb.eg_raw_transaction_data (message_status);
+CREATE INDEX eg_raw_transaction_data_system_code_idx ON financialdb.eg_raw_transaction_data (system_code);

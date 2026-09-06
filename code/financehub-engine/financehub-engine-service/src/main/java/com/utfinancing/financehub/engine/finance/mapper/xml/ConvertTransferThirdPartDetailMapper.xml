@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ConvertTransferThirdPartDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ConvertTransferThirdPartDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="transfer_id" property="transferId" />
+                    <result column="batch" property="batch" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="receivable_rent" property="receivableRent" />
+                    <result column="receivable_residual_value" property="receivableResidualValue" />
+                    <result column="receivable_outtax" property="receivableOuttax" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="lessee_margin" property="lesseeMargin" />
+                    <result column="depreciation_reserves" property="depreciationReserves" />
+                    <result column="appraised_value" property="appraisedValue" />
+                    <result column="transfer_open" property="transferOpen" />
+                    <result column="supplementary_provision" property="supplementaryProvision" />
+
+                    <result column="base_date_accrued_income" property="baseDateAccruedIncome" />
+                    <result column="base_date_provision" property="baseDateProvision" />
+                    <result column="base_date_receive" property="baseDateReceive" />
+                    <result column="base_date_invoices" property="baseDateInvoices" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+    <select id="selectCheckPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ConvertTransferThirdPartCheckVO">
+        select org_id                                     as org_id,
+               contract_code                              as contract_code,
+               max(client_code)                           as client_code,
+               sum(u.receivable_rent_balance)             as receivable_rent_balance,
+               sum(u.receivable_residual_value_amount)    as receivable_residual_value_amount,
+               sum(u.receivable_outtax_balance)           as receivable_outtax_balance,
+               sum(u.lease_revenue_balance)               as lease_revenue_balance,
+               sum(u.lessee_margin_balance)               as lessee_margin_balance,
+               sum(u.receivable_terminate_amount)        as receivable_terminate_amount,
+               sum(u.receivable_default_interest_amount) as receivable_default_interest_amount,
+               sum(u.depreciation_reserves_amount)       as depreciation_reserves_amount
+        from (select receivable_rent_balance,
+                     receivable_residual_value_amount,
+                     receivable_outtax_balance,
+                     lease_revenue_balance,
+                     lessee_margin_balance,
+                     org_id,
+                     contract_code,
+                     client_code,
+                     receivable_terminate_amount,
+                     receivable_default_interest_amount,
+                     depreciation_reserves_amount
+              from eg_contract_balance_latest
+              where del_flag = '0' and
+                <foreach collection="orgIdContractCodeMap" item="entry" separator="or" open="(" close=")" index="index">
+                    ( org_id = #{index}  and contract_code in
+                    <foreach collection="entry" item="contractCode" separator="or" open="(" close=")">
+                        #{contractCode}
+                    </foreach>)
+                </foreach>
+              union all
+              select receivable_rent_balance,
+                     receivable_residual_value_amount,
+                     receivable_outtax_balance,
+                     lease_revenue_balance,
+                     lessee_margin_balance,
+                     org_id,
+                     contract_code,
+                     client_code,
+                     receivable_terminate_amount,
+                     receivable_default_interest_amount,
+                     depreciation_reserves_amount
+
+              from eg_contract_balance_temp
+              where scene_code = 'ZRDSF'
+                and del_flag = '0' and
+                <foreach collection="orgIdContractCodeMap" item="entry" separator="or" open="(" close=")" index="index">
+                    ( org_id = #{index}  and contract_code in
+                    <foreach collection="entry" item="contractCode" separator="or" open="(" close=")">
+                        #{contractCode}
+                    </foreach>)
+                </foreach>
+              ) u
+        group by org_id, contract_code
+    </select>
+</mapper>
+

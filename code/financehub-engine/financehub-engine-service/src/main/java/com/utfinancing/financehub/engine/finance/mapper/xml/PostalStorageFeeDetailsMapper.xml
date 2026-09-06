@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.PostalStorageFeeDetailsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.PostalStorageFeeDetailsEntity">
+                    <id column="id" property="id" />
+                    <result column="postal_storage_fee_id" property="postalStorageFeeId" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="org_id" property="orgId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="postal_storage_project_type" property="postalStorageProjectType" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_term" property="leaseTerm" />
+                    <result column="payable_procedure_cost" property="payableProcedureCost" />
+                    <result column="allocation_amount" property="allocationAmount" />
+                    <result column="allocation_balance" property="allocationBalance" />
+                    <result column="allocated_periods" property="allocatedPeriods" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, postal_storage_fee_id, account_date, business_date, org_id, contract_code, client_code, client_name, contract_status, postal_storage_project_type, lease_date_start, lease_term, payable_procedure_cost, allocation_amount, allocation_balance, allocated_periods, voucher_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="listByContractCodes"
+            resultType="com.utfinancing.financehub.engine.finance.entity.PostalStorageFeeDetailsEntity">
+        select a.*
+        from eg_postal_storage_fee_details a,
+        (
+        select contract_code, max(id) id
+        from eg_postal_storage_fee_details
+        where
+        del_flag = '0'
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by contract_code
+        ) b
+        where a.id = b.id
+    </select>
+</mapper>
+

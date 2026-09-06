@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.BatchModifyTemplateMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.BatchModifyTemplateEntity">
+                    <id column="id" property="id" />
+                    <result column="account_checking_month" property="accountCheckingMonth" />
+                    <result column="collection_accounts_bank" property="collectionAccountsBank" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="remark" property="remark" />
+                    <result column="financial_primary_classic" property="financialPrimaryClassic" />
+                    <result column="confirm_account_property" property="confirmAccountProperty" />
+                    <result column="non_lease_account_checking_comments" property="nonLeaseAccountCheckingComments" />
+                    <result column="operate_history_comments" property="operateHistoryComments" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, account_checking_month, collection_accounts_bank, system_code, ebank_serial_number, remark, financial_primary_classic, confirm_account_property, non_lease_account_checking_comments, operate_history_comments
+        </sql>
+</mapper>
+

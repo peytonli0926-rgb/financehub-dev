@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.TInfoPerformanceAttributionSyncMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap"
+               type="com.utfinancing.financehub.engine.dw.entity.TInfoPerformanceAttributionSyncEntity">
+        <id column="id" property="id"/>
+        <result column="data_source_code" property="dataSourceCode"/>
+        <result column="data_source_name" property="dataSourceName"/>
+        <result column="project_no" property="projectNo"/>
+        <result column="contract_no" property="contractNo"/>
+        <result column="sec_contract_no" property="secContractNo"/>
+        <result column="lessee_code" property="lesseeCode"/>
+        <result column="lessee_name" property="lesseeName"/>
+        <result column="project_manager_code" property="projectManagerCode"/>
+        <result column="project_manager_name" property="projectManagerName"/>
+        <result column="sale_proportion" property="saleProportion"/>
+        <result column="sale_volume_belong_depart_code" property="saleVolumeBelongDepartCode"/>
+        <result column="sale_volume_belong_depart_name" property="saleVolumeBelongDepartName"/>
+        <result column="sale_volume_belong_sec_depart_code" property="saleVolumeBelongSecDepartCode"/>
+        <result column="sale_volume_belong_sec_depart_name" property="saleVolumeBelongSecDepartName"/>
+        <result column="sale_volume_belong_user_code" property="saleVolumeBelongUserCode"/>
+        <result column="sale_volume_belong_user_name" property="saleVolumeBelongUserName"/>
+        <result column="direct_director_code" property="directDirectorCode"/>
+        <result column="direct_director_name" property="directDirectorName"/>
+        <result column="general_manager_assistant_code" property="generalManagerAssistantCode"/>
+        <result column="general_manager_assistant_name" property="generalManagerAssistantName"/>
+        <result column="deputy_general_manager_code" property="deputyGeneralManagerCode"/>
+        <result column="deputy_general_manager_name" property="deputyGeneralManagerName"/>
+        <result column="deputy_general_manager_work_code" property="deputyGeneralManagerWorkCode"/>
+        <result column="deputy_general_manager_work_name" property="deputyGeneralManagerWorkName"/>
+        <result column="general_manager_code" property="generalManagerCode"/>
+        <result column="general_manager_name" property="generalManagerName"/>
+        <result column="asset_proportion" property="assetProportion"/>
+        <result column="asset_belong_depart_code" property="assetBelongDepartCode"/>
+        <result column="asset_belong_depart_name" property="assetBelongDepartName"/>
+        <result column="asset_belong_sec_depart_code" property="assetBelongSecDepartCode"/>
+        <result column="asset_belong_sec_depart_name" property="assetBelongSecDepartName"/>
+        <result column="asset_belong_user_code" property="assetBelongUserCode"/>
+        <result column="asset_belong_user_name" property="assetBelongUserName"/>
+        <result column="asset_direct_director_code" property="assetDirectDirectorCode"/>
+        <result column="asset_direct_director_name" property="assetDirectDirectorName"/>
+        <result column="asset_general_manager_assistant_code" property="assetGeneralManagerAssistantCode"/>
+        <result column="asset_general_manager_assistant_name" property="assetGeneralManagerAssistantName"/>
+        <result column="asset_deputy_general_manager_code" property="assetDeputyGeneralManagerCode"/>
+        <result column="asset_deputy_general_manager_name" property="assetDeputyGeneralManagerName"/>
+        <result column="asset_deputy_general_manager_work_code" property="assetDeputyGeneralManagerWorkCode"/>
+        <result column="asset_deputy_general_manager_work_name" property="assetDeputyGeneralManagerWorkName"/>
+        <result column="asset_general_manager_code" property="assetGeneralManagerCode"/>
+        <result column="asset_general_manager_name" property="assetGeneralManagerName"/>
+        <result column="income_proportion" property="incomeProportion"/>
+        <result column="income_belong_depart_code" property="incomeBelongDepartCode"/>
+        <result column="income_belong_depart_name" property="incomeBelongDepartName"/>
+        <result column="income_belong_sec_depart_code" property="incomeBelongSecDepartCode"/>
+        <result column="income_belong_sec_depart_name" property="incomeBelongSecDepartName"/>
+        <result column="income_belong_user_code" property="incomeBelongUserCode"/>
+        <result column="income_belong_user_name" property="incomeBelongUserName"/>
+        <result column="income_direct_director_code" property="incomeDirectDirectorCode"/>
+        <result column="income_direct_director_name" property="incomeDirectDirectorName"/>
+        <result column="income_general_manager_assistant_code" property="incomeGeneralManagerAssistantCode"/>
+        <result column="income_general_manager_assistant_name" property="incomeGeneralManagerAssistantName"/>
+        <result column="income_deputy_general_manager_code" property="incomeDeputyGeneralManagerCode"/>
+        <result column="income_deputy_general_manager_name" property="incomeDeputyGeneralManagerName"/>
+        <result column="income_deputy_general_manager_work_code" property="incomeDeputyGeneralManagerWorkCode"/>
+        <result column="income_deputy_general_manager_work_name" property="incomeDeputyGeneralManagerWorkName"/>
+        <result column="income_general_manager_code" property="incomeGeneralManagerCode"/>
+        <result column="income_general_manager_name" property="incomeGeneralManagerName"/>
+        <result column="customer_belong_depart_code" property="customerBelongDepartCode"/>
+        <result column="customer_belong_depart_name" property="customerBelongDepartName"/>
+        <result column="customer_belong_user_code" property="customerBelongUserCode"/>
+        <result column="customer_belong_user_name" property="customerBelongUserName"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, data_source_code, data_source_name, project_no, contract_no, sec_contract_no, lessee_code, lessee_name,
+        project_manager_code, project_manager_name, sale_proportion, sale_volume_belong_depart_code,
+        sale_volume_belong_depart_name, sale_volume_belong_sec_depart_code, sale_volume_belong_sec_depart_name,
+        sale_volume_belong_user_code, sale_volume_belong_user_name, direct_director_code, direct_director_name,
+        general_manager_assistant_code, general_manager_assistant_name, deputy_general_manager_code,
+        deputy_general_manager_name, deputy_general_manager_work_code, deputy_general_manager_work_name,
+        general_manager_code, general_manager_name, asset_proportion, asset_belong_depart_code,
+        asset_belong_depart_name, asset_belong_sec_depart_code, asset_belong_sec_depart_name, asset_belong_user_code,
+        asset_belong_user_name, asset_direct_director_code, asset_direct_director_name,
+        asset_general_manager_assistant_code, asset_general_manager_assistant_name, asset_deputy_general_manager_code,
+        asset_deputy_general_manager_name, asset_deputy_general_manager_work_code,
+        asset_deputy_general_manager_work_name, asset_general_manager_code, asset_general_manager_name,
+        income_proportion, income_belong_depart_code, income_belong_depart_name, income_belong_sec_depart_code,
+        income_belong_sec_depart_name, income_belong_user_code, income_belong_user_name, income_direct_director_code,
+        income_direct_director_name, income_general_manager_assistant_code, income_general_manager_assistant_name,
+        income_deputy_general_manager_code, income_deputy_general_manager_name, income_deputy_general_manager_work_code,
+        income_deputy_general_manager_work_name, income_general_manager_code, income_general_manager_name,
+        customer_belong_depart_code, customer_belong_depart_name, customer_belong_user_code, customer_belong_user_name,
+        create_time
+    </sql>
+</mapper>
+

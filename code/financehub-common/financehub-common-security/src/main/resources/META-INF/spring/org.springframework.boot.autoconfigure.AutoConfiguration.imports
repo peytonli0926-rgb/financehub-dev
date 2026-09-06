@@ -1,0 +1,7 @@
+com.utfinancing.financehub.common.security.config.WebMvcConfig
+com.utfinancing.financehub.common.security.config.PermissionConfig
+com.utfinancing.financehub.common.security.service.TokenService
+com.utfinancing.financehub.common.security.aspect.PreAuthorizeAspect
+com.utfinancing.financehub.common.security.aspect.InnerAuthAspect
+com.utfinancing.financehub.common.security.component.CommonPermissionComponent
+com.utfinancing.financehub.common.security.component.SSOComponent

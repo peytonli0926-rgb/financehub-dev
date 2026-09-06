@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.NonConfirmCollectionVoucherRecordMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.NonConfirmCollectionVoucherRecordEntity">
+                    <id column="id" property="id" />
+                    <result column="detail_id" property="detailId" />
+                    <result column="org_id" property="orgId" />
+                    <result column="cr_or_dt" property="crOrDt" />
+                    <result column="account_number" property="accountNumber" />
+                    <result column="voucher_comments" property="voucherComments" />
+                    <result column="amount" property="amount" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="org_name" property="orgName" />
+                    <result column="account_name" property="accountName" />
+                    <result column="bank_no" property="bankNo" />
+                    <result column="loans_contract_code" property="loansContractCode" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, detail_id, org_id, cr_or_dt, account_number, voucher_comments, amount, client_code, contract_code, create_by, create_time, update_by, update_time, del_flag, org_name, account_name, bank_no, loans_contract_code
+        </sql>
+</mapper>
+

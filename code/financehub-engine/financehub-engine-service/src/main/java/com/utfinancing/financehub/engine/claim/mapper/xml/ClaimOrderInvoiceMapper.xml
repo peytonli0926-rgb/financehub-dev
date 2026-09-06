@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.claim.mapper.ClaimOrderInvoiceMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.claim.entity.ClaimOrderInvoiceEntity">
+                    <id column="id" property="id" />
+                    <result column="claim_order_id" property="claimOrderId" />
+                    <result column="order_no" property="orderNo" />
+                    <result column="invoice_number" property="invoiceNumber" />
+                    <result column="invoice_type" property="invoiceType" />
+                    <result column="purchase_organization" property="purchaseOrganization" />
+                    <result column="seller" property="seller" />
+                    <result column="invoice_date" property="invoiceDate" />
+                    <result column="total_amount" property="totalAmount" />
+                    <result column="no_tax_amount" property="noTaxAmount" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="tax_amount" property="taxAmount" />
+                    <result column="invoice_content" property="invoiceContent" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+            <result column="is_generate_voucher" property="isGenerateVoucher"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, claim_order_id, order_no, invoice_number, invoice_type, purchase_organization, seller, invoice_date, total_amount, no_tax_amount, tax_rate, tax_amount, invoice_content, create_by, create_time, update_by, update_time, del_flag,is_generate_voucher
+        </sql>
+</mapper>
+

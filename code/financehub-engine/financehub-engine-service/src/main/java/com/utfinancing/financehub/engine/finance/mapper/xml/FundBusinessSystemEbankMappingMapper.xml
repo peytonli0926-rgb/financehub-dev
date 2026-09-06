@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.FundBusinessSystemEbankMappingMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.FundBusinessSystemEbankMappingEntity">
+                    <id column="id" property="id" />
+                    <result column="match_number" property="matchNumber" />
+                    <result column="ebank_number" property="ebankNumber" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="match_amount" property="matchAmount" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, match_number, ebank_number, ebank_serial_number, match_amount, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+
+        <select id="selectNonConfirmCollectionData" resultType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmCollectionDataDTO">
+            select
+                em.ebank_number ,em.ebank_serial_number, sum(em.match_amount) bank_amount
+            from eg_fund_ebank_transaction_data et
+            inner join eg_fund_business_system_ebank_mapping em on et.ebank_number = ANY ( STRING_TO_ARRAY(em.ebank_number, ',')) and em.del_flag ='0'
+            where et.del_flag ='0'
+                and et.currency_type='RMB' and et.collection_type in ('VC_SHOUKLX01','VC_SHOUKLX06','VC_SHOUKLX07','VC_SHOUKLX03')
+                and not exists ( select 1 from eg_non_confirm_collection_sum cs where cs.del_flag='0' and et.ebank_number=cs.ebank_number)
+            group by
+                em.ebank_number ,em.ebank_serial_number
+            union all
+            select
+                et.ebank_number ,et.ebank_number ebank_serial_number, sum(et.bank_amount) bank_amount
+            from eg_fund_ebank_transaction_data et
+            left join eg_fund_business_system_ebank_mapping ebn on et.ebank_number = ANY(STRING_TO_ARRAY(ebn.ebank_number, ',')) and ebn.del_flag ='0'
+            where et.del_flag ='0'
+                and et.currency_type='RMB' and et.collection_type in ('VC_SHOUKLX01','VC_SHOUKLX06','VC_SHOUKLX07','VC_SHOUKLX03')
+                and not exists ( select 1 from eg_non_confirm_collection_sum cs where cs.del_flag='0' and et.ebank_number=cs.ebank_number)
+                and ebn.id is null
+            group by
+                et.ebank_number
+            union all
+            select
+                em.ebank_number ,em.ebank_serial_number, sum(em.match_amount) bank_amount
+            from eg_fund_business_system_ebank_mapping em
+            left join eg_fund_ebank_transaction_data et on et.ebank_number = ANY ( STRING_TO_ARRAY(em.ebank_number, ','))
+                and et.del_flag ='0'
+                and et.currency_type='RMB' and et.collection_type in ('VC_SHOUKLX01','VC_SHOUKLX06','VC_SHOUKLX07','VC_SHOUKLX03')
+            where em.del_flag ='0'
+                and not exists ( select 1 from eg_non_confirm_collection_sum cs where cs.del_flag='0' and em.ebank_number=cs.ebank_number)
+                and et.id is null
+            group by
+                em.ebank_number ,em.ebank_serial_number
+        </select>
+
+    <select id="systemBankMappingReconciliationFilter" resultType="com.utfinancing.financehub.engine.finance.model.vo.SystemBankMappingReconciliationVO">
+        WITH s_m AS (select t.match_number, sum(t.collect_amount) as collect_amount
+                     from (SELECT pc.match_number, ob.collect_amount
+                           FROM eg_fund_business_system_ebank_pc_amount pc
+                                    JOIN eg_hy_full_online_bank_batch_no_mapping ob
+                                         ON pc.ebank_serial_number = ob.online_bank_no
+                           order by pc.match_number) t
+                     GROUP BY t.match_number)
+        SELECT *
+        FROM (SELECT DISTINCT e.business_date                       AS business_date,
+                              a.create_time,
+                              a.match_number                        AS match_number,
+                              a.ebank_number                        AS ebank_number,
+                              a.ebank_serial_number                 AS ebank_serial_number,
+                              a.match_amount                        AS match_amount,
+                              s_m.collect_amount                    AS collect_amount,
+                              (a.match_amount - s_m.collect_amount) AS diff_amount,
+                              e.is_send_kingdee                     AS send_kingdee
+              FROM eg_fund_business_system_ebank_mapping a
+                       LEFT JOIN s_m ON a.match_number = s_m.match_number
+                       LEFT JOIN (SELECT id, interface_id, period_code, is_send_kingdee, business_date
+                                  FROM eg_voucher
+                                  WHERE period_code = #{periodCode}
+                                    AND del_flag = '0'
+                                    AND id IN (SELECT voucher_id
+                                               FROM eg_voucher_entry
+                                               WHERE period_code = #{periodCode}
+                                                 AND account_code LIKE '1002%'
+                                                 AND del_flag = '0')) e ON e.interface_id = a.id
+              WHERE e.id IS NOT NULL) t_
+        <where>
+            <if test=" abnormal != null and abnormal == 0 ">
+                and t_.diff_amount = 0
+            </if>
+            <if test=" abnormal != null and abnormal == 1 ">
+                and t_.diff_amount  <![CDATA[>]]>  0
+            </if>
+        </where>
+    </select>
+
+    <select id="systemBankMappingReconciliationByMatchNumber" resultType="com.utfinancing.financehub.engine.finance.model.vo.SystemBankMappingReconciliationVO">
+        WITH s_m AS (select t.match_number, sum(t.collect_amount) as collect_amount
+                     from (SELECT pc.match_number, ob.collect_amount
+                           FROM eg_fund_business_system_ebank_pc_amount pc
+                                    JOIN eg_hy_full_online_bank_batch_no_mapping ob
+                                         ON pc.ebank_serial_number = ob.online_bank_no
+                           order by pc.match_number) t
+                     GROUP BY t.match_number)
+        SELECT *
+        FROM (SELECT DISTINCT e.business_date                       AS business_date,
+                              a.create_time,
+                              a.match_number                        AS match_number,
+                              a.ebank_number                        AS ebank_number,
+                              a.ebank_serial_number                 AS ebank_serial_number,
+                              a.match_amount                        AS match_amount,
+                              s_m.collect_amount                    AS collect_amount,
+                              (a.match_amount - s_m.collect_amount) AS diff_amount,
+                              e.is_send_kingdee                     AS send_kingdee
+              FROM eg_fund_business_system_ebank_mapping a
+                       LEFT JOIN s_m ON a.match_number = s_m.match_number
+                       LEFT JOIN (SELECT id, interface_id, period_code, is_send_kingdee, business_date
+                                  FROM eg_voucher
+                                  WHERE period_code = #{periodCode}
+                                    AND del_flag = '0'
+                                    AND id IN (SELECT voucher_id
+                                               FROM eg_voucher_entry
+                                               WHERE period_code = #{periodCode}
+                                                 AND account_code LIKE '1002%'
+                                                 AND del_flag = '0')) e ON e.interface_id = a.id
+              WHERE e.id IS NOT NULL) t_
+        <where>
+            <if test="matchNumber != null">
+                and t_.match_number = #{matchNumber}
+            </if>
+        </where>
+    </select>
+
+
+
+    <select id="systemBankMappingReconciliationDetailByMatchNumber" resultType="com.utfinancing.financehub.engine.finance.model.vo.SystemBankMappingReconciliationDetailVO">
+        select efbsepa.ebank_serial_number     as                              ebank_serial_number,
+               ehfobbnm.deduct_batch_no        as                              deduct_batch_no,
+               efbsepa.business_match_amount   as                              business_match_amount,
+               COALESCE(s_m.collect_amount, 0) as                              collect_amount,
+               efbsepa.business_match_amount - COALESCE(s_m.collect_amount, 0) diff_amount
+        from eg_fund_business_system_ebank_pc_amount efbsepa
+                 left join eg_hy_full_online_bank_batch_no_mapping ehfobbnm
+                           on efbsepa.ebank_serial_number = ehfobbnm.online_bank_no
+                 left join
+             (select ebank_serial_number, sum(ob.collect_amount) AS collect_amount
+              from eg_fund_business_system_ebank_pc_amount pc
+                       left join
+                   eg_hy_full_online_bank_batch_no_mapping ob on pc.ebank_serial_number = ob.online_bank_no
+              where pc.match_number = #{matchNumber}
+              group by ebank_serial_number) s_m on s_m.ebank_serial_number = efbsepa.ebank_serial_number
+        where efbsepa.match_number = #{matchNumber}
+        order by ehfobbnm.collect_amount desc, efbsepa.ebank_serial_number, deduct_batch_no
+    </select>
+
+    <select id="systemBankMappingReconciliationNoVO" resultType="com.utfinancing.financehub.engine.finance.model.vo.SystemBankMappingReconciliationNoVO">
+        SELECT m.create_time, m.online_bank_no, m.deduct_batch_no, m.collect_amount
+        FROM eg_hy_full_online_bank_batch_no_mapping m
+                 LEFT JOIN eg_fund_business_system_ebank_pc_amount e ON m.online_bank_no = e.ebank_serial_number
+        WHERE e.ebank_serial_number IS NULL
+    </select>
+</mapper>
+

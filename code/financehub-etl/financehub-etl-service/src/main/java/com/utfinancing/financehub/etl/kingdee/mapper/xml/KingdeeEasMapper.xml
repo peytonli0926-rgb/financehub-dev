@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.KingdeeEasMapper">
+
+    <select id="getCurrentPeriodCode" resultType="integer">
+        SELECT  C.FNUMBER
+        FROM T_BD_SYSTEMSTATUSCTROL A
+        INNER JOIN T_BD_SYSTEMSTATUS B ON A.FSYSTEMSTATUSID = B.FID
+        INNER JOIN T_BD_PERIOD C ON A.FCURRENTPERIODID = C.FID
+        INNER JOIN T_ORG_BASEUNIT D ON A.FCOMPANYID = D.FID
+        WHERE B.FNAME = '6' AND D.FNUMBER = #{orgId}
+    </select>
+
+
+    <select id="selectAllPerson" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OptionDTO">
+        SELECT fid AS eas_fid, FNUMBER AS code, FNAME_L2 AS name FROM HXORACLE.t_bd_person
+    </select>
+
+    <select id="selectAllBank" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OptionDTO">
+        SELECT fid AS eas_fid, FNUMBER AS code, FNAME_L2 AS name FROM HXORACLE.T_BD_Bank
+    </select>
+
+    <select id="selectAllCostCenter" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OptionDTO">
+        SELECT fid AS eas_fid, FNUMBER AS code, FNAME_L2 AS name FROM HXORACLE.T_ORG_COSTCENTER
+    </select>
+
+    <select id="selectAllGeneralAsst" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OptionDTO">
+        SELECT
+            t.fid AS eas_fid,
+            t.FNUMBER AS code,
+            t.FNAME_L2 AS name,
+            g.FNAME_L2 AS asst_type
+        FROM HXORACLE.T_BD_GeneralAsstActType t JOIN T_BD_GeneralAsstActTypeGroup g ON t.FGROUPID = g.FID
+    </select>
+
+    <select id="selectContractData" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OptionDTO">
+        SELECT t.fid AS eas_fid,
+               t.FNUMBER AS code,
+               t.FNAME_L2 AS name,
+               '合同号' AS asst_type
+        FROM HXORACLE.T_BD_MATERIAL t
+    </select>
+    <select id="getCurrentPeriodCodeAll" resultType="java.util.Map">
+        SELECT
+        C.FNUMBER orgId,
+        P.FNUMBER periodCode
+        FROM
+        T_BD_SYSTEMSTATUSCTROL A
+        LEFT JOIN T_BD_SYSTEMSTATUS B ON A.FSYSTEMSTATUSID = B.FID
+        LEFT JOIN T_BD_PERIOD P ON A.FCURRENTPERIODID = P.FID
+        LEFT JOIN T_ORG_COMPANY C ON A.FCOMPANYID = C.FID
+        WHERE
+        B.FNAME = 6
+    </select>
+    <select id="selectKingdeeHybVoucher"
+            resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeHybVoucherEntity">
+        select
+        'NOT_EXECUTE' "messageStatus",
+        gv.FID "fid",
+        gv.FABSTRACT "abstractContent",
+        toc.FNUMBER "orgId",
+        toc.FNAME_L2 "orgName",
+        tbp.FNUMBER "periodCode",
+        tbm.fnumber "contractCode",
+        tbm.FNAME_L2 "contractName",
+        tbc1.FNUMBER "clientCode" ,
+        tbc1.FNAME_L2 "clientName",
+        gav.FASSGRPID "fassgrpId" ,
+        tbc.FNAME_L2 "currencyName" ,
+        gac.FNUMBER "accountCode",
+        gac.FNAME_L2 "accountName",
+        nullif(DECODE(GE.FENTRYDC, '1', coalesce(GAV.FLOCALAMOUNT, GE.FLOCALAMOUNT), '0'), 0) "debitAmount",
+        nullif(DECODE(GE.FENTRYDC, '0', coalesce(GAV.FLOCALAMOUNT, GE.FLOCALAMOUNT), '0'), 0) "creditAmount"
+        from
+        HXORACLE.T_GL_VOUCHER GV
+        inner join HXORACLE.T_ORG_COMPANY toc on
+        toc.FID = gv.FCOMPANYID
+        inner join HXORACLE.T_BD_PERIOD TBP on
+        TBP.FID = gv.FPERIODID
+        inner join HXORACLE.T_GL_VOUCHERENTRY GE on
+        GV.FID = GE.FBILLID
+        inner join HXORACLE.T_BD_CURRENCY tbc on
+        GE.FCURRENCYID = tbc.FID
+        left join HXORACLE.T_GL_VOUCHERASSISTRECORD GAV on
+        GE.FID = GAV.FENTRYID
+        left join HXORACLE.T_BD_ASSISTANTHG HG on
+        HG.FID = GAV.FASSGRPID
+        inner join HXORACLE.T_BD_ACCOUNTVIEW GAC on
+        GE.FACCOUNTID = GAC.FID
+        left outer join HXORACLE.T_BD_MATERIAL tbm on
+        HG.FMATERIALID = TBM.FID
+        left outer join HXORACLE.T_BD_CUSTOMER tbc1 on
+        HG.FCUSTOMERID = TBC1.FID
+        where
+        gv.fid in (
+        select
+        gv1.fid
+        from
+        HXORACLE.T_GL_VOUCHER GV1
+        inner join HXORACLE.T_GL_VOUCHERENTRY GE1 on
+        GV1.FID = GE1.FBILLID
+        inner join HXORACLE.T_BD_ACCOUNTVIEW GAC1 on
+        GE1.FACCOUNTID = GAC1.FID
+        where
+        gv1.fid in (
+        select
+        gv2.fid fid
+        from
+        HXORACLE.T_GL_VOUCHER GV2
+        inner join HXORACLE.T_ORG_COMPANY toc2 on
+        toc2.FID = gv2.FCOMPANYID
+        inner join HXORACLE.T_BD_PERIOD TBP2 on
+        TBP2.FID = gv2.FPERIODID
+        inner join HXORACLE.T_GL_VOUCHERENTRY GE2 on
+        GV2.FID = GE2.FBILLID
+        left outer join HXORACLE.T_GL_VOUCHERASSISTRECORD GAV2 on
+        GE2.FID = GAV2.FENTRYID
+        left outer join HXORACLE.T_BD_ASSISTANTHG HG2 on
+        HG2.FID = GAV2.FASSGRPID
+        left outer join HXORACLE.T_BD_MATERIAL tbm2 on
+        HG2.FMATERIALID = TBM2.FID
+        where
+        gv2.FBIZSTATUS = 5
+        and tbp2.FNUMBER = #{periodCode}
+        and gv2.fbookeddate = to_date(#{voucherDate}, 'yyyy-mm-dd')
+        and toc2.fnumber in ('01-C0001', '02-C0002', '30001', '80001')
+        and tbm2.fnumber like 'KCB%'
+        and gac1.fnumber='1531.02'
+        ))
+    </select>
+
+</mapper>

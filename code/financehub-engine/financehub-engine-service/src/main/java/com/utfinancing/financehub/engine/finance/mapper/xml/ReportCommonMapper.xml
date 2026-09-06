@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ReportCommonMapper">
+
+    <sql id="leaseTable">
+        with sub as (
+        select
+        #{param.queryDate} query_date,
+        ec.id contract_id,
+        ec.voucher_id,
+        ec.org_id,
+        eoc.org_name,
+        ec.contract_code ,
+        ec.client_code,
+        ec.client_name,
+        ecbl.system_code ,
+        ec.contract_status ,
+        ec.financial_contract_status,
+        to_char(ec.lease_date_start, 'yyyy-MM-dd')  lease_date_start,
+        to_char(ec.lease_date_end, 'yyyy-MM-dd') lease_date_end,
+        ec.lease_type ,
+        ecbl.receivable_rent_balance,
+        ecbl.receivable_downpayment_balance,
+        ecbl.receivable_residual_value_balance,
+        ecbl.receivable_commission_balance,
+        ecbl.receivable_insurance_balance,
+        ecbl.receivable_otherincome_balance,
+        ecbl.receivable_rebate_balance,
+        ecbl.receivable_outtax_balance,
+
+        COALESCE(ecbl.receivable_rent_balance,0)+
+        COALESCE(ecbl.receivable_downpayment_balance,0)+
+        COALESCE(ecbl.receivable_residual_value_balance,0)+
+        COALESCE(ecbl.receivable_commission_balance,0)+
+        COALESCE(ecbl.receivable_insurance_balance,0)+
+        COALESCE(ecbl.receivable_otherincome_balance,0)+
+        COALESCE(ecbl.receivable_rebate_balance,0)+
+        COALESCE(ecbl.receivable_outtax_balance,0) as receivable_total_balance,
+
+        ecbl.receivable_outputtax_base_balance,
+        ecbl.unrealized_revenue_balance,
+        COALESCE(ecbl.unrealized_revenue_balance,0)-COALESCE(esfd.accumulated_accrued_amount,0) as receivable_service_fee_balance,
+        income_contract.rental_income_after_total,
+
+--         ecbl.lease_revenue_balance,
+        COALESCE(ecbl.receivable_rent_balance,0)+
+        COALESCE(ecbl.receivable_downpayment_balance,0)+
+        COALESCE(ecbl.receivable_residual_value_balance,0)+
+        COALESCE(ecbl.receivable_commission_balance,0)+
+        COALESCE(ecbl.receivable_insurance_balance,0)+
+        COALESCE(ecbl.receivable_otherincome_balance,0)+
+        COALESCE(ecbl.receivable_rebate_balance,0)+
+        COALESCE(ecbl.receivable_outtax_balance,0)-COALESCE(ecbl.unrealized_revenue_balance,0) lease_revenue_balance,
+
+        ecbl.depreciation_reserves_balance,
+
+        COALESCE(ecbl.receivable_rent_balance,0)+
+        COALESCE(ecbl.receivable_downpayment_balance,0)+
+        COALESCE(ecbl.receivable_residual_value_balance,0)+
+        COALESCE(ecbl.receivable_commission_balance,0)+
+        COALESCE(ecbl.receivable_insurance_balance,0)+
+        COALESCE(ecbl.receivable_otherincome_balance,0)+
+        COALESCE(ecbl.receivable_rebate_balance,0)+
+        COALESCE(ecbl.receivable_outtax_balance,0)-COALESCE(ecbl.unrealized_revenue_balance,0)-COALESCE(ecbl.depreciation_reserves_balance,0) as receivable_net_balance,
+
+        ecbl.lessee_margin_balance,
+        contract_ta.ta_amount,
+        income_contract.overdue_earnings
+        from
+        (
+        select
+        tmp.*,ev.voucher_id
+        from
+        eg_contract tmp left join
+        (select org_id,contract_code,string_agg(id::text,',') voucher_id from eg_voucher where period_code = #{param.periodCode} group by org_id,contract_code) ev
+        on tmp.org_id = ev.org_id and tmp.contract_code = ev.contract_code
+        where 1=1
+--           and tmp.id = 1780861319282139138
+          and (tmp.contract_code_m is null or tmp.contract_code_m= tmp.contract_code)
+
+        <if test="param.orgId != null and param.orgId != ''">
+            and tmp.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and tmp.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+<!--        <if test="param.contractCode != null and param.contractCode != ''">-->
+<!--            and contract_code like concat('%', #{param.contractCode}::text, '%')-->
+<!--        </if>-->
+        <if test="param.contractCode != null and param.contractCode.size() != 0">
+        and tmp.contract_code in
+        <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        <if test="param.leaseType != null and param.leaseType != ''">
+            and tmp.lease_type = #{param.leaseType}
+        </if>
+        <if test="param.clientName != null and param.clientName != ''">
+            and tmp.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+--         and tmp.report_flag = '1'
+        ) ec
+        left outer join eg_org_company eoc on ec.org_id = eoc.org_id
+
+        left outer join
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'latest'">
+            eg_contract_balance_latest
+        </if>
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'month'">
+            eg_contract_balance_month
+        </if>
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'contract'">
+            (select * from eg_contract_balance ecb where
+            ecb.period_code &lt;= #{param.periodCode}
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+                and ecb.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCode != null and param.contractCode.size() != 0">
+                and ecb.contract_code in
+                <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            and exists(select 1 from eg_contract ec_tmp where 1=1
+            and (ec_tmp.contract_code_m is null or ec_tmp.contract_code_m= ec_tmp.contract_code)
+
+            <if test="param.orgId != null and param.orgId != ''">
+                and ec_tmp.org_id = #{param.orgId}
+            </if>
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+                and ec_tmp.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCode != null and param.contractCode.size() != 0">
+                and ec_tmp.contract_code in
+                <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.leaseType != null and param.leaseType != ''">
+                and ec_tmp.lease_type = #{param.leaseType}
+            </if>
+            <if test="param.clientName != null and param.clientName != ''">
+                and ec_tmp.client_name like concat('%', #{param.clientName}::text, '%')
+            </if>
+--             and ec_tmp.report_flag = '1'
+            and ecb.contract_code = ec_tmp.contract_code
+            and ecb.org_id = ec_tmp.org_id
+            )
+
+            and id in ( select
+            max(id) from eg_contract_balance t where voucher_date &lt;= #{param.queryDate}
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+                and t.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCode != null and param.contractCode.size() != 0">
+                and t.contract_code in
+                <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            and exists(select 1 from eg_contract ec_tmp2 where 1=1
+            and (ec_tmp2.contract_code_m is null or ec_tmp2.contract_code_m= ec_tmp2.contract_code)
+
+            <if test="param.orgId != null and param.orgId != ''">
+                and ec_tmp2.org_id = #{param.orgId}
+            </if>
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+                and ec_tmp2.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCode != null and param.contractCode.size() != 0">
+                and ec_tmp2.contract_code in
+                <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.leaseType != null and param.leaseType != ''">
+                and ec_tmp2.lease_type = #{param.leaseType}
+            </if>
+            <if test="param.clientName != null and param.clientName != ''">
+                and ec_tmp2.client_name like concat('%', #{param.clientName}::text, '%')
+            </if>
+--             and ec_tmp2.report_flag = '1'
+            and t.contract_code = ec_tmp2.contract_code
+            and t.org_id = ec_tmp2.org_id
+            )
+
+            group by
+            business_code,
+            contract_code,
+            client_code,
+            bill_contract_code
+            ))
+        </if>
+        ecbl on ec.contract_code = ecbl.contract_code
+        and ec.org_id = ecbl.org_id
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'month'">
+            <if test="param.queryDate != null and param.queryDate != '' and param.queryNextDate != null and param.queryNextDate != ''">
+                AND ecbl.voucher_date &lt; #{param.queryNextDate}
+            </if>
+        </if>
+        left outer join
+        (
+        select
+        elid.contract_code,
+        elid.org_id ,
+        elid.rental_income_after_total,
+        elid.overdue_earnings
+        from
+        eg_lease_income_details elid
+        where to_char(elid.business_date, 'YYYYMM') = #{param.periodCode}::text
+        ) income_contract on
+        income_contract.contract_code = ec.contract_code
+        and ec.org_id = income_contract.org_id
+        left outer join
+        (
+        select
+        ect.org_id,
+        ect.contract_code ,
+        sum(ect.ta_amount) ta_amount
+        from
+        eg_contract_ta_amount ect
+        where
+        ect.del_flag = '0'
+        group by
+        ect.org_id,
+        ect.contract_code) contract_ta on
+        contract_ta.contract_code = ec.contract_code
+        and ec.org_id = contract_ta.org_id
+
+        left join eg_service_fee_details esfd on
+        esfd.periods = #{param.periodCode}
+        and esfd.contract_code = ec.contract_code
+        and esfd.org_id = ec.org_id
+        )
+        ,except_data as (
+        select org_id, contract_code from sub
+        where 1 = 1
+        and coalesce(sub.receivable_rent_balance,0) = 0
+        and coalesce(sub.receivable_downpayment_balance,0) = 0
+        and coalesce(sub.receivable_residual_value_balance,0) = 0
+        and coalesce(sub.receivable_commission_balance,0) = 0
+        and coalesce(sub.receivable_insurance_balance,0) = 0
+        and coalesce(sub.receivable_otherincome_balance,0) = 0
+        and coalesce(sub.receivable_rebate_balance,0) = 0
+        and coalesce(sub.receivable_outtax_balance,0) = 0
+        and coalesce(sub.receivable_outputtax_base_balance,0) = 0
+        and coalesce(sub.unrealized_revenue_balance,0) = 0
+        and coalesce(sub.rental_income_after_total,0) = 0
+        and coalesce(sub.lease_revenue_balance,0) = 0
+        and coalesce(sub.depreciation_reserves_balance,0) = 0
+        and coalesce(sub.lessee_margin_balance,0) = 0
+        and coalesce(sub.ta_amount,0) = 0
+        and coalesce(sub.overdue_earnings,0) = 0
+        )
+        ,res as (
+--         select * from sub where not exists (select 1 from except_data where sub.org_id = except_data.org_id and sub.contract_code = except_data.contract_code)
+        select sub.*, except_data.org_id ex_org_id, except_data.contract_code ex_contract_code from sub left join except_data
+        on sub.org_id = except_data.org_id and sub.contract_code = except_data.contract_code where except_data.org_id is null and except_data.contract_code is null
+        )
+    </sql>
+
+    <select id="selectLeaseTable" resultType="com.utfinancing.financehub.engine.finance.model.vo.ReportLeaseTableVO">
+        <include refid="leaseTable"/>
+        select * from res order by res.contract_code
+
+        <if test="param.queryType != null and param.queryType != '' and param.queryType != 'contract'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectLeaseTableSize" resultType="java.util.Map">
+        <include refid="leaseTable"/>
+        select count(1) total_size from res
+    </select>
+
+    <update id="createTempTableLeaseTable">
+        CREATE TEMP TABLE temp_id_tab (
+            id int8 PRIMARY KEY
+        );
+    </update>
+
+    <insert id="fillTempTableLeaseTable">
+        insert into temp_id_tab (id)
+        select
+        max(id) from eg_contract_balance t where voucher_date &lt;= #{param.queryDate}
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCode != null and param.contractCode.size() != 0">
+            and t.contract_code in
+            <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and exists(select 1 from eg_contract ec_tmp2 where 1=1
+        and (ec_tmp2.contract_code_m is null or ec_tmp2.contract_code_m= ec_tmp2.contract_code)
+
+        <if test="param.orgId != null and param.orgId != ''">
+            and ec_tmp2.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and ec_tmp2.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCode != null and param.contractCode.size() != 0">
+            and ec_tmp2.contract_code in
+            <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.leaseType != null and param.leaseType != ''">
+            and ec_tmp2.lease_type = #{param.leaseType}
+        </if>
+        <if test="param.clientName != null and param.clientName != ''">
+            and ec_tmp2.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        --             and ec_tmp2.report_flag = '1'
+        and t.contract_code = ec_tmp2.contract_code
+        and t.org_id = ec_tmp2.org_id
+        )
+
+        group by
+        business_code,
+        contract_code,
+        client_code,
+        bill_contract_code,
+        org_id
+    </insert>
+
+
+
+    <sql id="leaseTableFromTempTable">
+        with sub as (
+        select
+        #{param.queryDate} query_date,
+        ec.id contract_id,
+        ec.voucher_id,
+        ec.org_id,
+        eoc.org_name,
+        ec.contract_code ,
+        ec.client_code,
+        ec.client_name,
+        ecbl.system_code ,
+        ec.contract_status ,
+        ec.financial_contract_status,
+        to_char(ec.lease_date_start, 'yyyy-MM-dd')  lease_date_start,
+        to_char(ec.lease_date_end, 'yyyy-MM-dd') lease_date_end,
+        ec.lease_type ,
+        ecbl.receivable_rent_balance,
+        ecbl.receivable_downpayment_balance,
+        ecbl.receivable_residual_value_balance,
+        ecbl.receivable_commission_balance,
+        ecbl.receivable_insurance_balance,
+        ecbl.receivable_otherincome_balance,
+        ecbl.receivable_rebate_balance,
+        ecbl.receivable_outtax_balance,
+
+        COALESCE(ecbl.receivable_rent_balance,0)+
+        COALESCE(ecbl.receivable_downpayment_balance,0)+
+        COALESCE(ecbl.receivable_residual_value_balance,0)+
+        COALESCE(ecbl.receivable_commission_balance,0)+
+        COALESCE(ecbl.receivable_insurance_balance,0)+
+        COALESCE(ecbl.receivable_otherincome_balance,0)+
+        COALESCE(ecbl.receivable_rebate_balance,0)+
+        COALESCE(ecbl.receivable_outtax_balance,0) as receivable_total_balance,
+
+        ecbl.receivable_outputtax_base_balance,
+        ecbl.unrealized_revenue_balance,
+        COALESCE(ecbl.unrealized_revenue_balance,0)-COALESCE(esfd.accumulated_accrued_amount,0) as receivable_service_fee_balance,
+        income_contract.rental_income_after_total,
+
+        --         ecbl.lease_revenue_balance,
+        COALESCE(ecbl.receivable_rent_balance,0)+
+        COALESCE(ecbl.receivable_downpayment_balance,0)+
+        COALESCE(ecbl.receivable_residual_value_balance,0)+
+        COALESCE(ecbl.receivable_commission_balance,0)+
+        COALESCE(ecbl.receivable_insurance_balance,0)+
+        COALESCE(ecbl.receivable_otherincome_balance,0)+
+        COALESCE(ecbl.receivable_rebate_balance,0)+
+        COALESCE(ecbl.receivable_outtax_balance,0)-COALESCE(ecbl.unrealized_revenue_balance,0) lease_revenue_balance,
+
+        ecbl.depreciation_reserves_balance,
+
+        COALESCE(ecbl.receivable_rent_balance,0)+
+        COALESCE(ecbl.receivable_downpayment_balance,0)+
+        COALESCE(ecbl.receivable_residual_value_balance,0)+
+        COALESCE(ecbl.receivable_commission_balance,0)+
+        COALESCE(ecbl.receivable_insurance_balance,0)+
+        COALESCE(ecbl.receivable_otherincome_balance,0)+
+        COALESCE(ecbl.receivable_rebate_balance,0)+
+        COALESCE(ecbl.receivable_outtax_balance,0)-COALESCE(ecbl.unrealized_revenue_balance,0)-COALESCE(ecbl.depreciation_reserves_balance,0) as receivable_net_balance,
+
+        ecbl.lessee_margin_balance,
+        contract_ta.ta_amount,
+        income_contract.overdue_earnings
+        from
+        (
+        select
+        tmp.*,ev.voucher_id
+        from
+        eg_contract tmp left join
+        (select org_id,contract_code,string_agg(id::text,',') voucher_id from eg_voucher where period_code = #{param.periodCode} group by org_id,contract_code) ev
+        on tmp.org_id = ev.org_id and tmp.contract_code = ev.contract_code
+        where 1=1
+        --           and tmp.id = 1780861319282139138
+        and (tmp.contract_code_m is null or tmp.contract_code_m= tmp.contract_code)
+
+        <if test="param.orgId != null and param.orgId != ''">
+            and tmp.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and tmp.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--        <if test="param.contractCode != null and param.contractCode != ''">-->
+        <!--            and contract_code like concat('%', #{param.contractCode}::text, '%')-->
+        <!--        </if>-->
+        <if test="param.contractCode != null and param.contractCode.size() != 0">
+            and tmp.contract_code in
+            <foreach item="item" index="index" collection="param.contractCode" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.leaseType != null and param.leaseType != ''">
+            and tmp.lease_type = #{param.leaseType}
+        </if>
+        <if test="param.clientName != null and param.clientName != ''">
+            and tmp.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        --         and tmp.report_flag = '1'
+        ) ec
+        left outer join eg_org_company eoc on ec.org_id = eoc.org_id
+
+        left outer join
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'latest'">
+            eg_contract_balance_latest
+        </if>
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'month'">
+            eg_contract_balance_month
+        </if>
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'contract'">
+            (select * from eg_contract_balance ecb where
+            exists (select 1 from temp_id_tab where ecb.id = temp_id_tab.id)
+            )
+        </if>
+        ecbl on ec.contract_code = ecbl.contract_code
+        and ec.org_id = ecbl.org_id
+        <if test="param.queryType != null and param.queryType != '' and param.queryType == 'month'">
+            <if test="param.queryDate != null and param.queryDate != '' and param.queryNextDate != null and param.queryNextDate != ''">
+                AND ecbl.voucher_date &lt; #{param.queryNextDate}
+            </if>
+        </if>
+        left outer join
+        (
+        select
+        elid.contract_code,
+        elid.org_id ,
+        elid.rental_income_after_total,
+        elid.overdue_earnings
+        from
+        eg_lease_income_details elid
+        where to_char(elid.business_date, 'YYYYMM') = #{param.periodCode}::text
+        ) income_contract on
+        income_contract.contract_code = ec.contract_code
+        and ec.org_id = income_contract.org_id
+        left outer join
+        (
+        select
+        ect.org_id,
+        ect.contract_code ,
+        sum(ect.ta_amount) ta_amount
+        from
+        eg_contract_ta_amount ect
+        where
+        ect.del_flag = '0'
+        group by
+        ect.org_id,
+        ect.contract_code) contract_ta on
+        contract_ta.contract_code = ec.contract_code
+        and ec.org_id = contract_ta.org_id
+
+        left join eg_service_fee_details esfd on
+        esfd.periods = #{param.periodCode}
+        and esfd.contract_code = ec.contract_code
+        and esfd.org_id = ec.org_id
+        )
+        ,except_data as (
+        select org_id, contract_code from sub
+        where 1 = 1
+        and coalesce(sub.receivable_rent_balance,0) = 0
+        and coalesce(sub.receivable_downpayment_balance,0) = 0
+        and coalesce(sub.receivable_residual_value_balance,0) = 0
+        and coalesce(sub.receivable_commission_balance,0) = 0
+        and coalesce(sub.receivable_insurance_balance,0) = 0
+        and coalesce(sub.receivable_otherincome_balance,0) = 0
+        and coalesce(sub.receivable_rebate_balance,0) = 0
+        and coalesce(sub.receivable_outtax_balance,0) = 0
+        and coalesce(sub.receivable_outputtax_base_balance,0) = 0
+        and coalesce(sub.unrealized_revenue_balance,0) = 0
+        and coalesce(sub.rental_income_after_total,0) = 0
+        and coalesce(sub.lease_revenue_balance,0) = 0
+        and coalesce(sub.depreciation_reserves_balance,0) = 0
+        and coalesce(sub.lessee_margin_balance,0) = 0
+        and coalesce(sub.ta_amount,0) = 0
+        and coalesce(sub.overdue_earnings,0) = 0
+        )
+        ,res as (
+        --         select * from sub where not exists (select 1 from except_data where sub.org_id = except_data.org_id and sub.contract_code = except_data.contract_code)
+        select sub.*, except_data.org_id ex_org_id, except_data.contract_code ex_contract_code from sub left join except_data
+        on sub.org_id = except_data.org_id and sub.contract_code = except_data.contract_code where except_data.org_id is null and except_data.contract_code is null
+        )
+    </sql>
+
+    <select id="selectLeaseTableFromTempTable" resultType="com.utfinancing.financehub.engine.finance.model.vo.ReportLeaseTableVO">
+        <include refid="leaseTableFromTempTable"/>
+        select * from res order by res.contract_code
+
+        <if test="param.queryType != null and param.queryType != '' and param.queryType != 'contract'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+</mapper>
+

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractInterfaceTotalMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractInterfaceTotalEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="recycle_principal_amount" property="recyclePrincipalAmount" />
+                    <result column="recycle_interest_amount" property="recycleInterestAmount" />
+                    <result column="recycle_default_interest_amount" property="recycleDefaultInterestAmount" />
+                    <result column="receive_first_amount" property="receiveFirstAmount" />
+                    <result column="receive_procedure_amount" property="receiveProcedureAmount" />
+                    <result column="receive_insurance_amount" property="receiveInsuranceAmount" />
+                    <result column="receive_service_amount" property="receiveServiceAmount" />
+                    <result column="receive_margin_amount" property="receiveMarginAmount" />
+                    <result column="receive_retained_price" property="receiveRetainedPrice" />
+                    <result column="receive_other_revenues" property="receiveOtherRevenues" />
+                    <result column="receive_firm_rebate" property="receiveFirmRebate" />
+                    <result column="receive_terminate_procedure_amount" property="receiveTerminateProcedureAmount" />
+                    <result column="receive_penal" property="receivePenal" />
+                    <result column="receive_g_p_s" property="receiveGPS" />
+                    <result column="receive_insurance_differ_amount" property="receiveInsuranceDifferAmount" />
+                    <result column="receive_recycle_car_amount" property="receiveRecycleCarAmount" />
+                    <result column="enable_flag" property="enableFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, org_id, system_code, contract_status, recycle_principal_amount, recycle_interest_amount, recycle_default_interest_amount, receive_first_amount, receive_procedure_amount, receive_insurance_amount, receive_service_amount, receive_margin_amount, receive_retained_price, receive_other_revenues, receive_firm_rebate, receive_terminate_procedure_amount, receive_penal, receive_g_p_s, receive_insurance_differ_amount, receive_recycle_car_amount, enable_flag, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

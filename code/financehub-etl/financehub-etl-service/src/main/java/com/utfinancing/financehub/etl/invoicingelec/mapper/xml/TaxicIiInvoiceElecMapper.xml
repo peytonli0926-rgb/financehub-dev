@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.invoicingelec.mapper.TaxicIiInvoiceElecMapper">
+    <select id="selectByCondition" resultType="com.utfinancing.financehub.etl.financial.model.vo.InvoiceClaimVO">
+        select
+            hthx.danjh documentNum,-- 单据编号
+            case when k.fpztdm = '1' then '正常发票'
+                 when k.fpztdm = '2' then '已红冲'
+                 when k.fpztdm = '3' then'已红冲'
+                 else ''
+                end as fpztdm,-- 单据状态
+--             case k.fpzldm when '32' then '222' when '12' then '007' when '13' then '008' when '14' then '009' end as invoiceType,-- 发票类型
+            case k.fpzldm when '32' then '收据' when '12' then '普通发票' when '13' then '数电专票' when '14' then '数电普票' end as invoiceType,-- 发票类型
+            k.fpdm invoicePointCode,-- 开票点代码
+            k.fphm invoiceNumber,-- 发票号码
+            DATE_FORMAT(k.kprq, '%Y-%m-%d') as documentDate,-- 单据日期
+            k.gfmc purchaserName,-- 购方名称
+            k.gfsh purchaserTaxCode,-- 购方税号
+            CONCAT(k.gfdz, ' ', k.gfdh) as purchaserDress,-- 购方地址电话
+            CONCAT(k.gfyh, ' ', k.gfyhzh) as purchaserBankNum,-- 购方银行账号
+            k.xfmc sellerName,-- 销方名称
+            k.xfsh sellerTaxCode,-- 销方税号
+            CONCAT(k.xfdz, ' ', k.xfdh) as xfDzAndDh,-- 销方地址电话
+            CONCAT(k.xfyh, ' ', k.xfyhzh) as xfYhAndZh,-- 销方银行账号
+            hthx.contractno contractCode,-- 合同编号
+            hthx.contractzt contractStatus,-- 合同状态
+--             hthx.qiybh enterpriseNum,-- 企业编号
+            case when hthx.qiybh is not null then hthx.qiybh
+                 when hthx.qiybh is null and k.xfsh = '91120116586402612E' then '91120116586402612EHT04'
+                 when hthx.qiybh is null and k.xfsh = '91310115MA1K3K3E16' then '91310115MA1K3K3E16HT03'
+                 when hthx.qiybh is null and k.xfsh = '913100003105858098' then '913100003105858098HT02'
+                 else hthx.qiybh end enterpriseNum,-- 企业编号
+            hthx.qishu periodNum,-- 期数
+            hthx.kehhy clientIndustry,-- 客户行业
+            hthx.shangpbh productCode,-- 商品编码
+            k.skr,
+            k.fhr,
+            k.kpr,
+            k.terminal_code as terminalCode,
+--             hthx.shangpmc productName,-- 商品名称
+            SUBSTRING_INDEX(mx.spmc,'*',-1) productName,-- 商品名称
+            mx.spggxh,
+            mx.spdw unit,-- 单位
+            case k.fpczdm when 12 then mx.sps else mx.sps end as quantity,-- 数量
+            case k.fpczdm when 12 then (mx.spje + mx.spse) else mx.spje + mx.spse end as taxAmount,-- 价税合计
+            mx.spsl taxRate,-- 税率
+            case k.fpczdm when 12 then mx.spse else mx.spse end as taxValue,-- 税额
+--             case k.fpczdm when 12 then mx.spje else mx.spse end as noTaxAmount,-- 不含税金额
+            case k.fpczdm when 12 then (mx.spje + mx.spse)-mx.spse else mx.spje + mx.spse-mx.spse end as noTaxAmount,-- 不含税金额（新增）
+            mx.spdm,
+            mx.spmc mainCategory,-- main category
+            k.bz comments,-- 备注
+            hthx.yewlx businessSource,-- 业务系统
+            '4' as sourceFrom,
+            k.kplsh as systemInvoiceId
+        from t_kpls k
+                 left join t_kpspmx mx on k.kplsh = mx.kplsh
+--         left join t_data_hthx hthx on k.serial_no = hthx.danjh and mx.spzxbm = hthx.cankzd1
+                 left join t_data_hthx hthx on k.order_no = hthx.danjh and mx.spzxbm = hthx.cankzd1
+        where k.tenant_code = 'hthx'
+          AND k.fpzldm != '32'
+          and ((mx.spmc like '%房屋租赁款%' or mx.spmc like '%车位租金%' or mx.spmc like '%解押费%') or (mx.spse &lt;0))
+          and k.kprq &gt;= STR_TO_DATE(#{queryDTO.queryDate}, '%Y-%m-%d')
+
+    </select>
+<!--    STR_TO_DATE(#{queryDTO.queryDate}, '%Y-%m-%d')-->
+</mapper>
+

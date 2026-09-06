@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.AssetAbsTransferPaymentDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.AssetAbsTransferPaymentDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="asset_abs_transfer_payment_id" property="assetAbsTransferPaymentId" />
+                    <result column="rate" property="rate" />
+                    <result column="actual_principal_amount" property="actualPrincipalAmount" />
+                    <result column="actual_interest_amount" property="actualInterestAmount" />
+                    <result column="actual_retention_purchase_amount" property="actualRetentionPurchaseAmount" />
+                    <result column="actual_penalty_interest_amount" property="actualPenaltyInterestAmount" />
+                    <result column="voucher_ids" property="voucherIds" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, client_code, client_name, asset_abs_transfer_payment_id, rate, actual_principal_amount, actual_interest_amount, actual_retention_purchase_amount, actual_penalty_interest_amount, voucher_ids, del_flag, error_info, period_code, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectPaymentDetailList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.AssetAbsTransferPaymentDetailVO">
+        select
+        eaatpd.*,
+        eaatp.loan_contract_code,
+        eaatp.periods
+        from
+        eg_asset_abs_transfer_payment_detail eaatpd
+        inner join eg_asset_abs_transfer_payment eaatp on
+        eaatpd.asset_abs_transfer_payment_id = eaatp.id
+        where
+        1 = 1
+        and eaatpd.del_flag = '0'
+        and eaatp.del_flag = '0'
+        <if test="param.assetAbsTransferPaymentIdList != null and param.assetAbsTransferPaymentIdList.size > 0">
+            and eaatp.id in
+            <foreach item="item" index="index" collection="param.assetAbsTransferPaymentIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>
+

@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TGlVoucherMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TGlVoucherEntity">
+        <id column="FID" property="fid"/>
+        <result column="FNUMBER" property="fnumber"/>
+        <result column="FBIZDATE" property="fbizdate"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FHANDLERID" property="fhandlerid"/>
+        <result column="FDESCRIPTION" property="fdescription"/>
+        <result column="FHASEFFECTED" property="fhaseffected"/>
+        <result column="FAUDITORID" property="fauditorid"/>
+        <result column="FSOURCEBILLID" property="fsourcebillid"/>
+        <result column="FSOURCEFUNCTION" property="fsourcefunction"/>
+        <result column="FCOMPANYID" property="fcompanyid"/>
+        <result column="FPERIODID" property="fperiodid"/>
+        <result column="FVOUCHERTYPEID" property="fvouchertypeid"/>
+        <result column="FCASHIERID" property="fcashierid"/>
+        <result column="FPOSTERID" property="fposterid"/>
+        <result column="FCANCELLERID" property="fcancellerid"/>
+        <result column="FSOURCESYS" property="fsourcesys"/>
+        <result column="FSOURCETYPE" property="fsourcetype"/>
+        <result column="FBOOKEDDATE" property="fbookeddate"/>
+        <result column="FCASHFLOWFLAG" property="fcashflowflag"/>
+        <result column="FISREVERSEVOUCHER" property="fisreversevoucher"/>
+        <result column="FATTACHMENTS" property="fattachments"/>
+        <result column="FENTRYCOUNT" property="fentrycount"/>
+        <result column="FLOCALDEBITAMOUNT" property="flocaldebitamount"/>
+        <result column="FLOCALCREDITAMOUNT" property="flocalcreditamount"/>
+        <result column="FREPORTINGDEBITAMOUNT" property="freportingdebitamount"/>
+        <result column="FREPORTINGCREDITAMOUNT" property="freportingcreditamount"/>
+        <result column="FBIZSTATUS" property="fbizstatus"/>
+        <result column="FCURRENCYID" property="fcurrencyid"/>
+        <result column="FHASREVERSED" property="fhasreversed"/>
+        <result column="FBGSTATUS" property="fbgstatus"/>
+        <result column="FHASCASHACCOUNT" property="fhascashaccount"/>
+        <result column="FISAC" property="fisac"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FABSTRACT" property="fabstract"/>
+        <result column="FCALSUBMITBAL" property="fcalsubmitbal"/>
+        <result column="FISACNOTICE" property="fisacnotice"/>
+        <result column="FISCUSSENT" property="fiscussent"/>
+        <result column="FISCHECK" property="fischeck"/>
+        <result column="FISCLOSE" property="fisclose"/>
+        <result column="FISACCOUNTCOPY" property="fisaccountcopy"/>
+        <result column="FISMGCTRL" property="fismgctrl"/>
+        <result column="FISAUDITBACK" property="fisauditback"/>
+        <result column="FPLSPLITED" property="fplsplited"/>
+        <result column="FFILESTATE" property="ffilestate"/>
+        <result column="FCATEGORY" property="fcategory"/>
+        <result column="FRELATEDVOUCHERID" property="frelatedvoucherid"/>
+        <result column="FRELATEDVOUCHERNUMBER" property="frelatedvouchernumber"/>
+        <result column="FDIFFITEMFLAG" property="fdiffitemflag"/>
+        <result column="CFBXBILLID" property="cfbxbillid"/>
+        <result column="CFBXMAINID" property="cfbxmainid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FNUMBER, FBIZDATE, FCREATORID, FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME, FHANDLERID, FDESCRIPTION,
+        FHASEFFECTED, FAUDITORID, FSOURCEBILLID, FSOURCEFUNCTION, FCOMPANYID, FPERIODID, FVOUCHERTYPEID, FCASHIERID,
+        FPOSTERID, FCANCELLERID, FSOURCESYS, FSOURCETYPE, FBOOKEDDATE, FCASHFLOWFLAG, FISREVERSEVOUCHER, FATTACHMENTS,
+        FENTRYCOUNT, FLOCALDEBITAMOUNT, FLOCALCREDITAMOUNT, FREPORTINGDEBITAMOUNT, FREPORTINGCREDITAMOUNT, FBIZSTATUS,
+        FCURRENCYID, FHASREVERSED, FBGSTATUS, FHASCASHACCOUNT, FISAC, FCONTROLUNITID, FABSTRACT, FCALSUBMITBAL,
+        FISACNOTICE, FISCUSSENT, FISCHECK, FISCLOSE, FISACCOUNTCOPY, FISMGCTRL, FISAUDITBACK, FPLSPLITED, FFILESTATE,
+        FCATEGORY, FRELATEDVOUCHERID, FRELATEDVOUCHERNUMBER, FDIFFITEMFLAG, CFBXBILLID, CFBXMAINID
+    </sql>
+
+
+
+    <select id="selectOneContract" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.ContractSumDTO">
+        SELECT tbm.fnumber as contract_code, tbc1.FNUMBER as client_code, gac.FNUMBER as account_code,gac.FNAME_L2 as account_name,
+        sum(NULLIF(DECODE(GE.FENTRYDC, '1', COALESCE(GAV.FLOCALAMOUNT,GE.FLOCALAMOUNT), '0'), 0)) debitAmount,
+        sum(NULLIF(DECODE(GE.FENTRYDC, '0', COALESCE(GAV.FLOCALAMOUNT,GE.FLOCALAMOUNT), '0'), 0)) creditAmount
+        FROM  HXORACLE.T_GL_VOUCHER GV
+            INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =gv.FCOMPANYID
+            INNER JOIN HXORACLE.T_BD_PERIOD TBP  ON TBP.FID =gv.FPERIODID
+            INNER JOIN HXORACLE.T_GL_VOUCHERENTRY GE ON  GV.FID = GE.FBILLID
+            INNER JOIN  HXORACLE.T_BD_CURRENCY tbc ON GE.FCURRENCYID =tbc.FID
+            LEFT JOIN HXORACLE.T_GL_VOUCHERASSISTRECORD GAV ON GE.FID =GAV.FENTRYID
+            LEFT JOIN HXORACLE.T_BD_ASSISTANTHG HG ON HG.FID =GAV.FASSGRPID
+            LEFT JOIN HXORACLE.T_BD_ASSTACCOUNT aa ON aa.FID = hg.FASSTACCOUNTID
+        INNER JOIN HXORACLE.T_BD_ACCOUNTVIEW GAC ON GE.FACCOUNTID =GAC.FID
+        LEFT OUTER JOIN  HXORACLE.T_BD_MATERIAL tbm ON HG.FMATERIALID =TBM.FID
+        LEFT OUTER JOIN  HXORACLE.T_BD_CUSTOMER tbc1 ON HG.FCUSTOMERID =TBC1.FID
+        WHERE tbp.FNUMBER  ='201901' AND toc.FNUMBER   IN ('01-C0001')
+        AND gv.FBIZSTATUS =5 AND hg.FASSTACCOUNTID= 'rSn5IPwOQtykbfJMfKq2CkZaEPg='
+        GROUP BY tbm.fnumber, tbc1.FNUMBER, gac.FNUMBER, gac.FNAME_L2
+    </select>
+
+
+    <select id="selectVoucherByPeriodAndDate" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeVoucherEntity">
+        SELECT t.fid AS eas_id,
+            t.FNUMBER AS voucher_code,
+            tbp.FNUMBER AS period_code,
+            tbv.FNUMBER AS voucher_type_code,
+            tbv.FNAME_L2 AS voucher_type_name,
+            t.FBIZDATE AS business_date,
+            t.FBOOKEDDATE AS voucher_date,
+            t.FLOCALDEBITAMOUNT AS base_debit_amount,
+            t.FLOCALCREDITAMOUNT AS base_credit_amount,
+            t.FREPORTINGDEBITAMOUNT AS report_debit_amount,
+            t.FREPORTINGCREDITAMOUNT AS report_credit_amount,
+            t.FBIZSTATUS AS voucher_status,
+            tbc.FISOCODE AS currency_code,
+            toc.FNUMBER AS org_id,
+            toc.FNAME_L2 AS org_name,
+            t.FABSTRACT AS voucher_abstract,
+            t.FDESCRIPTION AS voucher_description
+        FROM HXORACLE.T_GL_VOUCHER t
+        INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = t.FCOMPANYID
+        INNER JOIN HXORACLE.T_BD_PERIOD TBP  ON TBP.FID =t.FPERIODID
+        LEFT JOIN HXORACLE.T_BD_VOUCHERTYPES tbv ON tbv.FID  = t.FVOUCHERTYPEID
+        LEFT JOIN HXORACLE.T_BD_CURRENCY tbc ON tbc.FID = t.FCURRENCYID
+        WHERE tbp.FNUMBER  = #{periodCode}
+        AND t.FBIZSTATUS =5 AND TO_CHAR(t.FBOOKEDDATE, 'yyyy-mm-dd') = #{voucherDate}
+        AND t.FABSTRACT NOT IN ('结转损益','结转损益-资产减值损失','结转损益6041.03','结转损益6701.04')
+    </select>
+
+
+    <select id="selectVoucherByEasVoucherId" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeVoucherEntity">
+        SELECT t.fid AS eas_id,
+        t.FNUMBER AS voucher_code,
+        tbp.FNUMBER AS period_code,
+        tbv.FNUMBER AS voucher_type_code,
+        tbv.FNAME_L2 AS voucher_type_name,
+        t.FBIZDATE AS business_date,
+        t.FBOOKEDDATE AS voucher_date,
+        t.FLOCALDEBITAMOUNT AS base_debit_amount,
+        t.FLOCALCREDITAMOUNT AS base_credit_amount,
+        t.FREPORTINGDEBITAMOUNT AS report_debit_amount,
+        t.FREPORTINGCREDITAMOUNT AS report_credit_amount,
+        t.FBIZSTATUS AS voucher_status,
+        tbc.FISOCODE AS currency_code,
+        toc.FNUMBER AS org_id,
+        toc.FNAME_L2 AS org_name,
+        t.FABSTRACT AS voucher_abstract,
+        t.FDESCRIPTION AS voucher_description
+        FROM HXORACLE.T_GL_VOUCHER t
+        INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = t.FCOMPANYID
+        INNER JOIN HXORACLE.T_BD_PERIOD TBP  ON TBP.FID =t.FPERIODID
+        LEFT JOIN HXORACLE.T_BD_VOUCHERTYPES tbv ON tbv.FID  = t.FVOUCHERTYPEID
+        LEFT JOIN HXORACLE.T_BD_CURRENCY tbc ON tbc.FID = t.FCURRENCYID
+        WHERE t.fid = #{easVoucherId}
+    </select>
+
+
+    <select id="selectVoucherByPeriod" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeVoucherEntity">
+        SELECT t.fid AS eas_id,
+        t.FNUMBER AS voucher_code,
+        tbp.FNUMBER AS period_code,
+        tbv.FNUMBER AS voucher_type_code,
+        tbv.FNAME_L2 AS voucher_type_name,
+        t.FBIZDATE AS business_date,
+        t.FBOOKEDDATE AS voucher_date,
+        t.FLOCALDEBITAMOUNT AS base_debit_amount,
+        t.FLOCALCREDITAMOUNT AS base_credit_amount,
+        t.FREPORTINGDEBITAMOUNT AS report_debit_amount,
+        t.FREPORTINGCREDITAMOUNT AS report_credit_amount,
+        t.FBIZSTATUS AS voucher_status,
+        tbc.FISOCODE AS currency_code,
+        toc.FNUMBER AS org_id,
+        toc.FNAME_L2 AS org_name,
+        t.FABSTRACT AS voucher_abstract,
+        t.FDESCRIPTION AS voucher_description
+        FROM HXORACLE.T_GL_VOUCHER t
+        INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = t.FCOMPANYID
+        INNER JOIN HXORACLE.T_BD_PERIOD TBP  ON TBP.FID =t.FPERIODID
+        LEFT JOIN HXORACLE.T_BD_VOUCHERTYPES tbv ON tbv.FID  = t.FVOUCHERTYPEID
+        LEFT JOIN HXORACLE.T_BD_CURRENCY tbc ON tbc.FID = t.FCURRENCYID
+        WHERE tbp.FNUMBER  = #{periodCode}
+        AND t.FBIZSTATUS =5
+        AND t.FABSTRACT NOT IN ('结转损益','结转损益-资产减值损失','结转损益6041.03','结转损益6701.04')
+    </select>
+
+    <select id="selectVoucherEntryByPeriodAndDate" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeVoucherEntryEntity">
+        SELECT ge.FID AS eas_id,
+            ge.FBILLID AS voucher_eas_id,
+            ge.FDESCRIPTION AS voucher_summary,
+            tbm.fnumber AS contract_code,
+            tbm.FNAME_L2 AS contract_name,
+            tbc1.FNUMBER AS client_code,
+            tbc1.FNAME_L2 AS client_name,
+            gac.FNUMBER AS account_code,
+            gac.FNAME_L2 AS  account_name,
+            toc.FNUMBER AS org_id,
+            tba1.FBANKACCOUNTNUMBER AS bank_number,
+            tbg1.FNUMBER AS bill_contract_code,
+            tbp.FNUMBER AS period_code,
+            DECODE(GE.FENTRYDC, '1', 'DR', 'CR') AS debit_credit_type,
+            NULLIF(DECODE(GE.FENTRYDC, '1', COALESCE(GAV.FORIGINALAMOUNT,GE.FORIGINALAMOUNT), '0'), 0) AS debit_amount,
+            NULLIF(DECODE(GE.FENTRYDC, '0', COALESCE(GAV.FORIGINALAMOUNT,GE.FORIGINALAMOUNT), '0'), 0) AS credit_amount
+        FROM  HXORACLE.T_GL_VOUCHER t
+        INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =t.FCOMPANYID
+        INNER JOIN HXORACLE.T_BD_PERIOD TBP  ON TBP.FID =t.FPERIODID
+        INNER JOIN HXORACLE.T_GL_VOUCHERENTRY GE ON  t.FID = GE.FBILLID
+        INNER JOIN HXORACLE.T_BD_CURRENCY tbc ON GE.FCURRENCYID =tbc.FID
+        LEFT JOIN HXORACLE.T_GL_VOUCHERASSISTRECORD GAV ON GE.FID =GAV.FENTRYID
+        LEFT JOIN HXORACLE.T_BD_ASSISTANTHG HG ON HG.FID =GAV.FASSGRPID
+        INNER JOIN HXORACLE.T_BD_ACCOUNTVIEW GAC ON GE.FACCOUNTID =GAC.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON HG.FMATERIALID =TBM.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON HG.FCUSTOMERID =TBC1.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTBANKS TBA1 ON TBA1.FID =HG.FBANKACCOUNTID
+        LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg1 ON tbg1.FID =HG.FGENERALASSACTTYPE3ID
+        WHERE ge.FBILLID  = #{voucherId}
+    </select>
+
+
+    <select id="selectVoucherEntryByPeriodCode" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeVoucherEntryEntity">
+        SELECT ge.FID AS eas_id,
+            ge.FBILLID AS voucher_eas_id,
+            ge.FDESCRIPTION AS voucher_summary,
+            toc.FNUMBER AS org_id,
+            tbm.fnumber AS contract_code,
+            tbm.FNAME_L2 AS contract_name,
+            tbc1.FNUMBER AS client_code,
+            tbc1.FNAME_L2 AS client_name,
+            gac.FNUMBER AS account_code,
+            gac.FNAME_L2 AS  account_name,
+            tba1.FBANKACCOUNTNUMBER AS bank_number,
+            tbg1.FNUMBER AS bill_contract_code,
+            tbp.FNUMBER AS period_code,
+            DECODE(GE.FENTRYDC, '1', 'DR', 'CR') AS debit_credit_type,
+            NULLIF(DECODE(GE.FENTRYDC, '1', COALESCE(GAV.FORIGINALAMOUNT,GE.FORIGINALAMOUNT), '0'), 0) AS debit_amount,
+            NULLIF(DECODE(GE.FENTRYDC, '0', COALESCE(GAV.FORIGINALAMOUNT,GE.FORIGINALAMOUNT), '0'), 0) AS credit_amount
+        FROM  HXORACLE.T_GL_VOUCHER t
+        INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =t.FCOMPANYID
+        INNER JOIN HXORACLE.T_BD_PERIOD TBP  ON TBP.FID =t.FPERIODID
+        INNER JOIN HXORACLE.T_GL_VOUCHERENTRY GE ON  t.FID = GE.FBILLID
+        INNER JOIN HXORACLE.T_BD_CURRENCY tbc ON GE.FCURRENCYID =tbc.FID
+        LEFT JOIN HXORACLE.T_GL_VOUCHERASSISTRECORD GAV ON GE.FID =GAV.FENTRYID
+        LEFT JOIN HXORACLE.T_BD_ASSISTANTHG HG ON HG.FID =GAV.FASSGRPID
+        INNER JOIN HXORACLE.T_BD_ACCOUNTVIEW GAC ON GE.FACCOUNTID =GAC.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON HG.FMATERIALID =TBM.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON HG.FCUSTOMERID =TBC1.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTBANKS TBA1 ON TBA1.FID =HG.FBANKACCOUNTID
+        LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg1 ON tbg1.FID =HG.FGENERALASSACTTYPE3ID
+        WHERE tbp.FNUMBER = #{periodCode} and to_char(t.FBOOKEDDATE,'yyyy-mm-dd') = #{voucherDate}
+                AND t.FABSTRACT NOT IN ('结转损益','结转损益-资产减值损失','结转损益6041.03','结转损益6701.04')
+                <if test="bizStatus != null">
+                    AND t.FBIZSTATUS = #{bizStatus}
+                </if>
+        <if test="contractCodeList != null and contractCodeList.size > 0">
+            and tbm.fnumber in
+            <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+    <select id="selectAccountBalanceList" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.KingdeeContractBalanceDTO">
+        SELECT tbm.fnumber AS contract_code,tbc1.FNUMBER AS client_code ,ga.FNUMBER AS account_code, gba.FENDBALANCEFOR AS account_balance
+        FROM HXORACLE.T_GL_AssistBalance_5F GBA
+        LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =gba.FORGUNITID
+        LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GBA.FACCOUNTID = GA.FID
+        LEFT OUTER JOIN  HXORACLE.T_BD_CURRENCY tbc ON gba.FCURRENCYID =tbc.FID
+        LEFT OUTER JOIN  HXORACLE.T_BD_ASSISTANTHG GS ON GBA.FASSISTGRPID =GS.FID
+        LEFT OUTER JOIN  HXORACLE.T_BD_MATERIAL tbm ON GS.FMATERIALID =TBM.FID
+        LEFT OUTER JOIN  HXORACLE.T_BD_CUSTOMER tbc1 ON GS.FCUSTOMERID =TBC1.FID
+        WHERE GBA.FPERIOD = 201812 AND tbc1.FNUMBER = #{clientCode} AND tbm.fnumber = #{contractCode}
+    </select>
+
+    
+    <select id="selectContractBalance" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeContractBalanceEntity">
+        SELECT
+            ${periodCode} as period_code,
+            toc.FNUMBER AS org_id,
+            tbm.fnumber AS contract_code,
+            tbc1.FNUMBER AS client_code,
+            tbg1.FNUMBER AS bill_contract_code,
+            ga.FNUMBER AS account_code,
+            ga.FNAME_L2 AS account_name,
+            sum(gba.FENDBALANCEFOR) AS account_balance
+        FROM HXORACLE.T_GL_AssistBalance_5F GBA
+        LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = gba.FORGUNITID
+        LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GBA.FACCOUNTID = GA.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gba.FCURRENCYID = tbc.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_ASSISTANTHG GS ON GBA.FASSISTGRPID = GS.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON GS.FMATERIALID = TBM.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON GS.FCUSTOMERID = TBC1.FID
+        LEFT OUTER JOIN T_BD_GENERALASSTACTTYPE tbg1 ON tbg1.FID = GS.FGENERALASSACTTYPE3ID
+        WHERE GBA.FPERIOD = #{periodCode}
+        <if test="contractCodeList != null and contractCodeList.size > 0">
+            and tbm.fnumber in
+            <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY toc.FNUMBER, tbm.fnumber, tbc1.FNUMBER, tbg1.FNUMBER, ga.FNUMBER, ga.FNAME_L2
+    </select>
+
+
+    <select id="selectContractBalance80001" resultType="com.utfinancing.financehub.etl.financial.entity.KingdeeContractBalanceEntity">
+        SELECT
+            toc.FNUMBER AS org_id,
+            tbm.fnumber AS contract_code,
+            tbc1.FNUMBER AS client_code,
+            tbg1.FNUMBER AS bill_contract_code,
+            ga.FNUMBER AS account_code,
+            SUM(gba.FBEGINBALANCEFOR) AS account_balance
+        FROM HXORACLE.T_GL_AssistBalance_5F GBA
+            LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = gba.FORGUNITID
+            LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GBA.FACCOUNTID = GA.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gba.FCURRENCYID = tbc.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_ASSISTANTHG GS ON GBA.FASSISTGRPID = GS.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON GS.FMATERIALID = TBM.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON GS.FCUSTOMERID = TBC1.FID
+            LEFT OUTER JOIN T_BD_GENERALASSTACTTYPE tbg1 ON tbg1.FID =GS.FGENERALASSACTTYPE3ID
+        WHERE GBA.FPERIOD = #{periodCode} and toc.FNUMBER = '80001'
+        <if test="contractCodeList != null and contractCodeList.size > 0">
+            and tbm.fnumber in
+            <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY toc.FNUMBER, tbm.fnumber, tbc1.FNUMBER, tbg1.FNUMBER, ga.FNUMBER
+
+    </select>
+
+    <select id="selectKingdeeAssistBalanceList" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.KingdeeAssistBalanceDTO">
+        SELECT
+            TO_NUMBER(${periodCode}) as period_code,
+            toc.FNUMBER AS org_id,
+            CAST(tbm.fnumber AS VARCHAR2(80)) AS contract_code,
+            CAST(tbc1.FNUMBER AS VARCHAR2(80)) AS client_code,
+            CAST(tbg1.FNUMBER AS VARCHAR2(80)) AS bill_contract_code,
+            tbc.FISOCODE AS currency_code,
+            ga.FNUMBER AS account_code,
+            ga.FNAME_L2 AS account_name,
+            sum(gba.FBEGINBALANCEFOR) AS begin_balance,
+            sum(gba.FENDBALANCEFOR) AS end_balance,
+            sum(gba.FDEBITFOR) AS debit_amount,
+            sum(gba.FCREDITFOR) AS credit_amount,
+            sum(gba.FYEARDEBITFOR) AS year_debit_amount,
+            sum(gba.FYEARCREDITFOR) AS year_credit_amount
+        FROM HXORACLE.T_GL_AssistBalance_5F GBA
+                 LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = gba.FORGUNITID
+                 LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GBA.FACCOUNTID = GA.FID
+                 LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gba.FCURRENCYID = tbc.FID
+                 LEFT OUTER JOIN HXORACLE.T_BD_ASSISTANTHG GS ON GBA.FASSISTGRPID = GS.FID
+                 LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON GS.FMATERIALID = TBM.FID
+                 LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON GS.FCUSTOMERID = TBC1.FID
+                 LEFT OUTER JOIN T_BD_GENERALASSTACTTYPE tbg1 ON tbg1.FID = GS.FGENERALASSACTTYPE3ID
+        WHERE GBA.FPERIOD = #{periodCode}
+            <if test="orgId != null and orgId != ''">
+                AND toc.FNUMBER = #{orgId}
+            </if>
+        GROUP BY toc.FNUMBER, tbm.fnumber, tbc1.FNUMBER, tbg1.FNUMBER,tbc.FISOCODE, ga.FNUMBER, ga.FNAME_L2
+        union
+        SELECT
+            gb.FPERIOD as period_code,
+            toc.FNUMBER AS org_id,
+            '' AS contract_code,
+            '' AS client_code,
+            '' AS bill_contract_code,
+            tbc.FISOCODE AS currency_code,
+            ga.FNUMBER AS account_code,
+            ga.FNAME_L2 AS account_name,
+            sum(gb.FBEGINBALANCEFOR) AS begin_balance,
+            sum(gb.FENDBALANCEFOR) AS end_balance,
+            sum(gb.FDEBITFOR) AS debit_amount,
+            sum(gb.FCREDITFOR) AS credit_amount,
+            sum(gb.FYEARDEBITFOR) AS year_debit_amount,
+            sum(gb.FYEARCREDITFOR) AS year_credit_amount
+        FROM HXORACLE.T_GL_ACCOUNTBALANCE_5F gb
+                 LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = gb.FORGUNITID
+                 LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GB.FACCOUNTID = GA.FID
+                 LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gb.FCURRENCYID = tbc.FID
+        WHERE GB.FPERIOD = #{periodCode}
+          AND toc.FNUMBER IN ('01-C0001','02-C0001','30001','80001')
+          AND ga.FNUMBER IN ('1231.05',
+                             '1510.01',
+                             '1531.02',
+                             '2241.18',
+                             '6051.99',
+                             '6701.22',
+                             '1231.02.01',
+                             '1231.02.04',
+                             '1231.02.99',
+                             '1510.02',
+                             '1510.04.01',
+                             '1510.04.03',
+                             '2202.04.01',
+                             '2202.04.02',
+                             '2202.04.06'
+            )
+        GROUP BY gb.FPERIOD,toc.FNUMBER, tbc.FISOCODE, ga.FNUMBER, ga.FNAME_L2
+    </select>
+<!--    SELECT-->
+<!--    ${periodCode} as period_code,-->
+<!--    toc.FNUMBER AS org_id,-->
+<!--    tbm.fnumber AS contract_code,-->
+<!--    tbc1.FNUMBER AS client_code,-->
+<!--    tbg1.FNUMBER AS bill_contract_code,-->
+<!--    tbc.FISOCODE AS currency_code,-->
+<!--    ga.FNUMBER AS account_code,-->
+<!--    ga.FNAME_L2 AS account_name,-->
+<!--    sum(gba.FBEGINBALANCEFOR) AS begin_balance,-->
+<!--    sum(gba.FENDBALANCEFOR) AS end_balance,-->
+<!--    sum(gba.FDEBITFOR) AS debit_amount,-->
+<!--    sum(gba.FCREDITFOR) AS credit_amount,-->
+<!--    sum(gba.FYEARDEBITFOR) AS year_debit_amount,-->
+<!--    sum(gba.FYEARCREDITFOR) AS year_credit_amount-->
+<!--    FROM HXORACLE.T_GL_AssistBalance_5F GBA-->
+<!--    LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID = gba.FORGUNITID-->
+<!--    LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GBA.FACCOUNTID = GA.FID-->
+<!--    LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gba.FCURRENCYID = tbc.FID-->
+<!--    LEFT OUTER JOIN HXORACLE.T_BD_ASSISTANTHG GS ON GBA.FASSISTGRPID = GS.FID-->
+<!--    LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON GS.FMATERIALID = TBM.FID-->
+<!--    LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON GS.FCUSTOMERID = TBC1.FID-->
+<!--    LEFT OUTER JOIN T_BD_GENERALASSTACTTYPE tbg1 ON tbg1.FID = GS.FGENERALASSACTTYPE3ID-->
+<!--    WHERE GBA.FPERIOD = #{periodCode}-->
+<!--    <if test="orgId != null and orgId != ''">-->
+<!--        AND toc.FNUMBER = #{orgId}-->
+<!--    </if>-->
+<!--    GROUP BY toc.FNUMBER, tbm.fnumber, tbc1.FNUMBER, tbg1.FNUMBER,tbc.FISOCODE, ga.FNUMBER, ga.FNAME_L2-->
+
+
+    <select id="selectCustomerById" resultType="com.utfinancing.financehub.etl.kingdee.entity.TBdCustomer">
+        select FNUMBER, FNAME_L2 from HXORACLE.T_BD_CUSTOMER
+        where FNUMBER = #{clientCode}
+    </select>
+
+    <select id="selectKingdeeData" resultType="java.util.Map">
+        ${statement}
+    </select>
+</mapper>
+

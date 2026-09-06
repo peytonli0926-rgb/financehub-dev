@@ -1,0 +1,11 @@
+package com.utfinancing.financehub.etl.passveh.model;
+
+import lombok.Data;
+
+import java.io.Serializable;
+
+@Data
+public class SelectContractCodeByPageDTO implements Serializable {
+    private int end;
+    private int start;
+}

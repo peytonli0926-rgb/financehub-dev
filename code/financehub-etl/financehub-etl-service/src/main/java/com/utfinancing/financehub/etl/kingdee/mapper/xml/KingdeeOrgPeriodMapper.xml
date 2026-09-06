@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.KingdeeOrgPeriodMapper">
+
+    <select id="selectCurrentPeriodCodeByOrgIds" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OrgPeriodDTO">
+        SELECT C.FNUMBER orgId, C.FNAME_L2 orgName, P.FNUMBER periodCode FROM T_BD_SYSTEMSTATUSCTROL  A
+            LEFT JOIN T_BD_SYSTEMSTATUS B  ON  A.FSYSTEMSTATUSID = B.FID
+            LEFT JOIN T_BD_PERIOD P ON A.FCURRENTPERIODID = P.FID
+            LEFT JOIN T_ORG_COMPANY C ON A.FCOMPANYID = C.FID
+        WHERE B.FNAME = 6
+        and c.FNUMBER in
+        <foreach item="item" index="index" collection="param" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+</mapper>
+

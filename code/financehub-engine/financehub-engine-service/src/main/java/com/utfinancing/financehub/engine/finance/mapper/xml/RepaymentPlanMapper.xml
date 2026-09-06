@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RepaymentPlanMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanEntity">
+        <id column="id" property="id" />
+        <result column="client_code" property="clientCode" />
+        <result column="client_name" property="clientName" />
+        <result column="contract_code" property="contractCode" />
+        <result column="contract_name" property="contractName" />
+        <result column="plan_date" property="planDate" />
+        <result column="rent_amount" property="rentAmount" />
+        <result column="principal_amount" property="principalAmount" />
+        <result column="interest_amount" property="interestAmount" />
+        <result column="principal_tax" property="principalTax" />
+        <result column="interest_tax" property="interestTax" />
+        <result column="outflow_amount" property="outflowAmount" />
+        <result column="planned_interest" property="plannedInterest" />
+        <result column="planned_principal" property="plannedPrincipal" />
+        <result column="cash_flow" property="cashFlow" />
+        <result column="opening_amortized_cost" property="openingAmortizedCost" />
+        <result column="ending_amortized_cost" property="endingAmortizedCost" />
+        <result column="actual_daily_rate" property="actualDailyRate" />
+        <result column="rental_income" property="rentalIncome" />
+        <result column="service_fee_amortization_rate" property="serviceFeeAmortizationRate" />
+        <result column="service_fee_amortization_income" property="serviceFeeAmortizationIncome" />
+        <result column="xirr_rate" property="xirrRate" />
+        <result column="actual_repayment_date" property="actualRepaymentDate" />
+        <result column="actual_repayment_principal_balance" property="actualRepaymentPrincipalBalance" />
+        <result column="actual_repayment_principal_amount" property="actualRepaymentPrincipalAmount" />
+        <result column="actual_repayment_interes_balance" property="actualRepaymentInteresBalance" />
+        <result column="actual_repayment_interes_amount" property="actualRepaymentInteresAmount" />
+        <result column="recapture_status" property="recaptureStatus" />
+        <result column="overdue_earnings" property="overdueEarnings" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+        <result column="source_irr_rate" property="sourceIrrRate" />
+        <result column="adjustment_amount" property="adjustmentAmount" />
+        <result column="change_after_ending_amortized_cost" property="changeAfterEndingAmortizedCost" />
+        <result column="change_after_rental_income" property="changeAfterRentalIncome" />
+        <result column="impairment_third_stage" property="impairmentThirdStage" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, client_code, client_name, contract_code, contract_name, plan_date, rent_amount,
+        principal_amount, interest_amount, principal_tax, interest_tax, outflow_amount, planned_interest,
+        planned_principal, cash_flow, opening_amortized_cost, ending_amortized_cost, actual_daily_rate,
+        rental_income, service_fee_amortization_rate, service_fee_amortization_income, xirr_rate,
+        actual_repayment_date, actual_repayment_principal_balance, actual_repayment_principal_amount,
+        actual_repayment_interes_balance, actual_repayment_interes_amount, recapture_status, overdue_earnings,
+        create_by, create_time, update_by, update_time, del_flag, source_irr_rate, adjustment_amount,
+        change_after_ending_amortized_cost, change_after_ending_amortized_cost, impairment_third_stage
+    </sql>
+
+    <delete id="deleteOldData" parameterType="java.lang.String">
+        delete from eg_repayment_plan where system_code = #{systemCode}
+    </delete>
+
+    <select id="selectNoRecaptureByContract" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNoRecaptureByContractDTO"
+            resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List" />
+        from
+            eg_repayment_plan
+        where
+            del_flag = '0'
+            and contract_code = #{contractCode}
+            and plan_date <![CDATA[<=]]> #{planDate}
+            and exception_type is null
+            and recapture_status != #{recaptureStatus}
+        order by plan_date
+    </select>
+    <select id="selectPlanAmountBuCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RepaymentPlanVO">
+        select
+        contract_code,
+        org_id,
+        sum(coalesce(actual_repayment_principal_amount, 0)) as actual_repayment_principal_amount,
+        sum(coalesce(actual_repayment_interes_amount, 0)) as actual_repayment_interes_amount
+        from
+        eg_repayment_plan
+        where
+        1 = 1
+        and contract_code = #{param.contractCode}
+        and org_id = #{param.orgId}
+        and to_char(actual_repayment_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.planDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        group by
+        contract_code,
+        org_id
+    </select>
+    <select id="selectMinPlanDate"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RepaymentPlanVO">
+        select
+        contract_code,
+        min(plan_date) as plan_date
+        from
+        eg_repayment_plan
+        where del_flag = '0'
+        and recapture_status != '2'
+        <if test="contractCodeList != null and contractCodeList.size > 0">
+            and contract_code in
+            <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by contract_code
+    </select>
+    <select id="getPlanByMaxActualRepaymentDate"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RepaymentPlanVO">
+        select
+        x.*
+        from
+        eg_repayment_plan x
+        where
+        1 = 1
+        and x.actual_repayment_date is not null
+        and to_char(x.actual_repayment_date, 'yyyy-MM-DD') = to_char(to_date(#{replaymentDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        and x.contract_code = #{contractCode}
+        order by
+        x.id desc
+        limit 1
+    </select>
+    <select id="selectListPrioritySnapshot"
+            resultType="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanEntity">
+        with snapshot as (select contract_code,
+                                TO_DATE(to_char(plan_date, 'yyyy-MM'),'yyyy-MM') plan_date,
+                                 sum(service_fee_amortization_rate) service_fee_amortization_rate
+                          from eg_repayment_plan_snapshot
+                          where contract_code in
+                            <foreach collection="contractCodeList" item="contractCode" index="index" open="(" separator="," close=")">
+                                #{contractCode}
+                            </foreach>
+                            and del_flag = '0'
+                          group by contract_code, to_char(plan_date, 'yyyy-MM')),
+
+             current as (select contract_code,
+                                TO_DATE(to_char(plan_date, 'yyyy-MM'),'yyyy-MM') plan_date,
+                                sum(service_fee_amortization_rate) service_fee_amortization_rate
+                         from eg_repayment_plan
+                         where contract_code not in (select distinct contract_code from snapshot)
+                         and contract_code in
+                            <foreach collection="contractCodeList" item="contractCode" index="index" open="(" separator="," close=")">
+                                #{contractCode}
+                            </foreach>
+                            and del_flag = '0'
+                         group by contract_code, to_char(plan_date, 'yyyy-MM'))
+        select * from snapshot union all select * from current
+    </select>
+
+
+    <select id="outstandingAmountCashFlowSum" parameterType="com.utfinancing.financehub.engine.finance.model.dto.OutstandingAmountCashFlowSumInputDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.OutstandingAmountCashFlowSumDTO">
+
+        select
+            oai.contract_code as contractCode ,
+            coalesce(hy.cashFlowSum,0) as cashFlowSum,
+            oai.end_balance_for oustandingAmount,
+            oaia.end_balance_for residualValueAmount,
+            (coalesce(hy.cashFlowSum,0) + (coalesce(oai.end_balance_for, 0) + coalesce(na.service_no_amortization_amout, 0))) * -1 as cashflowInit
+        from (
+            select
+                contract_code contractCode,
+                sum(cash_flow) cashFlowSum
+            from eg_repayment_plan
+            where
+                del_flag ='0' and plan_date <![CDATA[>]]> #{params.initDate}
+                group by contract_code
+                order by contract_code
+        ) hy
+        right join (
+            select contract_code, account_number, sum(end_balance_for) end_balance_for  from eg_outstanding_amount_init
+            where account_number in ('1532.01', '1505.03.02') and coalesce(end_balance_for, 0) != 0
+            group by contract_code , account_number
+        ) oai on hy.contractCode = oai.contract_code
+        left join eg_service_no_amortization na on na.contract_code = hy.contractCode
+        left join (
+            select contract_code, account_number, sum(end_balance_for) end_balance_for  from eg_outstanding_amount_init
+            where account_number = '1531.01.03'
+            group by contract_code , account_number
+        ) oaia on hy.contractCode = oaia.contract_code
+        where oai.contract_code is not null
+        <if test="params.contractCode != '' and params.contractCode != null">
+            and  oai.contract_code = #{params.contractCode}
+        </if>
+    </select>
+
+</mapper>
+

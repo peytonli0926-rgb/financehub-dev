@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.approve.mapper.ApproveMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.approve.entity.ApproveEntity">
+                    <id column="id" property="id" />
+                    <result column="document_id" property="documentId" />
+                    <result column="document_type" property="documentType" />
+                    <result column="document_status" property="documentStatus" />
+                    <result column="submitter_num" property="submitterNum" />
+                    <result column="submitter_name" property="submitterName" />
+                    <result column="approver_num" property="approverNum" />
+                    <result column="approver_name" property="approverName" />
+                    <result column="submit_date" property="submitDate" />
+                    <result column="approver_date" property="approverDate" />
+                    <result column="url" property="url"/>
+                    <result column="remark" property="remark" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, document_id, document_type, document_status, submitter_num, submitter_name, approver_num, approver_name, submit_date, approver_date, remark, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+        <delete id="physicalDeleteByDocuments">
+            delete from eg_approve
+            where document_type = #{documentType}
+              and document_id in
+            <foreach collection="documentIds" item="documentId" open="(" separator="," close=")">
+                #{documentId}
+            </foreach>
+        </delete>
+</mapper>
+

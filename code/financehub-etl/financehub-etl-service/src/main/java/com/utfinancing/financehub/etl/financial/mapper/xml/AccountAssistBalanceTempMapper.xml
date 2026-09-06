@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.AccountAssistBalanceTempMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.AccountAssistBalanceTempEntity">
+                    <id column="id" property="id" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="bill_contract_code" property="billContractCode" />
+                    <result column="currency_code" property="currencyCode" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_name" property="accountName" />
+                    <result column="year_begin_debit_balance" property="yearBeginDebitBalance" />
+                    <result column="year_begin_credit_balance" property="yearBeginCreditBalance" />
+                    <result column="month_begin_debit_balance" property="monthBeginDebitBalance" />
+                    <result column="month_begin_credit_balance" property="monthBeginCreditBalance" />
+                    <result column="month_debit_amount" property="monthDebitAmount" />
+                    <result column="month_credit_amount" property="monthCreditAmount" />
+                    <result column="year_debit_amount" property="yearDebitAmount" />
+                    <result column="year_credit_amount" property="yearCreditAmount" />
+                    <result column="month_end_debit_balance" property="monthEndDebitBalance" />
+                    <result column="month_end_credit_balance" property="monthEndCreditBalance" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, period_code, contract_code, client_code, business_code, org_id, bill_contract_code, currency_code, account_code, account_name, year_begin_debit_balance, year_begin_credit_balance, month_begin_debit_balance, month_begin_credit_balance, month_debit_amount, month_credit_amount, year_debit_amount, year_credit_amount, month_end_debit_balance, month_end_credit_balance, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+
+        <update id="batchUpdateYearBeginDataByFirstMonth">
+            with first_month as(
+                select * from eg_account_assist_balance_temp_fist_month eaabtfm
+            )
+            update eg_account_assist_balance_temp tmp
+            set year_begin_debit_balance = coalesce(first_month.year_begin_debit_balance,0),
+                year_begin_credit_balance  = coalesce(first_month.year_begin_credit_balance,0)
+                from first_month
+            where tmp.period_code = #{periodCode}
+              and coalesce(tmp.contract_code,'') = coalesce(first_month.contract_code,'')
+              and coalesce(tmp.client_code,'') = coalesce(first_month.client_code,'')
+              and coalesce(tmp.business_code,'') = coalesce(first_month.business_code,'')
+              and coalesce(tmp.org_id,'') = coalesce(first_month.org_id,'')
+              and coalesce(tmp.bill_contract_code,'') = coalesce(first_month.bill_contract_code,'')
+              and coalesce(tmp.currency_code,'') = coalesce(first_month.currency_code,'')
+              and coalesce(tmp.account_code,'') = coalesce(first_month.account_code,'')
+        </update>
+
+        <update id="batchUpdateYearBeginDataElseByFirstMonth">
+            update eg_account_assist_balance_temp tmp
+            set year_begin_debit_balance = 0,
+            year_begin_credit_balance  = 0
+            where period_code = #{periodCode}
+            and year_begin_debit_balance is null and year_begin_credit_balance is null
+        </update>
+
+        <insert id="syncIntoAccountAssist">
+            insert into eg_account_assist_balance
+            select * from eg_account_assist_balance_temp
+            where period_code = #{periodCode}
+        </insert>
+
+        <delete id="deleteTable">
+            truncate table eg_account_assist_balance_temp
+        </delete>
+</mapper>
+

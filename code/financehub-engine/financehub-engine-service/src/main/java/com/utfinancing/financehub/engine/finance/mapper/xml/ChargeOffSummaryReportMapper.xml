@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ChargeOffSummaryReportMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ChargeOffSummaryReportEntity">
+                    <id column="id" property="id" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="verification_status" property="verificationStatus" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="verification_date" property="verificationDate" />
+                    <result column="financial_expense_amount" property="financialExpenseAmount" />
+                    <result column="provision_reversal_amount" property="provisionReversalAmount" />
+                    <result column="provision_reversal_year" property="provisionReversalYear" />
+                    <result column="tax_verification_date" property="taxVerificationDate" />
+                    <result column="tax_verification_amount" property="taxVerificationAmount" />
+                    <result column="bad_debt_write_off_balance" property="badDebtWriteOffBalance" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, period_code, contract_code, org_id, verification_status, client_code, client_name, verification_date, financial_expense_amount, provision_reversal_amount, provision_reversal_year, tax_verification_date, tax_verification_amount, bad_debt_write_off_balance, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="summaryPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffSummaryReportVO">
+        select
+        #{param.periodCode} period_code,
+        d.contract_code,
+        d.org_id,
+        d.verification_status,
+        d.client_code,
+        d.client_name,
+        d.verification_date,
+        d.tax_verification_date,
+        max(coalesce(d.tax_verification_amount, 0)) as tax_verification_amount,
+        max(coalesce(d.financial_expense_amount, 0)) as financial_expense_amount,
+        sum(coalesce(d.provision_reversal_amount, 0)) as provision_reversal_amount,
+        max(coalesce(d.bad_debt_write_off_balance, 0)) as bad_debt_write_off_balance
+        from
+        eg_charge_off_summary_report d
+        where
+        1 = 1
+        and d.period_code=#{param.periodCode}
+        and d.del_flag =  '0'
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and d.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.clientName!=null and param.clientName!=''">
+            and d.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and d.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and d.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.verificationStatusList != null and param.verificationStatusList.size > 0">
+            and d.verification_status in
+            <foreach item="item" index="index" collection="param.verificationStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startVerificationDate!=null">
+            and to_char(d.verification_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{param.startVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endVerificationDate!=null">
+            and to_char(d.verification_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{param.endVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.startTaxVerificationDate!=null">
+            and to_char(d.tax_verification_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{param.startTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endTaxVerificationDate!=null">
+            and to_char(d.tax_verification_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{param.endTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        group by
+        d.contract_code,
+        d.org_id,
+        d.verification_status,
+        d.client_code,
+        d.client_name,
+        d.verification_date,
+        d.tax_verification_date
+    </select>
+    <select id="summaryDetailPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffSummaryReportVO">
+        select
+        c.*
+        from
+        eg_charge_off_summary_report c
+        where
+        c.period_code = #{param.periodCode}
+        and c.del_flag =  '0'
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and c.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and c.org_id = #{param.orgId}
+        </if>
+        <if test="param.verificationStatus!=null and param.verificationStatus!=''">
+            and c.verification_status = #{param.verificationStatus}
+        </if>
+        <if test="param.verificationDate!=null">
+            and c.verification_date = #{param.verificationDate}
+        </if>
+        order by
+        c.provision_reversal_year asc
+    </select>
+</mapper>
+

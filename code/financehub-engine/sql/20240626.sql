@@ -1,0 +1,1 @@
+ALTER TABLE financialdb.eg_non_confirm_collection_account_checking ALTER COLUMN account_checking_comments TYPE varchar(1000) USING account_checking_comments::varchar;

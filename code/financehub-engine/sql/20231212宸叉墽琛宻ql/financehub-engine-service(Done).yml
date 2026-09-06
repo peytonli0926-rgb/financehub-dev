@@ -1,0 +1,5 @@
+service:
+  parth: http://finhub.utfinancing.com
+approve:
+  url:
+    verification-url: /rentBusiness/verification?id=

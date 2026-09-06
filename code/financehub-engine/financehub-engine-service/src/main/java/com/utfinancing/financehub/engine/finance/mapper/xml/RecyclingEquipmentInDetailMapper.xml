@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RecyclingEquipmentInDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RecyclingEquipmentInDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="inbound_date" property="inboundDate" />
+                    <result column="org_id" property="orgId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="client_name" property="clientName" />
+                    <result column="receivable_rent_balance" property="receivableRentBalance" />
+                    <result column="receivable_residual_value_balance" property="receivableResidualValueBalance" />
+                    <result column="receivable_outtax_balance" property="receivableOuttaxBalance" />
+                    <result column="unrealized_revenue_balance" property="unrealizedRevenueBalance" />
+                    <result column="lessee_margin_balance" property="lesseeMarginBalance" />
+                    <result column="financial_exposure" property="financialExposure" />
+                    <result column="recycling_equipment_cost" property="recyclingEquipmentCost" />
+                    <result column="provision_for_impairment" property="provisionForImpairment" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="recycle_id" property="recycleId" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, inbound_date, org_id, contract_code, contract_status, client_name, receivable_rent_balance, receivable_residual_value_balance, receivable_outtax_balance, unrealized_revenue_balance, lessee_margin_balance, financial_exposure, recycling_equipment_cost, provision_for_impairment, is_generate_voucher, del_flag, create_by, create_time, update_by, update_time, recycle_id
+        </sql>
+
+
+<!--    <select id="getCheckData" resultType="com.utfinancing.financehub.engine.finance.model.vo.RecyclingEquipmentInCheckVO">-->
+<!--        select tab_a.contract_code,tab_a.client_code,tab_a.org_id-->
+<!--             ,tab_a.receivable_rent_balance+COALESCE(tab_b.receivable_rent_amount,0) as receivable_rent_balance-->
+<!--             ,tab_a.receivable_residual_value_balance+COALESCE(tab_b.receivable_residual_value_amount,0) as receivable_rent_balance-->
+<!--             ,tab_a.receivable_outtax_balance+COALESCE(tab_b.receivable_outtax_amount,0) as receivable_rent_balance-->
+<!--             ,tab_a.unrealized_revenue_balance+COALESCE(tab_b.unrealized_revenue_amount,0) as receivable_rent_balance-->
+<!--             ,tab_a.lessee_margin_balance+COALESCE(tab_b.lessee_margin_amount,0) as receivable_rent_balance-->
+<!--        from-->
+<!--            (select ecbl.contract_code,ecbl.client_code ,ecbl.org_id , sum(ecbl.receivable_rent_balance) receivable_rent_balance, sum(ecbl.receivable_residual_value_balance) receivable_residual_value_balance,-->
+<!--                    sum(ecbl.receivable_outtax_balance) receivable_outtax_balance, sum(ecbl.unrealized_revenue_balance) unrealized_revenue_balance, sum(ecbl.lessee_margin_balance) lessee_margin_balance-->
+<!--             from eg_contract_balance_latest ecbl-->
+<!--             where exists (select 1 from eg_recycling_equipment_in_detail ereid where ereid.inbound_date = #{inboundDate} and ereid.org_id = #{orgId} and ecbl.contract_code=ereid.contract_code and ecbl.org_id=ereid.org_id and ecbl.client_code=ereid.client_code)-->
+
+<!--             group by ecbl.contract_code ,ecbl.org_id,ecbl.client_code) tab_a-->
+<!--                left join-->
+<!--            (select ecbt.contract_code,ecbt.client_code ,ecbt.org_id , sum(ecbt.receivable_rent_amount) receivable_rent_amount, sum(ecbt.receivable_residual_value_amount) receivable_residual_value_amount,-->
+<!--                    sum(ecbt.receivable_outtax_amount) receivable_outtax_amount, sum(ecbt.unrealized_revenue_amount) unrealized_revenue_amount, sum(ecbt.lessee_margin_amount) lessee_margin_amount-->
+<!--             from eg_contract_balance_temp ecbt-->
+<!--             where ecbt.scene_code  = 'CWRK'-->
+<!--               and to_char(ecbt.voucher_date , 'YYYY-MM-DD') = #{inboundDate} and ecbt.period_code = #{periodCode} and ecbt.org_id = #{orgId}-->
+<!--               and exists(select 1 from-->
+<!--                 (select max(tmp.voucher_id) voucher_id,tmp.contract_code,tmp.org_id,tmp.client_code  from eg_contract_balance_temp tmp-->
+<!--                  where tmp.scene_code  = 'CWRK'-->
+<!--                    and to_char(tmp.voucher_date , 'YYYY-MM-DD') = #{inboundDate} and tmp.period_code = #{periodCode} and tmp.org_id = #{orgId}-->
+<!--                  group by tmp.contract_code,tmp.org_id,tmp.client_code-->
+<!--                 )max_tmp where ecbt.contract_code = max_tmp.contract_code-->
+<!--                            and ecbt.org_id = max_tmp.org_id-->
+<!--                            and ecbt.voucher_id = max_tmp.voucher_id-->
+<!--                            and ecbt.client_code = max_tmp.client_code-->
+<!--             )group by ecbt.contract_code,ecbt.org_id,ecbt.client_code) tab_b-->
+<!--            on tab_a.contract_code = tab_b.contract_code and tab_a.org_id = tab_b.org_id and tab_a.client_code = tab_b.client_code-->
+
+<!--    </select>-->
+    <select id="getCheckData" resultType="com.utfinancing.financehub.engine.finance.model.vo.RecyclingEquipmentInCheckVO">
+        select ereid.contract_code ,ereid.client_code,ereid.org_id
+             ,tab_a.receivable_rent_balance+COALESCE(tab_b.receivable_rent_amount,0) as receivable_rent_balance
+             ,tab_a.receivable_residual_value_balance+COALESCE(tab_b.receivable_residual_value_amount,0) as receivable_residual_value_balance
+             ,tab_a.receivable_outtax_balance+COALESCE(tab_b.receivable_outtax_amount,0) as receivable_outtax_balance
+             ,tab_a.unrealized_revenue_balance+COALESCE(tab_b.unrealized_revenue_amount,0) as unrealized_revenue_balance
+             ,tab_a.lessee_margin_balance+COALESCE(tab_b.lessee_margin_amount,0) as lessee_margin_balance
+        from
+            eg_recycling_equipment_in_detail ereid
+                left join
+            (select ecbl.contract_code,ecbl.org_id , sum(ecbl.receivable_rent_balance) receivable_rent_balance, sum(ecbl.receivable_residual_value_balance) receivable_residual_value_balance,
+                    sum(ecbl.receivable_outtax_balance) receivable_outtax_balance, sum(ecbl.unrealized_revenue_balance) unrealized_revenue_balance, sum(ecbl.lessee_margin_balance) lessee_margin_balance
+             from eg_contract_balance_latest ecbl
+             where exists (select 1 from eg_recycling_equipment_in_detail ereid where ereid.inbound_date = #{inboundDate} and ereid.org_id = #{orgId} and ecbl.contract_code=ereid.contract_code and ecbl.org_id=ereid.org_id )
+             group by ecbl.contract_code ,ecbl.org_id) tab_a
+            on ereid.contract_code = tab_a.contract_code and ereid.org_id = tab_a.org_id
+                left join
+            (select ecbt.contract_code,ecbt.org_id , sum(ecbt.receivable_rent_amount) receivable_rent_amount, sum(ecbt.receivable_residual_value_amount) receivable_residual_value_amount,
+                    sum(ecbt.receivable_outtax_amount) receivable_outtax_amount, sum(ecbt.unrealized_revenue_amount) unrealized_revenue_amount, sum(ecbt.lessee_margin_amount) lessee_margin_amount
+             from eg_contract_balance_temp ecbt
+             where ecbt.scene_code  = 'CWRK'
+               and to_char(ecbt.business_date , 'YYYY-MM-DD') = #{inboundDate} and ecbt.org_id =  #{orgId}
+             group by ecbt.contract_code,ecbt.org_id) tab_b
+            on tab_a.contract_code = tab_b.contract_code and tab_a.org_id = tab_b.org_id
+        where ereid.inbound_date = #{inboundDate} and ereid.org_id = #{orgId} and ereid.del_flag ='0'
+        <if test="recycleId!=null">
+            and ereid.recycle_id = #{recycleId}
+        </if>
+    </select>
+<!--    and to_char(ecbt.voucher_date , 'YYYY-MM-DD') = #{inboundDate} and ecbt.period_code = #{periodCode} and ecbt.org_id =  #{orgId}-->
+<!--    and exists(select 1 from-->
+<!--    (select max(tmp.voucher_id) voucher_id,tmp.contract_code,tmp.org_id  from eg_contract_balance_temp tmp-->
+<!--    where tmp.scene_code  = 'CWRK'-->
+<!--    and to_char(tmp.voucher_date , 'YYYY-MM-DD') = #{inboundDate} and tmp.period_code = #{periodCode} and tmp.org_id = #{orgId}-->
+<!--    group by tmp.contract_code,tmp.org_id-->
+<!--    )max_tmp where ecbt.contract_code = max_tmp.contract_code-->
+<!--    and ecbt.org_id = max_tmp.org_id-->
+<!--    and ecbt.voucher_id = max_tmp.voucher_id-->
+<!--    )-->
+
+    <select id="getProvision"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RecyclingEquipmentInDetailVO">
+        select * from eg_recycling_equipment_in_detail ereid
+        left join eg_recycling_equipment_in erei on erei.org_id =ereid.org_id
+        and erei.inbound_date =ereid.inbound_date and erei.del_flag ='0' and ereid.recycle_id = erei.id
+        where ereid.del_flag ='0'
+        and ereid.contract_code = #{contractCode}
+        and ereid.org_id = #{orgId}
+        <if test="processStatusList != null and processStatusList.size > 0">
+            and erei.process_status in
+            <foreach item="item" index="index" collection="processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by ereid.id desc
+        limit 1
+    </select>
+</mapper>
+

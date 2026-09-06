@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.LongRepaymentPlanMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.LongRepaymentPlanEntity">
+                    <id column="id" property="id" />
+                    <result column="long_receivable_number" property="longReceivableNumber" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="receivable_date" property="receivableDate" />
+                    <result column="receivable_total" property="receivableTotal" />
+                    <result column="receivable_principal" property="receivablePrincipal" />
+                    <result column="receivable_interest" property="receivableInterest" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, long_receivable_number, contract_code, receivable_date, receivable_total, receivable_principal, receivable_interest, voucher_id, account_date, error_info, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectPageByMapper"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.LongRepaymentPlanVO">
+        select elrp.*,
+        erp.actual_repayment_date ,
+        COALESCE(erp.actual_repayment_principal_amount, 0) + COALESCE(erp.actual_repayment_interes_amount, 0) as repaymentAmount,
+        eic.document_date as invoiceDate,
+        eic.tax_value as invoiceAmount
+        from eg_long_repayment_plan elrp
+        left join eg_repayment_plan erp on elrp.contract_code =erp.contract_code and elrp.receivable_date =erp.plan_date and erp.del_flag ='0'
+        left join (select contract_code ,plan_repay_date,max(document_date) as document_date,sum(tax_value) as tax_value
+        from eg_invoice_claim  where del_flag='0' group by contract_code ,plan_repay_date ) eic
+        on elrp.contract_code =eic.contract_code and elrp.receivable_date =eic.plan_repay_date
+        where elrp.del_flag ='0'
+        <if test="queryDTO.idList != null and queryDTO.idList.size() > 0">
+            and elrp.id in
+            <foreach collection="queryDTO.idList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.longRegisterIdList != null and queryDTO.longRegisterIdList.size() > 0">
+            and elrp.long_register_id in
+            <foreach collection="queryDTO.longRegisterIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by elrp.long_receivable_number ,elrp.contract_code  ,elrp.receivable_date
+    </select>
+</mapper>
+

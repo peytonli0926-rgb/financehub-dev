@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.DwsBzHetjyjgfyxDMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.DwsBzHetjyjgfyxDEntity">
+                    <id column="pt" property="pt" />
+                    <result column="vc_yewxtid" property="vcYewxtid" />
+                    <result column="vc_hetbh" property="vcHetbh" />
+                    <result column="vc_feiylx" property="vcFeiylx" />
+                    <result column="vc_feiymc" property="vcFeiymc" />
+                    <result column="dec_jiashj" property="decJiashj" />
+                    <result column="dec_jine" property="decJine" />
+                    <result column="dec_shuie" property="decShuie" />
+                    <result column="dec_shuil" property="decShuil" />
+                    <result column="vc_biz" property="vcBiz" />
+                    <result column="dec_feiybl" property="decFeiybl" />
+                    <result column="vc_jiesfs" property="vcJiesfs" />
+                    <result column="vc_shouzfx" property="vcShouzfx" />
+                    <result column="dt_chuangjsj" property="dtChuangjsj" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            pt, vc_yewxtid, vc_hetbh, vc_feiylx, vc_feiymc, dec_jiashj, dec_jine, dec_shuie, dec_shuil, vc_biz, dec_feiybl, vc_jiesfs, vc_shouzfx, dt_chuangjsj
+        </sql>
+
+        <select id="selectHetjyjgfyxByContractCode" parameterType="java.util.List" resultMap="BaseResultMap">
+            select
+                d.pt, d.vc_yewxtid, d.vc_hetbh, d.vc_feiylx, d.vc_feiymc, d.dec_jiashj, d.dec_jine, d.dec_shuie,
+                d.dec_shuil, dict1.vc_mingc vc_biz, d.dec_feiybl, dict2.vc_mingc vc_jiesfs, d.vc_shouzfx, d.dt_chuangjsj
+            from dws_bz_hetjyjgfyx_d d
+            left join dw_dict_data dict1 on d.vc_biz = dict1.vc_zhi and dict1.vc_fujdid ='biz'
+            left join dw_dict_data dict2 on d.vc_jiesfs = dict2.vc_zhi and dict2.vc_fujdid ='shouzfx'
+            where
+                d.vc_hetbh in
+                <foreach collection="contractCodeList" index="key" item="contractCode" open="(" separator="," close=")">
+                    #{contractCode}
+                </foreach>
+        </select>
+</mapper>
+

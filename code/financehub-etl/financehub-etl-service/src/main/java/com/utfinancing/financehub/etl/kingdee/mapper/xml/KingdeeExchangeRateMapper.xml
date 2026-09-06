@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.KingdeeExchangeRateMapper">
+
+    <select id="selectExchangeRateByQueryDate" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.CurrencyExchangeRateDTO">
+        SELECT TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') query_date,F.FNUMBER source_eas_code,F.FNAME_L2  source_eas_name,G.FNUMBER target_eas_code,
+               G.FNAME_L2 target_eas_name,R.FCONVERTRATE exchange_rate
+        FROM T_BD_EXCHANGERATE R
+                 INNER JOIN (SELECT MAX(FAVAILTIME) FAVAILTIME,FEXCHANGEAUXID
+                             FROM T_BD_EXCHANGERATE
+                             GROUP BY FEXCHANGEAUXID,TO_CHAR(FAVAILTIME ,'yyyyMMdd')
+        ) A ON R.FAVAILTIME = A.FAVAILTIME AND R.FEXCHANGEAUXID = A.FEXCHANGEAUXID
+                 INNER JOIN T_BD_EXCHANGEAUX E ON R.FEXCHANGEAUXID = E.FID
+                 INNER JOIN T_BD_CURRENCY F  ON E.FSOURCECURRENCYID = F.FID
+                 INNER JOIN T_BD_CURRENCY G  ON E.FTARGETCURRENCYID  = G.FID
+--         WHERE E.FTARGETCURRENCYID = 'dfd38d11-00fd-1000-e000-1ebdc0a8100dDEB58FDC'
+          AND TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') = #{queryDate}
+        ORDER BY TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') DESC
+    </select>
+
+    <select id="selectExchangeRateByQueryDateStartAndEnd" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.CurrencyExchangeRateDTO">
+        SELECT TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') query_date,F.FNUMBER source_eas_code,F.FNAME_L2  source_eas_name,G.FNUMBER target_eas_code,
+               G.FNAME_L2 target_eas_name,R.FCONVERTRATE exchange_rate
+        FROM T_BD_EXCHANGERATE R
+                 INNER JOIN (SELECT MAX(FAVAILTIME) FAVAILTIME,FEXCHANGEAUXID
+                             FROM T_BD_EXCHANGERATE
+                             GROUP BY FEXCHANGEAUXID,TO_CHAR(FAVAILTIME ,'yyyyMMdd')
+        ) A ON R.FAVAILTIME = A.FAVAILTIME AND R.FEXCHANGEAUXID = A.FEXCHANGEAUXID
+                 INNER JOIN T_BD_EXCHANGEAUX E ON R.FEXCHANGEAUXID = E.FID
+                 INNER JOIN T_BD_CURRENCY F  ON E.FSOURCECURRENCYID = F.FID
+                 INNER JOIN T_BD_CURRENCY G  ON E.FTARGETCURRENCYID  = G.FID
+--         WHERE E.FTARGETCURRENCYID = 'dfd38d11-00fd-1000-e000-1ebdc0a8100dDEB58FDC'
+            AND TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') &gt;= #{queryDateStart}
+            AND TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') &lt;= #{queryDateEnd}
+        ORDER BY TO_CHAR(R.FAVAILTIME ,'yyyy-MM-dd') DESC
+    </select>
+</mapper>
+

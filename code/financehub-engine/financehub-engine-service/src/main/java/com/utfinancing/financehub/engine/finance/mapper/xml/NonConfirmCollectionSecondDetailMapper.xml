@@ -1,0 +1,730 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.NonConfirmCollectionSecondDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.NonConfirmCollectionSecondDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="sum_id" property="sumId" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="system_name" property="systemName" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="business_happen_date" property="businessHappenDate" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="bank_amount" property="bankAmount" />
+                    <result column="remain_non_confirm_amount" property="remainNonConfirmAmount" />
+                    <result column="confirm_amount" property="confirmAmount" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="approve_id" property="approveId" />
+                    <result column="manual_voucher_ids" property="manualVoucherIds" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="write_off_voucher_id" property="writeOffVoucherId"/>
+                    <result column="wirte_off_voucher_exception" property="wirteOffVoucherException"/>
+            <result column="operation_type" property="operationType" />
+            <result column="auditor" property="auditor" />
+            <result column="auditor_name" property="auditorName" />
+            <result column="approve_time" property="approveTime" />
+            <result column="cur_claim_amount" property="curClaimAmount" />
+            <result column="write_off_detail_ids" property="writeOffDetailIds" />
+            <result column="is_relate_client_auxiliary_account" property="isRelateClientAuxiliaryAccount" />
+            <result column="voucher_ids" property="voucherIds" />
+            <result column="upload_file_id" property="uploadFileId" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, sum_id, system_code, system_name, business_date, business_happen_date, currency_type, bank_amount, remain_non_confirm_amount, confirm_amount, process_status, approve_id, manual_voucher_ids, create_by, create_time, update_by, update_time, del_flag, write_off_voucher_id, wirte_off_voucher_exception, operation_type, auditor, auditor_name, approve_time, cur_claim_amount, write_off_detail_ids, is_relate_client_auxiliary_account, voucher_ids, upload_file_id
+        </sql>
+
+    <select id="selectManualProcessData" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryManualProcessDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.ManualProcessListDTO">
+        select
+            csd.id,
+            csd.operation_type ,
+            csd.business_happen_date ,
+            cs.business_ebank_number ,
+            cs.ebank_serial_number ,
+            ebcrr.new_ebank_serial_number ,
+            ebcrr.claim_amount ,
+            ebcrr.income_ym_old ,
+            csd.process_status,
+            csd.manual_voucher_ids,
+            csd.write_off_voucher_id,
+            csd.voucher_ids
+        from
+            eg_non_confirm_collection_sum cs
+        inner join
+            eg_non_confirm_collection_second_detail csd on cs.id = csd.sum_id and csd.del_flag ='0'
+        inner join
+            eg_business_claim_repayment_record ebcrr on csd.id = ebcrr.non_confirm_second_detail_id and ebcrr.del_flag = '0'
+        where cs.del_flag = '0'
+            <if test="params.sumId != null and params.sumId != ''">
+                and cs.id = #{params.sumId}
+            </if>
+            <if test="params.detailId != null and params.detailId != ''">
+                and (csd.id = #{params.detailId} or csd.upload_file_id = #{params.detailId})
+            </if>
+            <if test="params.operationType != null and params.operationType != ''">
+                and csd.operation_type = #{params.operationType}
+            </if>
+            <if test="params.businessEbankNo != null and params.businessEbankNo != ''">
+                and cs.business_ebank_number like concat('%', #{params.businessEbankNo}::text, '%')
+            </if>
+            <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
+                and cs.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+            </if>
+            <if test="params.processStatus != null and params.processStatus != ''">
+                and csd.process_status = #{params.processStatus}
+            </if>
+        order by
+            csd.business_happen_date desc, csd.id
+    </select>
+
+    <select id="selectDetailData" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryDetailDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryDetailListDataSubDTO">
+        select
+            csd.id,
+            cs.collection_accounts_bank ,
+            cs.ebank_number ,
+            ebcrr.org_id ,
+            ebcrr.org_name,
+            ebcrr.scene_code,
+            ebcrr.scene_name,
+            cs.ebank_serial_number ,
+            cs.business_ebank_number ,
+            cs.collection_accounts_bank_no ,
+            ebcrr.system_code ,
+            csd.business_happen_date,
+            cs.business_date ,
+            cs.currency_type ,
+            coalesce(cs.bank_amount, 0) bank_amount,
+            coalesce(csd.remain_non_confirm_amount, 0) remain_non_confirm_amount,
+            (coalesce(cs.bank_amount, 0) - coalesce(csd.remain_non_confirm_amount,0)) as confirmed_amount,
+            ebcrr.contract_code ,
+            ebcrr.remark ebank_confirm_comments,
+            ebcrr.claim_amount,
+            csd.business_happen_date ebank_confirm_date,
+            ebcrr.batch_no,
+            csd.approve_time
+        from
+            eg_non_confirm_collection_sum cs
+        inner join
+            eg_non_confirm_collection_second_detail csd on cs.id = csd.sum_id and csd.del_flag ='0'
+        inner join
+            eg_business_claim_repayment_record ebcrr on csd.id = ebcrr.non_confirm_second_detail_id and ebcrr.del_flag = '0' and ebcrr.process_status in ('3','4')
+        where cs.del_flag = '0'
+            and cs.id = #{params.sumId}
+            <if test="params.ebankConfirmDateStart != null">
+                and csd.business_happen_date <![CDATA[>=]]> #{params.ebankConfirmDateStart}
+            </if>
+            <if test="params.ebankConfirmDateEnd != null">
+                and csd.business_happen_date <![CDATA[<=]]> #{params.ebankConfirmDateEnd}
+            </if>
+            <if test="params.ebankIncomeDateStart != null">
+                and cs.business_date <![CDATA[>=]]> #{params.ebankIncomeDateStart}
+            </if>
+            <if test="params.ebankIncomeDateEnd != null">
+                and cs.business_date <![CDATA[<=]]> #{params.ebankIncomeDateEnd}
+            </if>
+        union all
+        select
+            0 id,
+            cs.collection_accounts_bank ,
+            cs.ebank_number ,
+            ebcrr.org_id ,
+            ebcrr.org_name,
+            ebcrr.scene_code,
+            ebcrr.scene_name,
+            cs.ebank_serial_number ,
+            cs.business_ebank_number ,
+            cs.collection_accounts_bank_no ,
+            ebcrr.system_code ,
+            ebcrr.business_date business_happen_date,
+            cs.business_date ,
+            cs.currency_type ,
+            coalesce(cs.bank_amount,0) bank_amount,
+            (coalesce(cs.bank_amount,0) - coalesce(ebcrr.claim_amount, 0)) remain_non_confirm_amount,
+            coalesce(ebcrr.claim_amount,0) confirmed_amount,
+            ebcrr.contract_code ,
+            ebcrr.remark ebank_confirm_comments,
+            ebcrr.claim_amount ,
+            ebcrr.business_date ebank_confirm_date,
+            ebcrr.batch_no,
+            '1970-01-01 00:00:00' approve_time
+        from
+            eg_non_confirm_collection_sum cs
+        left join eg_business_claim_repayment_record ebcrr
+        on ebcrr.ebank_serial_number = ANY ( STRING_TO_ARRAY(cs.ebank_serial_number, ',')) and ebcrr.del_flag = '0' and ebcrr.batch_no = 1 and ebcrr.process_status in ('3','4')
+        where cs.del_flag = '0'
+            and cs.id = #{params.sumId}
+            and ebcrr.batch_no = 1
+            <if test="params.ebankConfirmDateStart != null">
+                and ebcrr.business_date <![CDATA[>=]]> #{params.ebankConfirmDateStart}
+            </if>
+            <if test="params.ebankConfirmDateEnd != null">
+                and ebcrr.business_date <![CDATA[<=]]> #{params.ebankConfirmDateEnd}
+            </if>
+            <if test="params.ebankIncomeDateStart != null">
+                and cs.business_date <![CDATA[>=]]> #{params.ebankIncomeDateStart}
+            </if>
+            <if test="params.ebankIncomeDateEnd != null">
+                and cs.business_date <![CDATA[<=]]> #{params.ebankIncomeDateEnd}
+            </if>
+        order by approve_time desc, business_date desc
+    </select>
+
+
+    <select id="selectThirdDetailForHy" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageListDataDTO">
+        select
+            ccs.collection_accounts_bank ,
+            STRING_AGG(ebcrr.org_id, ',') org_id,
+            STRING_AGG(ebcrr.org_name, ',') org_name ,
+            STRING_AGG(ebcrr.scene_code, ',') scene_code,
+            STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+            nm.online_bank_no business_ebank_number,
+            STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
+            STRING_AGG(ebcrr.system_code, ',') system_code ,
+            max(ebcrr.business_date) last_change_date,
+            ccs.business_date,
+            ccs.currency_type,
+            --coalesce(sum(nm.collect_amount), 0) as bank_amount,
+            coalesce(ccs.bank_amount, 0) as bank_amount,
+            --coalesce(sum(nm.collect_amount), 0) - coalesce(sum(ebcrr.claim_amount),0) as remain_non_confirm_amount,
+            coalesce(ccs.bank_amount, 0) - coalesce(sum(ebcrr.claim_amount),0) as remain_non_confirm_amount,
+            coalesce(sum(ebcrr.claim_amount), 0) as confirmed_amount,
+            ccs.collection_accounts_bank_no,
+            ccs.client_code ,
+            ccs.client_name ,
+            ccs.bank_summary,
+            ccs.comment,
+            ccs.client_accounts_bank_no,
+            STRING_AGG(ebcrr.remark , ',') remark
+        from
+            eg_non_confirm_collection_sum ccs
+        inner join
+            eg_hy_full_online_bank_batch_no_mapping nm on nm.online_bank_no = ANY(STRING_TO_ARRAY(ccs.business_ebank_number, ',')) and nm.del_flag ='0'
+        left join
+            eg_business_claim_repayment_record ebcrr on nm.deduct_batch_no = ebcrr.ebank_serial_number and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
+        where  ccs.del_flag = '0'
+            <if test="params.sumId != null and params.sumId != ''">
+                and ccs.id = #{params.sumId}
+            </if>
+            <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
+                and nm.online_bank_no like concat('%', #{params.businessEbankNumber}::text, '%')
+            </if>
+            <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
+                and ebcrr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+            </if>
+            <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
+                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+            </if>
+            <if test="params.businessDateStart != null">
+                and ccs.business_date <![CDATA[>=]]> #{params.businessDateStart}
+            </if>
+            <if test="params.businessDateEnd != null">
+                and ccs.business_date <![CDATA[<=]]> #{params.businessDateEnd}
+            </if>
+            <if test="params.clientName != null and params.clientName != ''">
+                and ccs.client_name like concat('%', #{params.clientName}::text, '%')
+            </if>
+        group by
+            ccs.collection_accounts_bank,
+            nm.online_bank_no,
+            ccs.business_date,
+            ccs.currency_type,
+            ccs.collection_accounts_bank_no,
+            ccs.client_code ,
+            ccs.client_name,
+            ccs.bank_summary,
+            ccs.comment,
+            ccs.client_accounts_bank_no,
+            ccs.bank_amount
+        <trim prefix="having" prefixOverrides="and">
+            <if test="params.lastChangeDateStart != null">
+                and max(ebcrr.business_date) <![CDATA[>=]]> #{params.lastChangeDateStart}
+            </if>
+            <if test="params.lastChangeDateEnd != null">
+                and max(ebcrr.business_date) <![CDATA[<=]]> #{params.lastChangeDateEnd}
+            </if>
+            <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount == '1'.toString()">
+                and sum(nm.collect_amount) - sum(ebcrr.claim_amount) != 0
+            </if>
+            <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount != '1'.toString()">
+                and sum(nm.collect_amount) - sum(ebcrr.claim_amount) = 0
+            </if>
+        </trim>
+        order by
+            last_change_date desc, business_ebank_number asc
+    </select>
+
+    <select id="selectThirdDetailForOther" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageListDataDTO">
+        select
+            ccs.collection_accounts_bank ,
+            STRING_AGG(ebcrr.org_id, ',') org_id,
+            STRING_AGG(ebcrr.org_name, ',') org_name ,
+            STRING_AGG(ebcrr.scene_code, ',') scene_code,
+            STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+            ccs.business_ebank_number  ,
+            STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
+            STRING_AGG(ebcrr.system_code, ',') system_code ,
+            max(ebcrr.business_date) last_change_date,
+            ccs.business_date,
+            ccs.currency_type,
+            coalesce(ccs.bank_amount, 0) as bank_amount,
+            coalesce(ccs.bank_amount, 0) - coalesce(sum(ebcrr.claim_amount), 0) as remain_non_confirm_amount,
+            coalesce(sum(ebcrr.claim_amount),0) as confirmed_amount,
+            ccs.collection_accounts_bank_no,
+            ccs.client_code ,
+            ccs.client_name ,
+            ccs.bank_summary,
+            ccs.comment,
+            ccs.client_accounts_bank_no,
+            STRING_AGG(ebcrr.remark , ',') remark
+        from
+            eg_non_confirm_collection_sum ccs
+        left join
+            eg_business_claim_repayment_record ebcrr on ccs.business_ebank_number = ebcrr.ebank_serial_number and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
+        where ccs.del_flag = '0'
+            <if test="params.sumId != null and params.sumId != ''">
+                and ccs.id = #{params.sumId}
+            </if>
+            <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
+                and ccs.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+            </if>
+            <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
+                and ebcrr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+            </if>
+            <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
+                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+            </if>
+            <if test="params.businessDateStart != null">
+                and ccs.business_date <![CDATA[>=]]> #{params.businessDateStart}
+            </if>
+            <if test="params.businessDateEnd != null">
+                and ccs.business_date <![CDATA[<=]]> #{params.businessDateEnd}
+            </if>
+            <if test="params.clientName != null and params.clientName != ''">
+                and ccs.client_name like concat('%', #{params.clientName}::text, '%')
+            </if>
+        group by
+            ccs.collection_accounts_bank,
+            ccs.business_ebank_number,
+            ccs.business_date,
+            ccs.currency_type,
+            ccs.collection_accounts_bank_no,
+            ccs.client_code ,
+            ccs.client_name,
+            ccs.bank_summary,
+            ccs.comment,
+            ccs.client_accounts_bank_no,
+            ccs.bank_amount
+        <trim prefix="having" prefixOverrides="and">
+            <if test="params.lastChangeDateStart != null">
+                and max(ebcrr.business_date) <![CDATA[>=]]> #{params.lastChangeDateStart}
+            </if>
+            <if test="params.lastChangeDateEnd != null">
+                and max(ebcrr.business_date) <![CDATA[<=]]> #{params.lastChangeDateEnd}
+            </if>
+            <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount == '1'.toString()">
+                and ccs.bank_amount - sum(ebcrr.claim_amount) != 0
+            </if>
+            <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount != '1'.toString()">
+                and ccs.bank_amount - sum(ebcrr.claim_amount) = 0
+            </if>
+        </trim>
+        order by
+            last_change_date desc, business_ebank_number asc
+    </select>
+
+    <select id="selectThirdDetailData" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageListDataDTO">
+        with hy_record as (
+            select
+                ccs.id,
+                ccs.collection_accounts_bank ,
+                STRING_AGG(ebcrr.org_id, ',') org_id,
+                STRING_AGG(ebcrr.org_name, ',') org_name ,
+                STRING_AGG(ebcrr.scene_code, ',') scene_code,
+                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                nm.online_bank_no business_ebank_number,
+                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
+                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                max(ebcrr.business_date) last_change_date,
+                ccs.business_date,
+                ccs.currency_type,
+                coalesce(nm.collect_amount,0) as bank_amount,
+                coalesce(nm.collect_amount,0) -  sum(coalesce(ebcrr.claim_amount,0)) as remain_non_confirm_amount,
+                sum(coalesce(ebcrr.claim_amount,0)) as confirmed_amount,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name ,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                STRING_AGG(ebcrr.remark , ';') remark
+            from
+                eg_non_confirm_collection_sum ccs
+            inner join
+                eg_hy_full_online_bank_batch_no_mapping nm on nm.sum_id = ccs.id and nm.del_flag ='0'
+            left join
+                eg_business_claim_repayment_record ebcrr on nm.deduct_batch_no = ebcrr.ebank_serial_number and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
+            where
+                ccs.del_flag = '0'
+            group by
+                ccs.id,
+                ccs.collection_accounts_bank,
+                nm.online_bank_no,
+                ccs.business_date,
+                ccs.currency_type,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                coalesce(nm.collect_amount,0)
+        ),
+        other_record as (
+            select
+                ccs.id,
+                ccs.collection_accounts_bank ,
+                STRING_AGG(ebcrr.org_id, ',') org_id,
+                STRING_AGG(ebcrr.org_name, ',') org_name ,
+                STRING_AGG(ebcrr.scene_code, ',') scene_code,
+                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                ccs.business_ebank_number  ,
+                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
+                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                max(ebcrr.business_date) last_change_date,
+                ccs.business_date,
+                ccs.currency_type,
+                coalesce(ccs.bank_amount,0) as bank_amount,
+                coalesce(ccs.bank_amount,0) - sum(coalesce(ebcrr.claim_amount,0)) as remain_non_confirm_amount,
+                sum(coalesce(ebcrr.claim_amount,0)) as confirmed_amount,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name ,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                STRING_AGG(ebcrr.remark , ';') remark
+            from
+                eg_non_confirm_collection_sum ccs
+            left join
+                eg_business_claim_repayment_record ebcrr on  ebcrr.ebank_serial_number = ccs.business_ebank_number  and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
+            where ccs.del_flag = '0'
+                and ccs.ebank_number = ccs.business_ebank_number
+                and ccs.ebank_number = ccs.ebank_serial_number
+            group by
+                ccs.id,
+                ccs.collection_accounts_bank,
+                ccs.business_ebank_number,
+                ccs.business_date,
+                ccs.currency_type,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                ccs.bank_amount
+        )
+        select
+            re.id,
+            re.collection_accounts_bank ,
+            re.org_id,
+            re.org_name ,
+            re.scene_code,
+            re.scene_name ,
+            re.business_ebank_number  ,
+            re.ebank_serial_number,
+            re.system_code ,
+            re.last_change_date,
+            re.business_date,
+            re.currency_type,
+            re.bank_amount,
+            re.remain_non_confirm_amount,
+            re.confirmed_amount,
+            re.collection_accounts_bank_no,
+            re.client_code ,
+            re.client_name ,
+            re.bank_summary,
+            re.comment,
+            re.client_accounts_bank_no,
+            re.remark
+        from (
+            select
+                hr.id,
+                hr.collection_accounts_bank ,
+                hr.org_id,
+                hr.org_name ,
+                hr.scene_code,
+                hr.scene_name ,
+                hr.business_ebank_number  ,
+                hr.ebank_serial_number,
+                hr.system_code ,
+                hr.last_change_date,
+                hr.business_date,
+                hr.currency_type,
+                hr.bank_amount,
+                hr.remain_non_confirm_amount,
+                hr.confirmed_amount,
+                hr.collection_accounts_bank_no,
+                hr.client_code ,
+                hr.client_name ,
+                hr.bank_summary,
+                hr.comment,
+                hr.client_accounts_bank_no,
+                hr.remark
+            from
+                hy_record hr
+            union all
+            select
+                orr.id,
+                orr.collection_accounts_bank ,
+                orr.org_id,
+                orr.org_name ,
+                orr.scene_code,
+                orr.scene_name ,
+                orr.business_ebank_number  ,
+                orr.ebank_serial_number,
+                orr.system_code ,
+                orr.last_change_date,
+                orr.business_date,
+                orr.currency_type,
+                orr.bank_amount,
+                orr.remain_non_confirm_amount,
+                orr.confirmed_amount,
+                orr.collection_accounts_bank_no,
+                orr.client_code ,
+                orr.client_name ,
+                orr.bank_summary,
+                orr.comment,
+                orr.client_accounts_bank_no,
+                orr.remark
+            from
+                other_record orr
+        ) re
+        where 1 = 1
+        <if test="params.sumId != null and params.sumId != ''">
+            and re.id = #{params.sumId}
+        </if>
+        <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
+            and re.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+        </if>
+        <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
+            and re.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+        </if>
+        <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
+            and re.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+        </if>
+        <if test="params.businessDateStart != null">
+            and re.business_date <![CDATA[>=]]> #{params.businessDateStart}
+        </if>
+        <if test="params.businessDateEnd != null">
+            and re.business_date <![CDATA[<=]]> #{params.businessDateEnd}
+        </if>
+        <if test="params.clientName != null and params.clientName != ''">
+            and re.client_name like concat('%', #{params.clientName}::text, '%')
+        </if>
+        <if test="params.lastChangeDateStart != null">
+            and re.last_change_date <![CDATA[>=]]> #{params.lastChangeDateStart}
+        </if>
+        <if test="params.lastChangeDateEnd != null">
+            and re.last_change_date <![CDATA[<=]]> #{params.lastChangeDateEnd}
+        </if>
+        <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount == '1'.toString()">
+            and re.remain_non_confirm_amount != 0
+        </if>
+        <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount != '1'.toString()">
+            and re.remain_non_confirm_amount = 0
+        </if>
+        order by last_change_date desc, business_ebank_number asc
+        limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+    </select>
+
+    <select id="selectThirdDetailDataCount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="java.lang.Integer">
+        with hy_record as (
+            select
+                ccs.id,
+                ccs.collection_accounts_bank ,
+                STRING_AGG(ebcrr.org_id, ',') org_id,
+                STRING_AGG(ebcrr.org_name, ',') org_name ,
+                STRING_AGG(ebcrr.scene_code, ',') scene_code,
+                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                nm.online_bank_no business_ebank_number,
+                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
+                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                max(ebcrr.business_date) last_change_date,
+                ccs.business_date,
+                ccs.currency_type,
+                coalesce(nm.collect_amount,0) as bank_amount,
+                coalesce(nm.collect_amount,0) -  sum(coalesce(ebcrr.claim_amount,0)) as remain_non_confirm_amount,
+                sum(coalesce(ebcrr.claim_amount,0)) as confirmed_amount,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name ,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                STRING_AGG(ebcrr.remark , ';') remark
+            from
+                eg_non_confirm_collection_sum ccs
+            inner join
+                eg_hy_full_online_bank_batch_no_mapping nm on nm.sum_id = ccs.id and nm.del_flag ='0'
+            left join
+                eg_business_claim_repayment_record ebcrr on nm.deduct_batch_no = ebcrr.ebank_serial_number and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
+            where
+                ccs.del_flag = '0'
+                group by
+                ccs.id,
+                ccs.collection_accounts_bank,
+                nm.online_bank_no,
+                ccs.business_date,
+                ccs.currency_type,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                coalesce(nm.collect_amount,0)
+        ),
+        other_record as (
+            select
+                ccs.id,
+                ccs.collection_accounts_bank ,
+                STRING_AGG(ebcrr.org_id, ',') org_id,
+                STRING_AGG(ebcrr.org_name, ',') org_name ,
+                STRING_AGG(ebcrr.scene_code, ',') scene_code,
+                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                ccs.business_ebank_number  ,
+                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
+                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                max(ebcrr.business_date) last_change_date,
+                ccs.business_date,
+                ccs.currency_type,
+                coalesce(ccs.bank_amount,0) as bank_amount,
+                coalesce(ccs.bank_amount,0) - sum(coalesce(ebcrr.claim_amount,0)) as remain_non_confirm_amount,
+                sum(coalesce(ebcrr.claim_amount,0)) as confirmed_amount,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name ,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                STRING_AGG(ebcrr.remark , ';') remark
+            from
+                eg_non_confirm_collection_sum ccs
+            left join
+                eg_business_claim_repayment_record ebcrr on  ebcrr.ebank_serial_number = ccs.business_ebank_number  and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
+            where ccs.del_flag = '0'
+                and ccs.ebank_number = ccs.business_ebank_number
+                and ccs.ebank_number = ccs.ebank_serial_number
+                group by
+                ccs.id,
+                ccs.collection_accounts_bank,
+                ccs.business_ebank_number,
+                ccs.business_date,
+                ccs.currency_type,
+                ccs.collection_accounts_bank_no,
+                ccs.client_code ,
+                ccs.client_name,
+                ccs.bank_summary,
+                ccs.comment,
+                ccs.client_accounts_bank_no,
+                ccs.bank_amount
+        )
+        select
+            count(1) as totalCount
+        from (
+            select
+                hr.id,
+                hr.collection_accounts_bank ,
+                hr.org_id,
+                hr.org_name ,
+                hr.scene_code,
+                hr.scene_name ,
+                hr.business_ebank_number  ,
+                hr.ebank_serial_number,
+                hr.system_code ,
+                hr.last_change_date,
+                hr.business_date,
+                hr.currency_type,
+                hr.bank_amount,
+                hr.remain_non_confirm_amount,
+                hr.confirmed_amount,
+                hr.collection_accounts_bank_no,
+                hr.client_code ,
+                hr.client_name ,
+                hr.bank_summary,
+                hr.comment,
+                hr.client_accounts_bank_no,
+                hr.remark
+            from
+                hy_record hr
+            union all
+            select
+                orr.id,
+                orr.collection_accounts_bank ,
+                orr.org_id,
+                orr.org_name ,
+                orr.scene_code,
+                orr.scene_name ,
+                orr.business_ebank_number  ,
+                orr.ebank_serial_number,
+                orr.system_code ,
+                orr.last_change_date,
+                orr.business_date,
+                orr.currency_type,
+                orr.bank_amount,
+                orr.remain_non_confirm_amount,
+                orr.confirmed_amount,
+                orr.collection_accounts_bank_no,
+                orr.client_code ,
+                orr.client_name ,
+                orr.bank_summary,
+                orr.comment,
+                orr.client_accounts_bank_no,
+                orr.remark
+            from
+                other_record orr
+        ) re
+        where 1 = 1
+        <if test="params.sumId != null and params.sumId != ''">
+            and re.id = #{params.sumId}
+        </if>
+        <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
+            and re.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+        </if>
+        <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
+            and re.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+        </if>
+        <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
+            and re.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+        </if>
+        <if test="params.businessDateStart != null">
+            and re.business_date <![CDATA[>=]]> #{params.businessDateStart}
+        </if>
+        <if test="params.businessDateEnd != null">
+            and re.business_date <![CDATA[<=]]> #{params.businessDateEnd}
+        </if>
+        <if test="params.clientName != null and params.clientName != ''">
+            and re.client_name like concat('%', #{params.clientName}::text, '%')
+        </if>
+        <if test="params.lastChangeDateStart != null">
+            and re.last_change_date <![CDATA[>=]]> #{params.lastChangeDateStart}
+        </if>
+        <if test="params.lastChangeDateEnd != null">
+            and re.last_change_date <![CDATA[<=]]> #{params.lastChangeDateEnd}
+        </if>
+        <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount == '1'.toString()">
+            and re.remain_non_confirm_amount != 0
+        </if>
+        <if test="params.isZeroForNonConfirmAmount != null and params.isZeroForNonConfirmAmount != '1'.toString()">
+            and re.remain_non_confirm_amount = 0
+        </if>
+    </select>
+</mapper>
+

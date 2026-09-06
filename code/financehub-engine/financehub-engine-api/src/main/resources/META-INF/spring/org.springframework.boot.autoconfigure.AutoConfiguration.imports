@@ -1,0 +1,3 @@
+com.utfinancing.financehub.engine.fallback.RuleFacadeFallBack
+com.utfinancing.financehub.engine.fallback.VerificationFacadeFallBack
+com.utfinancing.financehub.engine.fallback.FieldMappingFacadeFallBack

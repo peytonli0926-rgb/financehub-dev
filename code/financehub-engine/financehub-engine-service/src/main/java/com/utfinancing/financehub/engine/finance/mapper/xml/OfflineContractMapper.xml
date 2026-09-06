@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.OfflineContractMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.OfflineContractEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="invoice_type" property="invoiceType" />
+                    <result column="lease_type" property="leaseType" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="income_calculate" property="incomeCalculate" />
+                    <result column="income_provision_method" property="incomeProvisionMethod" />
+                    <result column="invoicing_flag" property="invoicingFlag" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="submit_by" property="submitBy" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, contract_name, client_code, client_name, org_id, lease_date_start, lease_date_end, invoice_type, lease_type, currency_type, tax_rate, income_calculate, income_provision_method, invoicing_flag, process_status, is_generate_voucher, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

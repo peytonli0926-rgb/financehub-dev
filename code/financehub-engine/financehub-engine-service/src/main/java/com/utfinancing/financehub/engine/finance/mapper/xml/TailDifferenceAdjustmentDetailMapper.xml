@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.TailDifferenceAdjustmentDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.TailDifferenceAdjustmentDetailEntity">
+        <id column="id" property="id"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="org_id" property="orgId"/>
+        <result column="account_code" property="accountCode"/>
+        <result column="account_name" property="accountName"/>
+        <result column="business_date" property="businessDate"/>
+        <result column="account_date" property="accountDate"/>
+        <result column="account_balance" property="accountBalance"/>
+        <result column="tail_difference_adjustment_id" property="tailDifferenceAdjustmentId"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="voucher_ids" property="voucherIds"/>
+        <result column="receivable_rent" property="receivableRent"/>
+        <result column="receivable_residual_value" property="receivableResidualValue"/>
+        <result column="payable_device" property="payableDevice"/>
+        <result column="payable_other" property="payableOther"/>
+        <result column="contract_status" property="contractStatus"/>
+        <result column="rental_income_after_total" property="rentalIncomeAfterTotal"/>
+        <result column="rental_income_after_lease_total" property="rentalIncomeAfterLeaseTotal"/>
+        <result column="overdue_days" property="overdueDays"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="error_info" property="errorInfo"/>
+        <result column="business_code" property="businessCode"/>
+    </resultMap>
+    <!--  通用查询结果列  -->
+    <sql id="Base_Column_List"> id, contract_code, org_id, account_code, account_name, business_date, account_date, account_balance, tail_difference_adjustment_id, del_flag, create_by, create_time, update_by, update_time, voucher_ids, receivable_rent, receivable_residual_value, payable_device, payable_other, contract_status, rental_income_after_total, rental_income_after_lease_total, overdue_days, client_code,error_info,business_code</sql>
+    <sql id="eg_contract_balance_uni_eg_contract_balance_month">
+        select t.contract_code,
+               t.client_code,
+               t.org_id,
+               t.business_code,
+               sum(t.${param.fundTypeAmount}) ${param.fundTypeBalance},
+               sum(t.receivable_rent_amount)           receivable_rent_balance,
+               sum(t.receivable_residual_value_amount) receivable_residual_value_balance,
+               sum(t.payable_device_amount)            payable_device_balance,
+               sum(t.payable_other_amount)             payable_other_balance
+        from (select contract_code,
+                     client_code,
+                     org_id,
+                     business_code,
+                     ${param.fundTypeAmount} ${param.fundTypeAmount},
+                     receivable_rent_amount,
+                     receivable_residual_value_amount,
+                     payable_device_amount,
+                     payable_other_amount
+              from eg_contract_balance
+              where period_code =  #{param.periodCode}
+              union all
+              select contract_code,
+                     client_code,
+                     org_id,
+                     business_code,
+                     ${param.fundTypeBalance} ${param.fundTypeBalance},
+                     receivable_rent_balance           receivable_rent_amount,
+                     receivable_residual_value_balance receivable_residual_value_amount,
+                     payable_device_balance            payable_device_amount,
+                     payable_other_balance             payable_other_amount
+              from eg_contract_balance_month
+              where period_code = #{param.lastPeriodCode}) t
+        group by t.contract_code, t.client_code, t.org_id, t.business_code
+    </sql>
+    <insert id="initInsertData">
+        WITH filtered_temp AS (
+            SELECT
+                org_id,
+                contract_code,
+                #{param.accountCode} AS account_code,
+                #{param.accountName} AS account_name,
+                sum(COALESCE(${param.fundTypeBalance}, 0)) AS account_balance,
+                sum(COALESCE(receivable_rent_balance, 0)) AS receivable_rent,
+                sum(COALESCE(receivable_residual_value_balance, 0)) AS receivable_residual_value,
+                sum(COALESCE(payable_device_balance, 0)) AS payable_device,
+                sum(COALESCE(payable_other_balance, 0)) AS payable_other,
+                sum(COALESCE(receive_sum_balance, 0)) AS receive_sum_balance
+            FROM
+            eg_tdad_contract_balance_temp
+            GROUP BY
+            org_id,
+            contract_code
+            <if test="param.minAccountBalance!=null and param.maxAccountBalance!=null">
+                HAVING 1 = 1
+                <if test="param.minAccountBalance!=null ">
+                    AND SUM(${param.fundTypeBalance}) <![CDATA[>=]]> -1
+                </if>
+                <if test="param.maxAccountBalance!=null">
+                    AND SUM(${param.fundTypeBalance}) <![CDATA[<=]]> 1
+                </if>
+                and SUM(${param.fundTypeBalance}) <![CDATA[<>]]> 0
+            </if>
+        ),
+        main_temp AS (
+            SELECT
+            tm.org_id,
+            tm.business_code,
+            tm.contract_code,
+            tm.client_code,
+            #{param.accountCode} AS account_code,
+            #{param.accountName} AS account_name,
+            sum(COALESCE(tm.${param.fundTypeBalance}, 0)) AS account_balance,
+            sum(COALESCE(tm.receivable_rent_balance, 0)) AS receivable_rent,
+            sum(COALESCE(tm.receivable_residual_value_balance, 0)) AS receivable_residual_value,
+            sum(COALESCE(tm.payable_device_balance, 0)) AS payable_device,
+            sum(COALESCE(tm.payable_other_balance, 0)) AS payable_other
+            FROM
+            eg_tdad_contract_balance_temp tm
+            JOIN
+            filtered_temp tm1
+            ON
+            tm.org_id = tm1.org_id
+            AND tm.contract_code = tm1.contract_code
+            WHERE
+            tm.${param.fundTypeBalance} <![CDATA[<>]]> 0
+            and tm.business_code = #{param.businessCode}
+            group by tm.org_id,  tm.contract_code, tm.client_code, tm.business_code
+        )
+        INSERT INTO
+        eg_tail_difference_adjustment_detail (
+        org_id,
+        business_code,
+        contract_code,
+        client_code,
+        account_code,
+        account_name,
+        account_balance,
+        receivable_rent,
+        receivable_residual_value,
+        payable_device,
+        payable_other,
+        contract_status,
+        overdue_days,
+        rental_income_after_total,
+        rental_income_after_lease_total,
+        business_date,
+        create_time,
+        lease_date_end,
+        tax_rate,
+        receive_sum
+        )
+        SELECT
+        -- 明确列出需要的列，避免使用 a.*
+        a.org_id,
+        ec.business_code,
+        a.contract_code,
+        ec.client_code,
+        a.account_code,
+        a.account_name,
+        a.account_balance,
+        a.receivable_rent,
+        a.receivable_residual_value,
+        a.payable_device,
+        a.payable_other,
+        ec.contract_status,
+        l.overdue_days,
+        CASE WHEN '博远' = ec.special_flag THEN l.rental_income_after_total END AS rental_income_after_total,
+        CASE WHEN '博远' != ec.special_flag THEN l.rental_income_after_total END AS rental_income_after_lease_total,
+        #{param.businessDate}::timestamp,
+        CURRENT_TIMESTAMP,
+        ec.lease_date_end,
+        ec.tax_rate,
+        a.receive_sum_balance
+        FROM
+        filtered_temp a
+        LEFT JOIN
+        eg_contract_month ec
+        ON
+        ec.contract_code = a.contract_code
+        AND ec.org_id = a.org_id
+        AND ec.del_flag = '0'
+        LEFT JOIN
+        eg_lease_income_details l
+        ON
+        ec.business_code = l.business_code
+        AND a.contract_code = l.client_code
+        AND a.org_id = l.org_id
+        AND l.business_date = #{param.businessDate}
+        where
+            a.account_balance != 0
+            and ec.business_code = #{param.businessCode}
+    </insert>
+    <insert id="generateContractBalanceTempData">
+        insert
+        into eg_tdad_contract_balance_temp (contract_code,
+                                            client_code,
+                                            org_id,
+                                            business_code,
+                                            payable_agency_estimate_balance,
+                                            payable_band_cost_estimate_balance,
+                                            payable_device_estimate_balance,
+                                            payable_other_cost_estimate_balance,
+                                            payable_other_estimate_balance,
+                                            payable_pledge_estimate_balance,
+                                            payable_unpledge_estimate_balance,
+                                            payable_vehicle_estimate_balance,
+                                            receivable_outtax_balance,
+                                            receivable_service_outtax_balance,
+                                            receive_sum_outtax_balance,
+                                            receive_unrealized_revenue_balance,
+                                            unrealized_revenue_balance,
+                                            receivable_rent_balance,
+                                            receivable_residual_value_balance,
+                                            payable_device_balance,
+                                            payable_other_balance,
+                                            receive_sum_balance)
+        select contract_code,
+               client_code,
+               org_id,
+               business_code,
+               payable_agency_estimate_amount,
+               payable_band_cost_estimate_amount,
+               payable_device_estimate_amount,
+               payable_other_cost_estimate_amount,
+               payable_other_estimate_amount,
+               payable_pledge_estimate_amount,
+               payable_unpledge_estimate_amount,
+               payable_vehicle_estimate_amount,
+               receivable_outtax_amount,
+               receivable_service_outtax_amount,
+               receive_sum_outtax_amount,
+               receive_unrealized_revenue_amount,
+               unrealized_revenue_amount,
+               receivable_rent_amount,
+               receivable_residual_value_amount,
+               payable_device_amount,
+               payable_other_amount,
+               receive_sum_amount
+        from eg_contract_balance
+        where period_code = #{param.periodCode}
+          and org_id is not null
+          and contract_code is not null
+          and del_flag = '0'
+            and (payable_agency_estimate_amount <![CDATA[<>]]> 0 or
+            payable_band_cost_estimate_amount <![CDATA[<>]]> 0 or
+            payable_device_estimate_amount <![CDATA[<>]]> 0 or
+            payable_other_cost_estimate_amount <![CDATA[<>]]> 0 or
+            payable_other_estimate_amount <![CDATA[<>]]> 0 or
+            payable_pledge_estimate_amount <![CDATA[<>]]> 0 or
+            payable_unpledge_estimate_amount <![CDATA[<>]]> 0 or
+            payable_vehicle_estimate_amount <![CDATA[<>]]> 0 or
+            receivable_outtax_amount <![CDATA[<>]]> 0 or
+            receivable_service_outtax_amount <![CDATA[<>]]> 0 or
+            receive_sum_outtax_amount <![CDATA[<>]]> 0 or
+            receive_unrealized_revenue_amount <![CDATA[<>]]> 0 or
+            unrealized_revenue_amount <![CDATA[<>]]> 0 or
+            receivable_rent_amount <![CDATA[<>]]> 0 or
+            receivable_residual_value_amount <![CDATA[<>]]> 0 or
+            payable_device_amount <![CDATA[<>]]> 0 or
+            payable_other_amount <![CDATA[<>]]> 0)
+        union all
+        select contract_code,
+               client_code,
+               org_id,
+               business_code,
+               payable_agency_estimate_balance     payable_agency_estimate_amount,
+               payable_band_cost_estimate_balance  payable_band_cost_estimate_amount,
+               payable_device_estimate_balance     payable_device_estimate_amount,
+               payable_other_cost_estimate_balance payable_other_cost_estimate_amount,
+               payable_other_estimate_balance      payable_other_estimate_amount,
+               payable_pledge_estimate_balance     payable_pledge_estimate_amount,
+               payable_unpledge_estimate_balance   payable_unpledge_estimate_amount,
+               payable_vehicle_estimate_balance    payable_vehicle_estimate_amount,
+               receivable_outtax_balance           receivable_outtax_amount,
+               receivable_service_outtax_balance   receivable_service_outtax_amount,
+               receive_sum_outtax_balance          receive_sum_outtax_amount,
+               receive_unrealized_revenue_balance  receive_unrealized_revenue_amount,
+               unrealized_revenue_balance          unrealized_revenue_amount,
+               receivable_rent_balance             receivable_rent_amount,
+               receivable_residual_value_balance   receivable_residual_value_amount,
+               payable_device_balance              payable_device_amount,
+               payable_other_balance               payable_other_amount,
+               receive_sum_balance               receive_sum_amount
+        from eg_contract_balance_month
+        where period_code = #{param.lastPeriodCode}
+          and org_id is not null
+          and contract_code is not null
+          and del_flag = '0'
+            and (payable_agency_estimate_balance  <![CDATA[<>]]>  0 or
+            payable_band_cost_estimate_balance <![CDATA[<>]]> 0 or
+            payable_device_estimate_balance <![CDATA[<>]]> 0 or
+            payable_other_cost_estimate_balance <![CDATA[<>]]> 0 or
+            payable_other_estimate_balance <![CDATA[<>]]> 0 or
+            payable_pledge_estimate_balance <![CDATA[<>]]> 0 or
+            payable_unpledge_estimate_balance <![CDATA[<>]]> 0 or
+            payable_vehicle_estimate_balance <![CDATA[<>]]> 0 or
+            receivable_outtax_balance <![CDATA[<>]]> 0 or
+            receivable_service_outtax_balance <![CDATA[<>]]> 0 or
+            receive_sum_outtax_balance <![CDATA[<>]]> 0 or
+            receive_unrealized_revenue_balance <![CDATA[<>]]> 0 or
+            unrealized_revenue_balance <![CDATA[<>]]> 0 or
+            receivable_rent_balance <![CDATA[<>]]> 0 or
+            receivable_residual_value_balance <![CDATA[<>]]> 0 or
+            payable_device_balance <![CDATA[<>]]> 0 or
+            payable_other_balance <![CDATA[<>]]> 0)
+    </insert>
+    <update id="truncateContractBalanceTempData">
+        truncate table eg_tdad_contract_balance_temp
+    </update>
+
+    <select id="selectAllOrgIdAccountCode"
+            resultType="com.utfinancing.financehub.engine.finance.entity.TailDifferenceAdjustmentEntity">
+        select
+        distinct
+        org_id,
+        account_code,
+        account_name
+        from
+        eg_tail_difference_adjustment_detail t
+        where
+        1 = 1
+        and t.del_flag ='0'
+        and t.tail_difference_adjustment_id is null
+        group by
+        org_id,
+        account_code,
+        account_name
+    </select>
+    <select id="selectByParams"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.TailDifferenceAdjustmentDetailVO">
+        select
+        t.contract_code,
+        t.org_id,
+        t.account_code,
+        t.account_name,
+        t.business_date,
+        t.account_date,
+        t.account_balance,
+        t.voucher_ids,
+        t.receivable_rent,
+        t.receivable_residual_value,
+        t.payable_device,
+        t.payable_other,
+        t.contract_status,
+        t.rental_income_after_total,
+        t.rental_income_after_lease_total,
+        t.overdue_days,
+        t.client_code,
+        t.business_code,
+        t.lease_date_end,
+        t.receive_sum,
+        eoc.org_name as orgIdName,
+        CASE
+        WHEN tt.tax_rate is not null THEN tt.tax_rate
+        WHEN tt.tax_rate is  null and c.lease_type = '直租' THEN 0.13
+        WHEN tt.tax_rate is  null and c.lease_type = '回租' THEN 0.06
+        END AS tax_rate
+        from
+        eg_tail_difference_adjustment_detail t
+        inner join eg_tail_difference_adjustment t1 on
+        t.tail_difference_adjustment_id = t1.id
+        left join eg_org_company eoc on
+        t.org_id = eoc.org_id
+        and eoc.del_flag = '0'
+        inner join eg_contract_month c on t.contract_code = c.contract_code AND c.org_id = t.org_id AND c.del_flag = '0'
+        left join (select distinct tax.business_code,a.account_code,tax.lease_type,tax.tax_rate
+        from eg_tax_rate tax,eg_account a
+        where tax.fund_type = a.fund_type and tax.enable_flag = '1'
+        and tax.del_flag = '0') tt on t.business_code = tt.business_code and t.account_code = tt.account_code and c.lease_type = tt.lease_type
+        where
+        1 = 1
+        and t.del_flag = '0'
+        and t1.del_flag = '0'
+        <if test="param.tailDifferenceIdList != null and param.tailDifferenceIdList.size() > 0">
+            and t1.id in
+            <foreach collection="param.tailDifferenceIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectPageByParams"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.TailDifferenceAdjustmentDetailVO">
+        select * from (
+        select
+        t1.contract_code,
+        t1.org_id,
+        t1.account_code,
+        t1.account_name,
+        t1.business_date,
+        t1.account_date,
+        t1.contract_status,
+        t1.lease_date_end,
+        t1.tax_rate,
+        string_agg(voucher_ids, ',') AS voucher_ids,
+        sum(coalesce(t1.account_balance, 0)) as account_balance,
+        sum(coalesce(t1.receivable_rent, 0)) as receivable_rent,
+        sum(coalesce(t1.receivable_residual_value, 0)) as receivable_residual_value,
+        sum(coalesce(t1.payable_device, 0)) as payable_device,
+        sum(coalesce(t1.payable_other, 0)) as payable_other,
+        sum(coalesce(t1.rental_income_after_total, 0)) as rental_income_after_total,
+        sum(coalesce(t1.rental_income_after_lease_total, 0)) as rental_income_after_lease_total,
+        sum(coalesce(t1.receive_sum, 0)) as receive_sum
+        from
+        eg_tail_difference_adjustment t
+        inner join eg_tail_difference_adjustment_detail t1 on
+        t.id = t1.tail_difference_adjustment_id
+        where
+        1 = 1
+        and t.del_flag = '0'
+        and t1.del_flag = '0'
+        and t1.account_balance != 0
+        and t.id = #{param.tailDifferenceAdjustmentId}
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and t1.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.contractStatus!=null and param.contractStatus!=''">
+            and t1.contract_status = #{param.contractStatus}
+        </if>
+        <if test="param.contractStatusList != null and param.contractStatusList.size > 0">
+            and t1.contract_status in
+            <foreach item="item" index="index" collection="param.contractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        t1.contract_code,
+        t1.org_id,
+        t1.account_code,
+        t1.account_name,
+        t1.business_date,
+        t1.account_date,
+        t1.lease_date_end,
+        t1.tax_rate,
+        t1.contract_status
+        ) a where 1=1 and a.account_balance!=0
+    </select>
+</mapper>

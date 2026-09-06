@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.VoucherEntryDimensionValueMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.VoucherEntryDimensionValueEntity">
+                    <id column="id" property="id" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="dim" property="dim" />
+                    <result column="dim_value" property="dimValue" />
+                    <result column="source_system" property="sourceSystem" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, org_id, account_code, dim, dim_value, source_system
+        </sql>
+</mapper>
+

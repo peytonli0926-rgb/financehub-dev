@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ParityTransferMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ParityTransferEntity">
+                    <id column="id" property="id" />
+                    <result column="batch" property="batch" />
+                    <result column="transfer_party" property="transferParty" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="transferee_party" property="transfereeParty" />
+                    <result column="reference_date" property="referenceDate" />
+                    <result column="trade_date" property="tradeDate" />
+                    <result column="transfer_price" property="transferPrice" />
+                    <result column="contract_num" property="contractNum" />
+                    <result column="is_invoice_flag" property="isInvoiceFlag" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="approve_error_info" property="approveErrorInfo" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, batch, transfer_party, business_date, account_date, transferee_party, reference_date, trade_date, transfer_price, contract_num, is_invoice_flag, process_instance_id, process_status, is_generate_voucher, period_code, approve_error_info, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+</mapper>
+

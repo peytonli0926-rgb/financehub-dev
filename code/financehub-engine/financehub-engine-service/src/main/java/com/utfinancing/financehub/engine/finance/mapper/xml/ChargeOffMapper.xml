@@ -1,0 +1,1239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ChargeOffMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ChargeOffEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="verification_status" property="verificationStatus" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="verification_date" property="verificationDate" />
+                    <result column="financial_expense_amount" property="financialExpenseAmount" />
+                    <result column="provision_reversal_amount" property="provisionReversalAmount" />
+                    <result column="provision_reversal_year" property="provisionReversalYear" />
+                    <result column="tax_verification_date" property="taxVerificationDate" />
+                    <result column="tax_verification_amount" property="taxVerificationAmount" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, org_id, verification_status, client_code, client_name, verification_date, financial_expense_amount, provision_reversal_amount, provision_reversal_year, tax_verification_date, tax_verification_amount, process_instance_id, process_status, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="summaryPage" resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffVO">
+        with a as (
+            select
+                t1.contract_code,
+                t1.org_id,
+                t1.verification_status,
+                t1.client_code,
+                t1.client_name,
+                t1.verification_date,
+                eco.tax_verification_date,     -- 税务核销日期
+                eco.tax_verification_amount,   -- 税务核销金额
+                t1.financial_expense_amount,
+                eco.provision_reversal_amount,
+                t1.provision_reversal_year,
+                eco.bad_debt_write_off_balance
+            from (
+                select
+                    evd.contract_code,
+                    evd.org_id,
+                    ev.verification_status,
+                    evd.client_code,
+                    evd.client_name,
+                    ev.account_date as verification_date,
+                    evd.financial_expense_amount,
+                    0 as depreciation_loss_amount,
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_verification_details evd
+                inner join eg_verification ev on evd.verification_id = ev.id
+                where
+                    1 = 1
+                    and evd.del_flag = '0'
+                    and ev.del_flag = '0'
+                    and ev.process_status in ('2', '3', '4')
+                    and to_char(ev.account_date, 'yyyymm')::int = #{param.periodCode}
+                union all
+                select
+                    eid.contract_code,
+                    eid.org_id,
+                    eid.financial_contract_status verification_status,
+                    eid.client_code,
+                    eid.client_name,
+                    eid.inbound_date::varchar::timestamp verification_date,
+                    eid.provision_for_impairment financial_expense_amount,  -- 财务核销敞口金额
+                    0 as depreciation_loss_amount,                          -- 拨备转回金额
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_recycling_equipment_in_detail eid
+                inner join eg_recycling_equipment_in erei on eid.inbound_date = erei.inbound_date
+                    and eid.org_id = erei.org_id and eid.recycle_id = erei.id
+                where
+                    1 = 1
+                    and eid.del_flag = '0'
+                    and erei.del_flag = '0'
+                    and erei.process_status in ('2', '3', '4')
+                    and to_char(eid.inbound_date::varchar::timestamp, 'yyyymm')::int = #{param.periodCode}
+            ) t1
+            left join eg_charge_off eco on t1.org_id = eco.org_id and t1.contract_code = eco.contract_code
+                and eco.verification_status = t1.verification_status and eco.verification_date = t1.verification_date
+                and eco.process_status in ('2', '3', '4')
+        ),
+        eco as (
+            select
+                distinct contract_code , org_id ,verification_status ,verification_date, tax_verification_date, tax_verification_amount
+            from eg_charge_off
+            where tax_verification_date is not null and tax_verification_amount is not null and process_status in ('2', '3', '4')
+        ),
+        cr as (
+            select
+                a.*
+            from
+                a
+            union all
+            select
+                b.contract_code,
+                b.org_id,
+                b.verification_status,
+                b.client_code,
+                b.client_name,
+                b.verification_date,
+                b.tax_verification_date,
+                b.tax_verification_amount,
+                b.financial_expense_amount,
+                b.provision_reversal_amount,
+                b.provision_reversal_year,
+                b.bad_debt_write_off_balance
+            from
+                eg_charge_off b
+            where
+                1 = 1
+                and b.process_status in ('2', '3', '4')
+                and to_char(b.verification_date, 'yyyymm')::int = #{param.periodCode}
+                and not exists (
+                    select
+                        1
+                    from
+                        a
+                    where
+                        a.contract_code = b.contract_code
+                        and a.org_id = b.org_id
+                        and a.verification_date = b.verification_date
+                        and a.provision_reversal_year = b.provision_reversal_year)
+            union all
+            select
+                c.contract_code,
+                c.org_id,
+                c.verification_status,
+                c.client_code,
+                c.client_name,
+                c.verification_date,
+                eco.tax_verification_date,
+                eco.tax_verification_amount,
+                c.financial_expense_amount,
+                c.provision_reversal_amount,
+                c.provision_reversal_year,
+                c.bad_debt_write_off_balance
+            from
+                eg_charge_off_summary_report c
+            left join eco on c.contract_code = eco.contract_code and c.org_id = eco.org_id
+                and c.provision_reversal_year = to_char(eco.verification_date, 'yyyy')
+                and c.verification_date = eco.verification_date and c.verification_status = eco.verification_status
+        where
+                1 = 1
+                and c.period_code = #{param.lastPeriodCode}
+                and c.del_flag =  '0'
+                and not exists (
+                    select
+                        1
+                    from
+                        a
+                    where
+                        a.contract_code = c.contract_code
+                        and a.org_id = c.org_id
+                        and a.verification_date = c.verification_date
+                        and a.provision_reversal_year = c.provision_reversal_year)
+        ),
+        ta as (
+            select
+                cr.contract_code, cr.org_id, cr.verification_date, cr.verification_status,
+                cr.tax_verification_date, cr.tax_verification_amount
+            from
+                cr
+            where
+                cr.tax_verification_date is not null and cr.tax_verification_amount is not null
+            group by
+                cr.contract_code, cr.org_id, cr.verification_date, cr.verification_status,
+                cr.tax_verification_date, cr.tax_verification_amount
+        ),
+        cb as (
+            select
+                case when cr.verification_status = '财务入库'
+                    then sum(coalesce(ecb.depreciation_loss_amount, 0))
+                else
+                    sum(coalesce(ecb.depreciation_loss_reverse_amount, 0))
+                end as depreciation_loss_reverse_amount,
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status
+            from
+                eg_contract_balance ecb
+            left join cr on cr.contract_code = ecb.contract_code and cr.org_id = ecb.org_id
+                and cr.provision_reversal_year=substring(cast(ecb.period_code as text), 1, 4)
+            where
+                1 = 1
+                and ecb.period_code = #{param.periodCode}
+                and ecb.del_flag = '0'
+                and ecb.scene_code in ('ZLSK','KJFP','RKCZ','RKSH','CWCK')
+            group by
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status
+        ),
+        dr as (
+            select
+                contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status
+            from (
+                select
+                    contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status,
+                    row_number() over (PARTITION BY contract_code ,org_id, verification_status  order by verification_date desc, provision_reversal_year desc) as rn
+                from cr
+            ) m
+            where m.rn = 1
+        ),
+        re as (
+            select
+                cr.contract_code,
+                cr.org_id,
+                cr.verification_status,
+                cr.client_code,
+                cr.client_name,
+                cr.verification_date,
+                cr.provision_reversal_year,
+                cr.tax_verification_date,
+                cr.tax_verification_amount,
+                case when dr.contract_code is null then
+                    coalesce(cr.provision_reversal_amount, 0)
+                else
+                    (coalesce(dr.provision_reversal_amount, 0)- coalesce(cb.depreciation_loss_reverse_amount, 0))
+                end as provision_reversal_amount,
+                coalesce(cr.financial_expense_amount, 0) as financial_expense_amount
+                -- 	(coalesce(c.financial_expense_amount, 0)- ((coalesce(sr.provision_reversal_amount, 0)-cb.depreciation_loss_reverse_amount))) as bad_debt_write_off_balance
+            from cr
+            left join dr on cr.contract_code = dr.contract_code
+                and cr.org_id = dr.org_id
+                and cr.verification_date  = dr.verification_date
+                and cr.provision_reversal_year = dr.provision_reversal_year
+                and cr.verification_status = dr.verification_status
+            left join cb on cb.contract_code = cr.contract_code and cb.org_id = cr.org_id and cr.verification_status = cb.verification_status
+        ),
+        re1 as (
+            select
+                re.contract_code,
+                re.org_id,
+                re.verification_status,
+                re.client_code,
+                re.client_name,
+                re.verification_date,
+                sum(re.provision_reversal_amount) provision_reversal_amount,
+                re.financial_expense_amount,
+                coalesce(re.financial_expense_amount, 0) - sum(re.provision_reversal_amount) as bad_debt_write_off_balance
+            from re
+            group by
+                re.contract_code,
+                re.org_id,
+                re.verification_status,
+                re.client_code,
+                re.client_name,
+                re.verification_date,
+                re.financial_expense_amount
+        )
+        select
+            re1.contract_code,
+            re1.org_id,
+            re1.verification_status,
+            re1.client_code,
+            re1.client_name,
+            re1.verification_date,
+            ta.tax_verification_date,
+            ta.tax_verification_amount,
+            re1.provision_reversal_amount,
+            re1.financial_expense_amount,
+            re1.bad_debt_write_off_balance
+        from re1
+        left join ta on re1.contract_code = ta.contract_code and re1.org_id = ta.org_id
+                and re1.verification_date = ta.verification_date and re1.verification_status = ta.verification_status
+        where
+        1 = 1
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and re1.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.clientName!=null and param.clientName!=''">
+            and re1.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and re1.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and re1.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.verificationStatusList != null and param.verificationStatusList.size > 0">
+            and re1.verification_status in
+            <foreach item="item" index="index" collection="param.verificationStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startVerificationDate!=null">
+            and to_char(re1.verification_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(to_date(#{param.startVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endVerificationDate!=null">
+            and to_char(re1.verification_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(to_date(#{param.endVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.startTaxVerificationDate!=null">
+            and to_char(ta.tax_verification_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(to_date(#{param.startTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endTaxVerificationDate!=null">
+            and to_char(ta.tax_verification_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(to_date(#{param.endTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+    </select>
+    <select id="summaryDetailPage" resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffVO">
+        with a as (
+            select
+                t1.contract_code,
+                t1.org_id,
+                t1.verification_status,
+                t1.client_code,
+                t1.client_name,
+                t1.verification_date,
+                eco.tax_verification_date,     -- 税务核销日期
+                eco.tax_verification_amount,   -- 税务核销金额
+                t1.financial_expense_amount,
+                eco.provision_reversal_amount,
+                t1.provision_reversal_year,
+                eco.bad_debt_write_off_balance
+            from (
+                select
+                    evd.contract_code,
+                    evd.org_id,
+                    ev.verification_status,
+                    evd.client_code,
+                    evd.client_name,
+                    ev.account_date as verification_date,
+                    evd.financial_expense_amount,
+                    0 as depreciation_loss_amount,
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_verification_details evd
+                inner join eg_verification ev on evd.verification_id = ev.id
+                where
+                    1 = 1
+                    and evd.del_flag = '0'
+                    and ev.del_flag = '0'
+                    and ev.process_status in ('2', '3', '4')
+                    and to_char(ev.account_date, 'yyyymm')::int = #{param.periodCode}
+                union all
+                select
+                    eid.contract_code,
+                    eid.org_id,
+                    eid.financial_contract_status verification_status,
+                    eid.client_code,
+                    eid.client_name,
+                    eid.inbound_date::varchar::timestamp verification_date,
+                    eid.provision_for_impairment financial_expense_amount,  -- 财务核销敞口金额
+                    0 as depreciation_loss_amount,                          -- 拨备转回金额
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_recycling_equipment_in_detail eid
+                inner join eg_recycling_equipment_in erei on eid.inbound_date = erei.inbound_date and eid.org_id = erei.org_id and eid.recycle_id = erei.id
+                where
+                    1 = 1
+                    and eid.del_flag = '0'
+                    and erei.del_flag = '0'
+                    and erei.process_status in ('2', '3', '4')
+                    and to_char(eid.inbound_date::varchar::timestamp, 'yyyymm')::int = #{param.periodCode}
+            ) t1
+            left join eg_charge_off eco on t1.org_id = eco.org_id and t1.contract_code = eco.contract_code
+                and eco.verification_status = t1.verification_status and eco.verification_date = t1.verification_date
+                and eco.process_status in ('2', '3', '4')
+        ),
+        eco as (
+            select
+                distinct contract_code , org_id ,verification_status ,verification_date, tax_verification_date, tax_verification_amount
+            from eg_charge_off
+            where tax_verification_date is not null and tax_verification_amount is not null and process_status in ('2', '3', '4')
+        ),
+        cr as (
+            select
+                a.*
+            from
+                a
+            union all
+            select
+                b.contract_code,
+                b.org_id,
+                b.verification_status,
+                b.client_code,
+                b.client_name,
+                b.verification_date,
+                b.tax_verification_date,
+                b.tax_verification_amount,
+                b.financial_expense_amount,
+                b.provision_reversal_amount,
+                b.provision_reversal_year,
+                b.bad_debt_write_off_balance
+            from
+                eg_charge_off b
+            where
+                1 = 1
+                and b.process_status in ('2', '3', '4')
+                and to_char(b.verification_date, 'yyyymm')::int = #{param.periodCode}
+                and not exists (
+                    select
+                    1
+                    from
+                    a
+                    where
+                    a.contract_code = b.contract_code
+                    and a.org_id = b.org_id
+                    and a.verification_date = b.verification_date
+                    and a.provision_reversal_year = b.provision_reversal_year)
+            union all
+            select
+                c.contract_code,
+                c.org_id,
+                c.verification_status,
+                c.client_code,
+                c.client_name,
+                c.verification_date,
+                eco.tax_verification_date,
+                eco.tax_verification_amount,
+                c.financial_expense_amount,
+                c.provision_reversal_amount,
+                c.provision_reversal_year,
+                c.bad_debt_write_off_balance
+            from
+                eg_charge_off_summary_report c
+            left join eco on c.contract_code = eco.contract_code and c.org_id = eco.org_id
+                and c.provision_reversal_year = to_char(eco.verification_date, 'yyyy')
+            where
+                1 = 1
+                and c.period_code = #{param.lastPeriodCode}
+                and c.del_flag =  '0'
+                and not exists (
+                    select
+                    1
+                    from
+                    a
+                    where
+                    a.contract_code = c.contract_code
+                    and a.org_id = c.org_id
+                    and a.verification_date = c.verification_date
+                    and a.provision_reversal_year = c.provision_reversal_year)
+        ),
+        cb as (
+            select
+                case when cr.verification_status = '财务入库'
+                    then sum(coalesce(ecb.depreciation_loss_amount, 0))
+                else
+                    sum(coalesce(ecb.depreciation_loss_reverse_amount, 0))
+                end  as depreciation_loss_reverse_amount,
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status
+            from
+                eg_contract_balance ecb
+            left join cr on cr.contract_code = ecb.contract_code and cr.org_id = ecb.org_id
+                and cr.provision_reversal_year=substring(cast(ecb.period_code as text), 1, 4)
+            where
+                1 = 1
+                and ecb.period_code = #{param.periodCode}
+                and ecb.del_flag = '0'
+                and ecb.scene_code in ('ZLSK','KJFP','RKCZ','RKSH','CWCK')
+            group by
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status
+        ),
+        dr as (
+            select
+                contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status
+            from (
+                select
+                    contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status,
+                    row_number() over (PARTITION BY contract_code ,org_id, verification_status  order by verification_date desc, provision_reversal_year desc) as rn
+                from cr
+            ) m
+            where m.rn = 1
+        )
+        select
+            cr.contract_code,
+            cr.org_id,
+            cr.verification_status,
+            cr.client_code,
+            cr.client_name,
+            cr.verification_date,
+            cr.provision_reversal_year,
+            case when dr.contract_code is null then
+                coalesce(cr.provision_reversal_amount, 0)
+            else
+                (coalesce(dr.provision_reversal_amount, 0)-coalesce(cb.depreciation_loss_reverse_amount, 0))
+            end as provision_reversal_amount,
+            coalesce(cr.financial_expense_amount, 0) as financial_expense_amount
+        from cr
+        left join dr on cr.contract_code = dr.contract_code
+            and cr.org_id = dr.org_id
+            and cr.verification_date  = dr.verification_date
+            and cr.provision_reversal_year = dr.provision_reversal_year
+            and cr.verification_status = dr.verification_status
+        left join cb on cb.contract_code = cr.contract_code and cb.org_id = cr.org_id and cr.verification_status = cb.verification_status
+        where 1=1
+            <if test="param.contractCode!=null and param.contractCode!=''">
+                and cr.contract_code like concat('%', #{param.contractCode}::text, '%')
+            </if>
+            <if test="param.orgId!=null and param.orgId!=''">
+                and cr.org_id = #{param.orgId}
+            </if>
+            <if test="param.verificationStatus!=null and param.verificationStatus!=''">
+                and cr.verification_status = #{param.verificationStatus}
+            </if>
+            <if test="param.verificationDate!=null">
+                and cr.verification_date = #{param.verificationDate}
+            </if>
+        order by cr.contract_code, cr.org_id, cr.verification_date, cr.verification_status, cr.provision_reversal_year
+
+    </select>
+
+    <select id="exportForCurMonth" resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffVO">
+        with a as (
+            select
+                t1.contract_code,
+                t1.org_id,
+                t1.verification_status,
+                t1.client_code,
+                t1.client_name,
+                t1.verification_date,
+                eco.tax_verification_date,
+                eco.tax_verification_amount,
+                t1.financial_expense_amount,
+                eco.provision_reversal_amount,
+                t1.provision_reversal_year,
+                eco.bad_debt_write_off_balance
+            from (
+                select
+                    evd.contract_code,
+                    evd.org_id,
+                    ev.verification_status,
+                    evd.client_code,
+                    evd.client_name,
+                    ev.account_date as verification_date,
+                    evd.financial_expense_amount,
+                    0 as depreciation_loss_amount,
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_verification_details evd
+                inner join eg_verification ev on evd.verification_id = ev.id
+                where
+                    1 = 1
+                    and evd.del_flag = '0'
+                    and ev.del_flag = '0'
+                    and ev.process_status in ('2', '3', '4')
+                    and to_char(ev.account_date, 'yyyymm')::int = #{param.periodCode}
+                union all
+                select
+                    eid.contract_code,
+                    eid.org_id,
+                    eid.financial_contract_status verification_status,
+                    eid.client_code,
+                    eid.client_name,
+                    eid.inbound_date::varchar::timestamp verification_date,
+                    eid.provision_for_impairment financial_expense_amount,  -- 财务核销敞口金额
+                    0 as depreciation_loss_amount,                          -- 拨备转回金额
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_recycling_equipment_in_detail eid
+                inner join eg_recycling_equipment_in erei on eid.inbound_date = erei.inbound_date and eid.org_id = erei.org_id and eid.recycle_id = erei.id
+                where
+                    1 = 1
+                    and eid.del_flag = '0'
+                    and erei.del_flag = '0'
+                    and erei.process_status in ('2', '3', '4')
+                    and to_char(eid.inbound_date::varchar::timestamp, 'yyyymm')::int = #{param.periodCode}
+            ) t1
+            left join eg_charge_off eco on t1.org_id = eco.org_id and t1.contract_code = eco.contract_code
+                and eco.verification_status = t1.verification_status and eco.verification_date = t1.verification_date
+                and eco.process_status in ('2', '3', '4')
+        ),
+        eco as (
+            select
+                distinct contract_code , org_id ,verification_status ,verification_date, tax_verification_date, tax_verification_amount
+            from eg_charge_off
+            where tax_verification_date is not null and tax_verification_amount is not null and process_status in ('2', '3', '4')
+        ),
+        cr as (
+            select
+                a.*
+            from
+                a
+            union all
+            select
+                b.contract_code,
+                b.org_id,
+                b.verification_status,
+                b.client_code,
+                b.client_name,
+                b.verification_date,
+                b.tax_verification_date,
+                b.tax_verification_amount,
+                b.financial_expense_amount,
+                b.provision_reversal_amount,
+                b.provision_reversal_year,
+                b.bad_debt_write_off_balance
+            from
+                eg_charge_off b
+            where
+                1 = 1
+                and b.process_status in ('2', '3', '4')
+                and to_char(b.verification_date, 'yyyymm')::int = #{param.periodCode}
+                and not exists (
+                    select
+                    1
+                    from
+                    a
+                    where
+                    a.contract_code = b.contract_code
+                    and a.org_id = b.org_id
+                    and a.verification_date = b.verification_date
+                    and a.provision_reversal_year = b.provision_reversal_year)
+            union all
+            select
+                c.contract_code,
+                c.org_id,
+                c.verification_status,
+                c.client_code,
+                c.client_name,
+                c.verification_date,
+                eco.tax_verification_date,
+                eco.tax_verification_amount,
+                c.financial_expense_amount,
+                c.provision_reversal_amount,
+                c.provision_reversal_year,
+                c.bad_debt_write_off_balance
+            from
+                eg_charge_off_summary_report c
+            left join eco on c.contract_code = eco.contract_code and c.org_id = eco.org_id
+                and c.provision_reversal_year = to_char(eco.verification_date, 'yyyy')
+                and c.verification_date = eco.verification_date and c.verification_status = eco.verification_status
+            where
+                1 = 1
+                and c.period_code = #{param.lastPeriodCode}
+                and c.del_flag =  '0'
+                and not exists (
+                    select
+                    1
+                    from
+                    a
+                    where
+                    a.contract_code = c.contract_code
+                    and a.org_id = c.org_id
+                    and a.verification_date = c.verification_date
+                    and a.provision_reversal_year = c.provision_reversal_year)
+        ),
+        ta as (
+            select
+                cr.contract_code, cr.org_id, cr.verification_date, cr.verification_status,
+                cr.tax_verification_date, cr.tax_verification_amount
+            from
+                cr
+            where
+                cr.tax_verification_date is not null and cr.tax_verification_amount is not null
+            group by
+                cr.contract_code, cr.org_id, cr.verification_date, cr.verification_status,
+                cr.tax_verification_date, cr.tax_verification_amount
+        ),
+        cb as (
+            select
+                case when cr.verification_status = '财务入库'
+                    then sum(coalesce(ecb.depreciation_loss_amount, 0))
+                else
+                    sum(coalesce(ecb.depreciation_loss_reverse_amount, 0))
+                end  as depreciation_loss_reverse_amount,
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status,
+                cr.verification_date
+            from
+                eg_contract_balance ecb
+            left join cr on cr.contract_code = ecb.contract_code and cr.org_id = ecb.org_id
+                and cr.provision_reversal_year=substring(cast(ecb.period_code as text), 1, 4)
+            where
+                1 = 1
+                and ecb.period_code = #{param.periodCode}
+                and ecb.del_flag = '0'
+                and ecb.scene_code in ('ZLSK','KJFP','RKCZ','RKSH','CWCK')
+            group by
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status,
+                cr.verification_date
+        ),
+        dr as (
+            select
+                contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status
+            from (
+                select
+                    contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status,
+                    row_number() over (PARTITION BY contract_code ,org_id, verification_status  order by verification_date desc, provision_reversal_year desc) as rn
+                from cr
+            ) m
+            where m.rn = 1
+        ),
+        bd as (
+            select
+                contract_code , org_id, verification_date, verification_status, sum(coalesce (provision_reversal_amount, 0)) as provision_reversal_amount
+            from cr
+            group by
+                contract_code , org_id, verification_date, verification_status
+        )
+        select
+            ${param.periodCode} as period_code,
+            cr.contract_code,
+            cr.org_id,
+            oc.org_name,
+            cr.verification_status,
+            cr.client_code,
+            cr.client_name,
+            cr.verification_date,
+            coalesce(cr.financial_expense_amount, 0) as financial_expense_amount,
+            case when dr.contract_code is null then
+                coalesce(cr.provision_reversal_amount, 0)
+            else
+                (coalesce(dr.provision_reversal_amount, 0)-coalesce (cb.depreciation_loss_reverse_amount, 0))
+            end as provision_reversal_amount,
+            cr.provision_reversal_year,
+            ta.tax_verification_date,
+            ta.tax_verification_amount,
+            (coalesce(cr.financial_expense_amount, 0) - coalesce(bd.provision_reversal_amount, 0) + coalesce (cb.depreciation_loss_reverse_amount, 0))  as bad_debt_write_off_balance,
+            '0' as del_flag
+        from cr
+        left join dr on
+            cr.contract_code = dr.contract_code
+            and cr.org_id = dr.org_id
+            and cr.verification_date  = dr.verification_date
+            and cr.provision_reversal_year = dr.provision_reversal_year
+            and cr.verification_status = dr.verification_status
+        left join bd on bd.contract_code = cr.contract_code
+            and bd.org_id = cr.org_id
+            and bd.verification_date = cr.verification_date
+            and bd.verification_status = cr.verification_status
+        left join cb on cb.contract_code = cr.contract_code and cb.org_id = cr.org_id and cr.verification_status = cb.verification_status
+                and cr.verification_date = cb.verification_date
+        left join eg_org_company oc on oc.org_id = cr.org_id and oc.del_flag ='0'
+        left join ta on ta.contract_code = cr.contract_code
+            and ta.org_id = cr.org_id
+            and to_char(ta.verification_date, 'yyyy') = cr.provision_reversal_year
+            and ta.verification_status = cr.verification_status
+            and cr.verification_date = ta.verification_date
+        where 1=1
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and cr.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.clientName!=null and param.clientName!=''">
+            and cr.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and cr.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and cr.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.verificationStatusList != null and param.verificationStatusList.size > 0">
+            and cr.verification_status in
+            <foreach item="item" index="index" collection="param.verificationStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="summaryList" resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffVO">
+        with a as (
+            select
+                t1.contract_code,
+                t1.org_id,
+                t1.verification_status,
+                t1.client_code,
+                t1.client_name,
+                t1.verification_date,
+                eco.tax_verification_date,
+                eco.tax_verification_amount,
+                t1.financial_expense_amount,
+                eco.provision_reversal_amount,
+                t1.provision_reversal_year,
+                eco.bad_debt_write_off_balance
+            from (
+                select
+                    evd.contract_code,
+                    evd.org_id,
+                    ev.verification_status,
+                    evd.client_code,
+                    evd.client_name,
+                    ev.account_date as verification_date,
+                    evd.financial_expense_amount,
+                    0 as depreciation_loss_amount,
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_verification_details evd
+                inner join eg_verification ev on evd.verification_id = ev.id
+                where
+                    1 = 1
+                    and evd.del_flag = '0'
+                    and ev.del_flag = '0'
+                    and ev.process_status in ('2', '3', '4')
+                    and evd.financial_contract_status != '非亏损结清'
+                    and to_char(ev.account_date, 'yyyymm')::int = #{param.periodCode}
+                union all
+                select
+                    eid.contract_code,
+                    eid.org_id,
+                    eid.financial_contract_status verification_status,
+                    eid.client_code,
+                    eid.client_name,
+                    eid.inbound_date::varchar::timestamp verification_date,
+                    eid.provision_for_impairment financial_expense_amount,  -- 财务核销敞口金额
+                    0 as depreciation_loss_amount,                          -- 拨备转回金额
+                    to_char(now(), 'yyyy') provision_reversal_year
+                from
+                    eg_recycling_equipment_in_detail eid
+                inner join eg_recycling_equipment_in erei on eid.inbound_date = erei.inbound_date and eid.org_id = erei.org_id and eid.recycle_id = erei.id
+                where
+                1 = 1
+                    and eid.del_flag = '0'
+                    and erei.del_flag = '0'
+                    and erei.process_status in ('2', '3', '4')
+                    and to_char(eid.inbound_date::varchar::timestamp, 'yyyymm')::int = #{param.periodCode}
+            ) t1
+             left join eg_charge_off eco on t1.org_id = eco.org_id and t1.contract_code = eco.contract_code
+                and eco.verification_status = t1.verification_status and eco.verification_date = t1.verification_date
+                and eco.process_status in ('2', '3', '4')
+        ),
+        eco as (
+            select
+                distinct contract_code , org_id ,verification_status ,verification_date, tax_verification_date, tax_verification_amount
+            from eg_charge_off
+            where tax_verification_date is not null and tax_verification_amount is not null and process_status in ('2', '3', '4')
+        ),
+        cr as (
+            select
+                a.*
+            from
+                a
+            union all
+            select
+                b.contract_code,
+                b.org_id,
+                b.verification_status,
+                b.client_code,
+                b.client_name,
+                b.verification_date,
+                b.tax_verification_date,
+                b.tax_verification_amount,
+                b.financial_expense_amount,
+                b.provision_reversal_amount,
+                b.provision_reversal_year,
+                b.bad_debt_write_off_balance
+            from
+                eg_charge_off b
+            where
+                1 = 1
+                and b.process_status in ('2', '3', '4')
+                and to_char(b.verification_date, 'yyyymm')::int = #{param.periodCode}
+                and not exists (
+                    select
+                    1
+                    from
+                    a
+                    where
+                    a.contract_code = b.contract_code
+                    and a.org_id = b.org_id
+                    and a.verification_date = b.verification_date
+                    and a.provision_reversal_year = b.provision_reversal_year)
+            union all
+            select
+                c.contract_code,
+                c.org_id,
+                c.verification_status,
+                c.client_code,
+                c.client_name,
+                c.verification_date,
+                eco.tax_verification_date,
+                eco.tax_verification_amount,
+                c.financial_expense_amount,
+                c.provision_reversal_amount,
+                c.provision_reversal_year,
+                c.bad_debt_write_off_balance
+            from
+                eg_charge_off_summary_report c
+            left join eco on c.contract_code = eco.contract_code and c.org_id = eco.org_id
+                and c.provision_reversal_year = to_char(eco.verification_date, 'yyyy')
+                and c.verification_date = eco.verification_date and c.verification_status = eco.verification_status
+            where
+                1 = 1
+                and c.period_code = #{param.lastPeriodCode}
+                and c.del_flag =  '0'
+                and not exists (
+                    select
+                    1
+                    from
+                    a
+                    where
+                    a.contract_code = c.contract_code
+                    and a.org_id = c.org_id
+                    and a.verification_date = c.verification_date
+                    and a.provision_reversal_year = c.provision_reversal_year)
+        ),
+        cb as (
+            select
+                case when cr.verification_status = '财务入库'
+                    then sum(coalesce(ecb.depreciation_loss_amount, 0))
+                else
+                    sum(coalesce(ecb.depreciation_loss_reverse_amount, 0))
+                end  as depreciation_loss_reverse_amount,
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status,
+                cr.verification_date
+            from
+                eg_contract_balance ecb
+            left join cr on cr.contract_code = ecb.contract_code and cr.org_id = ecb.org_id
+                and cr.provision_reversal_year=substring(cast(ecb.period_code as text), 1, 4)
+            where
+                1 = 1
+                and ecb.period_code = #{param.periodCode}
+                and ecb.del_flag = '0'
+                and ecb.scene_code in ('ZLSK','KJFP','RKCZ','RKSH','CWCK')
+            group by
+                ecb.contract_code ,
+                ecb.org_id,
+                cr.verification_status,
+                cr.verification_date
+        ),
+        dr as (
+            select
+                contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status
+            from (
+                select
+                    contract_code , org_id, verification_date, provision_reversal_year, provision_reversal_amount, verification_status,
+                    row_number() over (PARTITION BY contract_code ,org_id, verification_status  order by verification_date desc, provision_reversal_year desc) as rn
+                from cr
+            ) m
+            where m.rn = 1
+        ),
+        bd as (
+            select
+                contract_code , org_id, verification_date, verification_status, sum(coalesce (provision_reversal_amount, 0)) as provision_reversal_amount
+            from cr
+            group by
+                contract_code , org_id, verification_date, verification_status
+        )
+        insert into eg_charge_off_summary_report (
+            period_code,
+            contract_code,
+            org_id,
+            verification_status,
+            client_code,
+            client_name,
+            verification_date,
+            financial_expense_amount,
+            provision_reversal_amount,
+            provision_reversal_year,
+            tax_verification_date,
+            tax_verification_amount,
+            bad_debt_write_off_balance,
+            del_flag,
+            create_time
+        )
+        select
+            ${param.periodCode} as period_code,
+            cr.contract_code,
+            cr.org_id,
+            cr.verification_status,
+            cr.client_code,
+            cr.client_name,
+            cr.verification_date,
+            coalesce(cr.financial_expense_amount, 0) as financial_expense_amount,
+            case when dr.contract_code is null then
+                coalesce(cr.provision_reversal_amount, 0)
+            else
+                (coalesce(dr.provision_reversal_amount, 0)-coalesce (cb.depreciation_loss_reverse_amount, 0))
+            end as provision_reversal_amount,
+            cr.provision_reversal_year,
+            cr.tax_verification_date,
+            cr.tax_verification_amount,
+            (coalesce(cr.financial_expense_amount, 0) - coalesce(bd.provision_reversal_amount, 0) + coalesce (cb.depreciation_loss_reverse_amount, 0))  as bad_debt_write_off_balance,
+            '0' as del_flag,
+            now()
+        from cr
+        left join dr on
+            cr.contract_code = dr.contract_code
+            and cr.org_id = dr.org_id
+            and cr.verification_date  = dr.verification_date
+            and cr.provision_reversal_year = dr.provision_reversal_year
+            and cr.verification_status = dr.verification_status
+        left join bd on bd.contract_code = cr.contract_code
+            and bd.org_id = cr.org_id
+            and bd.verification_date = cr.verification_date
+            and bd.verification_status = cr.verification_status
+        left join cb on cb.contract_code = cr.contract_code and cb.org_id = cr.org_id and cr.verification_status = cb.verification_status
+                and cb.verification_date = cr.verification_date
+    </select>
+    <select id="isGenerateBalanceMonth" resultType="java.lang.Boolean">
+        SELECT EXISTS(SELECT 1 FROM eg_contract_balance_month t WHERE t.period_code=#{periodCode});
+    </select>
+
+    <sql id="allSummaryList">
+        with a as (
+        select
+        t1.contract_code,
+        t1.org_id,
+        t1.verification_status,
+        t1.client_code,
+        t1.client_name,
+        t1.verification_date,
+        eco.tax_verification_date,
+        eco.tax_verification_amount,
+        eco.financial_expense_amount,
+        eco.provision_reversal_amount,
+        case when eco.provision_reversal_year is null then cast(extract(year from t1.verification_date) as varchar) else eco.provision_reversal_year end provision_reversal_year,
+        eco.bad_debt_write_off_balance
+        from
+        (
+        select
+        contract_code,
+        org_id,
+        verification_status,
+        client_code,
+        client_name,
+        account_date as verification_date,
+        sum(coalesce(financial_expense_amount, 0)) as financial_expense_amount,
+        sum(coalesce(depreciation_loss_amount, 0)) as depreciation_loss_amount
+        from
+        (
+        select
+        evd.contract_code,
+        evd.org_id,
+        ev.verification_status,
+        evd.client_code,
+        evd.client_name,
+        ev.account_date,
+        evd.financial_expense_amount,
+        0 as depreciation_loss_amount
+        from
+        eg_verification_details evd
+        inner join eg_verification ev on
+        evd.verification_id = ev.id
+        where
+        1 = 1
+        and evd.del_flag = '0'
+        and ev.del_flag = '0'
+        and ev.process_status in ('3', '4')
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and evd.contract_code = #{param.contractCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and evd.org_id = #{param.orgId}
+        </if>
+        ) t
+        where
+        1 = 1
+        group by
+        contract_code,
+        org_id,
+        verification_status,
+        client_code,
+        client_name,
+        account_date) t1
+        left join eg_charge_off eco
+        on
+        t1.org_id = eco.org_id
+        and t1.contract_code = eco.contract_code
+        )
+
+        select
+        f.contract_code,
+        f.org_id,
+        f.verification_status,
+        f.client_code,
+        f.client_name,
+        f.verification_date,
+        f.financial_expense_amount,
+        f.provision_reversal_amount,
+        f.provision_reversal_year,
+        f.tax_verification_date,
+        f.tax_verification_amount,
+        (f.financial_expense_amount-f.provision_reversal_amount) as bad_debt_write_off_balance
+        from (
+        select
+        c.contract_code,
+        c.org_id,
+        c.verification_status,
+        c.client_code,
+        c.client_name,
+        c.verification_date,
+        c.provision_reversal_year,
+        c.tax_verification_date,
+        c.tax_verification_amount,
+        (coalesce(re.provision_reversal_amount, 0)-(
+        select
+        coalesce(sum(ecb.depreciation_loss_reverse_amount), 0)
+        from
+        eg_contract_balance ecb
+        where
+        1 = 1
+        and ecb.period_code = #{param.periodCode}
+        and ecb.del_flag = '0'
+        and ecb.contract_code = c.contract_code
+        and ecb.org_id = c.org_id)) as provision_reversal_amount,
+        coalesce(c.financial_expense_amount, 0) as financial_expense_amount,eoc.org_name from (
+        select
+        a.*
+        from
+        a
+        union all
+        select
+        b.contract_code,
+        b.org_id,
+        b.verification_status,
+        b.client_code,
+        b.client_name,
+        b.verification_date,
+        b.tax_verification_date,
+        b.tax_verification_amount,
+        b.financial_expense_amount,
+        b.provision_reversal_amount,
+        b.provision_reversal_year,
+        b.bad_debt_write_off_balance
+        from
+        eg_charge_off b
+        where 1=1 and not exists (select 1 from a where a.contract_code=b.contract_code and a.org_id=b.org_id)
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and b.contract_code = #{param.contractCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and b.org_id = #{param.orgId}
+        </if>
+        ) c
+        left join eg_org_company eoc on c.org_id=eoc.org_id and eoc.del_flag ='0'
+        left join eg_charge_off_summary_report re on
+        c.contract_code = re.contract_code
+        and c.org_id = re.org_id
+        and re.period_code = #{param.lastPeriodCode}
+        and re.del_flag = '0'
+        where
+        1 = 1
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and c.contract_code = #{param.contractCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and c.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and c.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.verificationStatusList != null and param.verificationStatusList.size > 0">
+            and c.verification_status in
+            <foreach item="item" index="index" collection="param.verificationStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startVerificationDate!=null">
+            and to_char(c.verification_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{param.startVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endVerificationDate!=null">
+            and to_char(c.verification_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{param.endVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.startTaxVerificationDate!=null">
+            and to_char(c.tax_verification_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{param.startTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endTaxVerificationDate!=null">
+            and to_char(c.tax_verification_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{param.endTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        ) f
+    </sql>
+
+    <select  id = "selectChargeOffSummaryReport" resultType="com.utfinancing.financehub.engine.finance.model.vo.ChargeOffVO"
+             parameterType="com.utfinancing.financehub.engine.finance.model.dto.ChargeOffQueryDTO">
+        select
+            ${param.periodCode} as period_code,
+            sr.contract_code,
+            sr.org_id,
+            oc.org_name,
+            sr.verification_status,
+            sr.client_code,
+            sr.client_name,
+            sr.verification_date,
+            sr.financial_expense_amount,
+            sr.provision_reversal_amount,
+            sr.provision_reversal_year,
+            sr.tax_verification_date,
+            sr.tax_verification_amount,
+            sr.bad_debt_write_off_balance,
+            '0' as del_flag
+        from
+            eg_charge_off_summary_report sr
+        left join eg_org_company oc on oc.org_id = sr.org_id and oc.del_flag ='0'
+        where
+            sr.period_code = #{param.periodCode}
+            and sr.del_flag =  '0'
+            <if test="param.contractCode!=null and param.contractCode!=''">
+                and sr.contract_code = #{param.contractCode}
+            </if>
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                and sr.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.verificationStatusList != null and param.verificationStatusList.size > 0">
+                and sr.verification_status in
+                <foreach item="item" index="index" collection="param.verificationStatusList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.clientName!=null and param.clientName!=''">
+                and sr.client_name like concat('%', #{param.clientName}::text, '%')
+            </if>
+            <if test="param.startVerificationDate!=null">
+                and to_char(sr.verification_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(to_date(#{param.startVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+            </if>
+            <if test="param.endVerificationDate!=null">
+                and to_char(sr.verification_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(to_date(#{param.endVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+            </if>
+            <if test="param.startTaxVerificationDate!=null">
+                and to_char(sr.tax_verification_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(to_date(#{param.startTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+            </if>
+            <if test="param.endTaxVerificationDate!=null">
+                and to_char(sr.tax_verification_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(to_date(#{param.endTaxVerificationDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+            </if>
+        order by sr.verification_date
+    </select>
+</mapper>
+

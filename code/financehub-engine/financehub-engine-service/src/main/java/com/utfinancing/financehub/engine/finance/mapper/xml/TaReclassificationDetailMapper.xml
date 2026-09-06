@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.TaReclassificationDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.TaReclassificationDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="reclassification_month" property="reclassificationMonth" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="bank_org_id" property="bankOrgId" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="ebank_batch_no" property="ebankBatchNo" />
+                    <result column="ebank_client_name" property="ebankClientName" />
+                    <result column="operation_remark" property="operationRemark" />
+                    <result column="ta_excess_balance" property="taExcessBalance" />
+                    <result column="rent_check" property="rentCheck" />
+                    <result column="ebank_check" property="ebankCheck" />
+                    <result column="ta_reclassification_amount" property="taReclassificationAmount" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="receivable_rent_balance" property="receivableRentBalance" />
+                    <result column="remark" property="remark" />
+                    <result column="special_contract_status" property="specialContractStatus" />
+                    <result column="ta_account_code" property="taAccountCode" />
+                    <result column="ta_account_name" property="taAccountName" />
+                    <result column="exception_type" property="exceptionType" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, reclassification_month, system_code, org_id, contract_code, business_code, contract_status, client_code, client_name, bank_org_id, ebank_serial_number, ebank_batch_no, ebank_client_name, operation_remark, ta_excess_balance, rent_check, ebank_check, ta_reclassification_amount, lease_date_end, receivable_rent_balance, remark, special_contract_status, ta_account_code, ta_account_name, exception_type, process_status, process_instance_id, is_generate_voucher, voucher_id, error_info, account_date, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+        <select id="getByParams" resultType="com.utfinancing.financehub.engine.finance.entity.TaReclassificationDetailEntity">
+            select * from eg_ta_reclassification_detail etrd where to_char(reclassification_month, 'YYYY-MM') = #{param.reclassificationMonth}
+            and exists (select 1 from eg_ta_reclassification_upload_record etrur where etrur.batch_id = #{param.batchId}
+            and etrd.reclassification_month = etrur.reclassification_month
+            and etrd.contract_code = etrur.contract_code
+            and etrd.ebank_batch_no = etrur.ebank_batch_no)
+        </select>
+
+        <select id="selectDetailInfo" resultType="com.utfinancing.financehub.engine.finance.entity.TaReclassificationDetailEntity">
+
+        </select>
+
+    <select id="selectTYPTInfo" resultType="com.utfinancing.financehub.engine.finance.entity.TaReclassificationDetailEntity">
+
+        select enccs.collection_accounts_bank bank_org_id,
+               etrd.id,
+               etrd.reclassification_month,
+               etrd.system_code,
+               etrd.org_id,
+               etrd.contract_code,
+               etrd.business_code,
+               etrd.contract_status,
+               etrd.client_code,
+               etrd.client_name,
+               --etrd.bank_org_id,
+               etrd.ebank_serial_number,
+               etrd.ebank_batch_no,
+               etrd.ebank_client_name,
+               etrd.operation_remark,
+               etrd.ta_excess_balance,
+               etrd.rent_check,
+               etrd.ebank_check,
+               etrd.ta_reclassification_amount,
+               etrd.lease_date_end,
+               etrd.receivable_rent_balance,
+               etrd.remark,
+               etrd.special_contract_status,
+               etrd.ta_account_code,
+               etrd.ta_account_name,
+               etrd.exception_type,
+               etrd.process_status,
+               etrd.process_instance_id,
+               etrd.is_generate_voucher,
+               etrd.voucher_id,
+               etrd.error_info,
+               etrd.account_date,
+               etrd.del_flag,
+               etrd.create_by,
+               etrd.create_time,
+               etrd.update_by,
+               etrd.update_time,
+               etrd.ta_reclassification_id,
+               etrd.account_code
+        from eg_ta_reclassification_detail etrd left join eg_non_confirm_collection_account_checking enccs
+            on enccs.ebank_serial_number like '%'||etrd.ebank_serial_number||'%'
+                and enccs.account_checking_month  = substring(#{queryDate},1,7)
+        where etrd.reclassification_month = to_date(#{queryDate}, 'YYYY-MM-DD')
+          and etrd.system_code = #{systemCode}
+    </select>
+
+    <select id="selectDetailDataAndContractInfo" resultType="com.utfinancing.financehub.engine.finance.entity.TaReclassificationDetailEntity">
+
+        with month_data as (
+            select
+                orgin.id,
+                orgin.reclassification_month,
+                orgin.system_code,
+                orgin.org_id org_id,
+                orgin.contract_code,
+                coalesce(ec.business_code,'ZLYW') business_code, --默认租赁业务
+                orgin.contract_status,
+--             etrd.client_code,
+--             etrd.client_name,
+                case when orgin.system_code in ('XWXT','TYPT') then orgin.client_code
+                     when orgin.system_code in ('CYCXT','SYCXT') then ec.client_code
+                     else null end client_code,
+                case when orgin.system_code in ('XWXT','TYPT') then orgin.client_name
+                     when orgin.system_code in ('CYCXT','SYCXT') then ec.client_name
+                     else null end client_name,
+                orgin.bank_org_id,
+                orgin.ebank_serial_number,
+                orgin.ebank_batch_no,
+                orgin.ebank_client_name,
+                orgin.operation_remark,
+                orgin.ta_excess_balance,
+                orgin.rent_check,
+                orgin.ebank_check,
+                orgin.ta_reclassification_amount,
+                ec.lease_date_end lease_date_end,
+                orgin.receivable_rent_balance,
+                orgin.remark,
+                ec.financial_contract_status special_contract_status,
+                orgin.ta_account_code,
+                orgin.ta_account_name,
+                orgin.exception_type,
+                orgin.process_status,
+                orgin.process_instance_id,
+                orgin.is_generate_voucher,
+                orgin.voucher_id,
+                orgin.error_info,
+                orgin.account_date,
+                orgin.del_flag,
+                orgin.create_by,
+                orgin.create_time,
+                orgin.update_by,
+                orgin.update_time,
+                orgin.ta_reclassification_id
+            from eg_ta_reclassification_detail orgin
+                     left join eg_contract_month ec
+                               on orgin.org_id = ec.org_id and orgin.contract_code = ec.contract_code
+            where orgin.reclassification_month = to_date(#{queryDate}, 'YYYY-MM-DD')
+        ) --select * from eg_contract_balance_latest ecbl where ecbl.org_id='01-C0001' and ecbl.contract_code ='L15A0331003'
+           ,latest_rent as (
+            select t.contract_code,
+                   t.org_id,
+                   sum(t.receivable_rent_balance) receivable_rent_balance
+            from (select contract_code,
+                         org_id,
+                         receivable_rent_amount receivable_rent_balance
+                  from eg_contract_balance
+                  where period_code = to_char(to_date(#{queryDate}, 'YYYY-MM'), 'YYYYMM')::integer
+                  union all
+                  select contract_code,
+                      org_id,
+                      receivable_rent_balance
+                  from eg_contract_balance_month
+                  where period_code = to_char(to_date(#{queryDate}, 'YYYY-MM')-1, 'YYYYMM')::integer) t
+            where exists (select 1 from month_data where t.org_id = month_data.org_id and t.contract_code = month_data.contract_code)
+            group by t.contract_code, t.org_id
+        )
+           ,cur_month_claim as (
+            select
+                sum(claim_amount) as cur_claim_amount,
+                ebank_serial_number
+            from
+                eg_business_claim_repayment_record
+            where
+                del_flag ='0'
+              and to_char(business_date,'yyyy-MM') = substr(#{queryDate},1,7)
+            group by
+                ebank_serial_number
+        )
+           , non_confirm_num as (
+            select count(1) num from eg_non_confirm_collection_account_checking where account_checking_month = substr(#{queryDate},1,7)
+        )
+           ,non_confirm as (
+
+            select enccac.ebank_serial_number ,
+                   case when (select num from non_confirm_num) &gt; 0 then sum(coalesce(enccac.cur_month_balance,0))
+                        when (select num from non_confirm_num) = 0 then sum(coalesce(enccac.cur_month_balance,0) + coalesce(cmc.cur_claim_amount,0))
+                        else 0 end as cur_month_balance
+--                            sum(coalesce(enccac.cur_month_balance,0)+coalesce(enccac2.cur_month_credit_amount,0)) cur_month_balance
+            from eg_non_confirm_collection_account_checking enccac
+                     left join cur_month_claim cmc on enccac.ebank_serial_number = cmc.ebank_serial_number
+            where enccac.account_checking_month =
+                  (case when (select num from non_confirm_num) &gt; 0 then substr(#{queryDate},1,7)
+                        else to_char(#{queryDate}::date - INTERVAL '1 month', 'yyyy-MM') end
+                      )
+              and exists (select 1 from month_data where month_data.ebank_batch_no = enccac.ebank_serial_number)
+            group by enccac.ebank_serial_number
+        )
+           ,month_data_view as (
+            select month_data.*,
+                   (select sum(ta_excess_balance) from month_data) ta_excess_balance_total,
+                   amount_by_contract.total ta_excess_balance_contract,
+                   amount_by_batch.total ta_excess_balance_batch,
+                   latest_rent.receivable_rent_balance receivable_rent_balance_tmp,
+                   non_confirm.cur_month_balance
+            from month_data
+                     left join latest_rent on month_data.org_id = latest_rent.org_id and month_data.contract_code = latest_rent.contract_code
+                     left join non_confirm on month_data.ebank_batch_no = non_confirm.ebank_serial_number
+                     left join (select sum(ta_excess_balance) total,coalesce(month_data.contract_code,'') contract_code from month_data group by coalesce(month_data.contract_code,'')) amount_by_contract on coalesce(month_data.contract_code,'') = coalesce(amount_by_contract.contract_code,'')
+                     left join (select sum(ta_excess_balance) total,coalesce(month_data.ebank_batch_no,'') ebank_serial_number from month_data group by coalesce(month_data.ebank_batch_no,'')) amount_by_batch on coalesce(month_data.ebank_batch_no,'') = coalesce(amount_by_batch.ebank_serial_number,'')
+        )
+           , res as (
+            select
+                month_data_view.id,
+                month_data_view.reclassification_month,
+                month_data_view.system_code,
+                month_data_view.org_id,
+                month_data_view.contract_code,
+                month_data_view.business_code,
+                month_data_view.contract_status,
+                month_data_view.client_code,
+                month_data_view.client_name,
+                month_data_view.bank_org_id,
+                month_data_view.ebank_serial_number,
+                month_data_view.ebank_batch_no,
+                month_data_view.ebank_client_name,
+                month_data_view.operation_remark,
+                month_data_view.ta_excess_balance,
+                month_data_view.lease_date_end,
+                month_data_view.remark,
+                month_data_view.special_contract_status,
+                month_data_view.process_status,
+                month_data_view.process_instance_id,
+                month_data_view.is_generate_voucher,
+                month_data_view.voucher_id,
+                month_data_view.error_info,
+                month_data_view.account_date,
+                month_data_view.del_flag,
+                month_data_view.create_by,
+                month_data_view.create_time,
+                month_data_view.update_by,
+                month_data_view.update_time,
+                month_data_view.ta_excess_balance_total,
+                month_data_view.ta_excess_balance_contract,
+                month_data_view.ta_excess_balance_batch,
+                month_data_view.receivable_rent_balance_tmp receivable_rent_balance,
+                month_data_view.cur_month_balance,
+
+                case when coalesce(special_contract_status,'') in ('资产出表（ABS）','资产处置结束（保理出表）','资产处置结束（第三方转让）') then null
+                     when coalesce(special_contract_status,'') not in ('资产出表（ABS）','资产处置结束（保理出表）','资产处置结束（第三方转让）') and coalesce(ta_excess_balance_contract,0) &lt;= coalesce(receivable_rent_balance_tmp,0) then '是'
+                     when coalesce(special_contract_status,'') not in ('资产出表（ABS）','资产处置结束（保理出表）','资产处置结束（第三方转让）') and coalesce(ta_excess_balance_contract,0) &gt; coalesce(receivable_rent_balance_tmp,0) then '否'
+                     else null end as rent_check,
+                case when coalesce(ta_excess_balance_batch,0) &lt;= coalesce(cur_month_balance,0) then '是'
+                     when coalesce(ta_excess_balance_batch,0) &gt; coalesce(cur_month_balance,0) then '否'
+                     else null end as ebank_check,
+                case when business_code='ZLYW' and coalesce(special_contract_status,'') in ('资产出表（ABS）','资产处置结束（保理出表）') then '2241.10.01'
+                     when business_code='ZLYW' and coalesce(special_contract_status,'') not in ('资产出表（ABS）','资产处置结束（保理出表）','资产处置结束（第三方转让）') then '1531.01.01'
+                     when business_code='BLYW' and coalesce(special_contract_status,'') in ('资产出表（ABS）','资产处置结束（保理出表）') then '2241.16'
+                     when business_code='BLYW' and coalesce(special_contract_status,'') not in ('资产出表（ABS）','资产处置结束（保理出表）','资产处置结束（第三方转让）') then '1122.03.01'
+                     when business_code='ZLYW' and coalesce(special_contract_status,'') in ('资产处置结束（第三方转让）') then '2241.09'
+                     when business_code='WDYW' then '1303.01'
+                     else null end as ta_account_code
+            from month_data_view
+        )
+           ,res_all as(
+            select res.*,
+                   case when coalesce(rent_check,'') = '是' and coalesce(ebank_check,'') = '是' then ta_excess_balance
+                        when rent_check is null and coalesce(ebank_check,'') = '是' then ta_excess_balance
+                        else 0 end as ta_reclassification_amount
+            from res
+        )
+        select
+            distinct res_all.*,
+                     case when coalesce(cur_month_balance,0) != 0 and coalesce(receivable_rent_balance,0) != 0 and coalesce(ta_reclassification_amount,0) = 0 then '1'--应收租金和网银余额不为零，但重分类金额为零
+            		else '0' end as exception_type --无异常
+            	from res_all
+    </select>
+    <select id="getTaReclassificationDetailList"
+            resultType="com.utfinancing.financehub.engine.finance.entity.TaReclassificationDetailEntity">
+        select null as client_code ,null as client_name ,null as operation_remark ,ebank_batch_no,ebank_serial_number,bank_org_id,ta_excess_balance,contract_code,ebank_client_name,org_id,contract_status,'CYCXT' as system_code
+        from ta_cyc where contract_code is not null and contract_code <![CDATA[<>]]> ''
+        union all
+        select null as client_code ,null as client_name ,null as operation_remark ,ebank_batch_no,ebank_serial_number,bank_org_id,ta_excess_balance,contract_code,ebank_client_name,org_id,contract_status,'SYCXT' as system_code
+        from ta_syc where contract_code is not null and contract_code <![CDATA[<>]]> ''
+        union all
+        select  client_code ,client_name ,operation_remark ,ebank_serial_number as ebank_batch_no,ebank_serial_number,null as bank_org_id,ta_excess_balance,contract_code,ebank_client_name,org_id,contract_status,'TYPT' as system_code
+        from ta_typt where contract_code is not null and contract_code <![CDATA[<>]]> ''
+        union all
+        select  client_code ,client_name ,operation_remark ,ebank_serial_number as ebank_batch_no,ebank_serial_number,null as bank_org_id,ta_excess_balance,contract_code,ebank_client_name,org_id,contract_status,'YYPT' as system_code
+        from ta_yypt where contract_code is not null and contract_code <![CDATA[<>]]> ''
+        union all
+        select client_code ,client_name ,operation_remark ,null as ebank_batch_no,ebank_serial_number,bank_org_id,ta_excess_balance,contract_code,ebank_client_name,org_id,contract_status,'XWXT' as system_code
+        from ta_xw where contract_code is not null and contract_code <![CDATA[<>]]> ''
+    </select>
+
+</mapper>
+

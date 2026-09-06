@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ReceiveTaxMapper">
+    <select id="selectPageByMapper"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ReceiveTaxVO">
+        select
+        eic.id ,
+        eic.seller_name ,
+        eic.contract_code ,
+        is_auto_generation,
+        process_status,
+        CASE
+        WHEN eic.is_auto_generation = '1' OR (eic.is_auto_generation ='0' AND eic.process_status = '1') THEN '是'
+        ELSE '否'
+        end as isInvoiced,
+        eic.product_name ,
+        eic.invoice_number ,
+        eic.tax_value,
+        eic.tax_rate,
+        eic.create_time ,
+        COALESCE(SUM(ertd.tax_amount), 0) AS invoiceDetailTax
+        from
+        eg_invoice_claim eic
+        left join eg_receive_tax_detail ertd on eic.contract_code =ertd.remark
+        and eic.invoice_number =ertd.invoice_number and eic.product_name =ertd.product_name and ertd.del_flag = '0'
+        where
+        eic.del_flag = '0'
+        and date_trunc('month', eic.create_time) = date_trunc('month', CURRENT_DATE)
+        <if test="queryDTO.idList != null and queryDTO.idList.size > 0">
+            and eic.id in
+            <foreach item="item" index="index" collection="queryDTO.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+        eic.id,
+        eic.seller_name,
+        eic.contract_code,
+        eic.is_auto_generation,
+        eic.process_status,
+        eic.product_name,
+        eic.invoice_number,
+        eic.tax_value,
+        eic.create_time ,
+        eic.tax_rate
+        order by eic.id desc
+
+    </select>
+</mapper>
+

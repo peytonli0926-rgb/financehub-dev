@@ -1,0 +1,1 @@
+CREATE INDEX eg_contract_balance_temp_contract_code_idx1 ON financialdb.eg_contract_balance_temp (contract_code,business_code);

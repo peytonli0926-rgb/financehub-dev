@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ImpairmentProvisionDetailMapper">
+
+    <select id="selectPageByMapper"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionDetailVO">
+        select
+        eipd.id,
+        eipd.contract_code,
+        coalesce (eipd.contract_name,ec.contract_name ) contract_name,
+        eipd.client_code client_code,
+        eipd.client_name client_name ,
+        eipd.impairment_type ,
+        eipd.business_type ,
+        eipd.org_id ,
+        (select t.org_name from eg_org_company t where t.org_id = eipd.org_id limit 1) org_name,
+        eipd.five_class ,
+        eipd.three_step ,
+        eipd.risk_exposure ,
+        eipd.provision_total ,
+        eipd.last_month_balance ,
+        eipd.this_month_provision ,
+        eipd.financial_institution ,
+        ec.contract_status ,
+        ec.financial_contract_status ,
+        eipd.voucher_id ,
+        eipd.account_date
+        from eg_impairment_provision_detail eipd
+        left join eg_contract_month ec on ec.contract_code =eipd.contract_code and ec.org_id =eipd.org_id and ec.del_flag ='0'
+        where eipd.del_flag ='0'
+        <if test="queryDTO.impairmentProvisionId!=null ">
+            and eipd.impairment_provision_id = #{queryDTO.impairmentProvisionId}
+        </if>
+        <if test="queryDTO.contractCode!=null and queryDTO.contractCode!=''">
+            and eipd.contract_code like concat('%', #{queryDTO.contractCode}::text, '%')
+        </if>
+        <if test="queryDTO.clientName!=null and queryDTO.clientName!=''">
+            and ec.client_name like concat('%', #{queryDTO.clientName}::text, '%')
+        </if>
+        <if test="queryDTO.orgId!=null and queryDTO.orgId!=''">
+            and ec.org_id = #{queryDTO.orgId}
+        </if>
+        <if test="queryDTO.financialContractStatus != null and queryDTO.financialContractStatus.size() != 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="queryDTO.financialContractStatus" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.contractStatus!=null and queryDTO.contractStatus!=''">
+            and ec.contract_status = #{queryDTO.contractStatus}
+        </if>
+        <if test="queryDTO.businessType!=null and queryDTO.businessType!=''">
+            and eipd.business_type = #{queryDTO.businessType}
+        </if>
+        <if test="queryDTO.fiveClass!=null and queryDTO.fiveClass!=''">
+            and eipd.five_class = #{queryDTO.fiveClass}
+        </if>
+        <if test="queryDTO.threeStep!=null and queryDTO.threeStep!=''">
+            and eipd.three_step = #{queryDTO.threeStep}
+        </if>
+        <if test="queryDTO.impairmentType!=null and queryDTO.impairmentType!=''">
+            and eipd.impairment_type = #{queryDTO.impairmentType}
+        </if>
+        <if test="queryDTO.impairmentCreateTime!=null ">
+            and date_trunc('month', eipd.create_time) = date_trunc('month', #{queryDTO.impairmentCreateTime})
+        </if>
+        <if test="queryDTO.idList != null and queryDTO.idList.size > 0">
+            and eipd.id in
+            <foreach item="item" index="index" collection="queryDTO.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by eipd.id desc
+    </select>
+
+    <select id="getTransferOut" resultType="java.util.Map">
+        select
+            eipd.impairment_type,
+            sum(ecb.depreciation_reserves_amount)*-1 as depreciation_reserves_amount
+        from
+            eg_impairment_provision_detail eipd
+                left join eg_contract_balance ecb on
+                    eipd.contract_code = ecb.contract_code
+                    and eipd.org_id = ecb.org_id
+                    and ecb.del_flag = '0'
+        where
+            eipd.del_flag = '0'
+          and eipd.impairment_type in ('租赁资产', '库存减值')
+          and ((eipd.account_date is not null
+            and to_char(eipd.account_date, 'YYYYMM') = #{periodCode})
+            or (eipd.account_date is null
+                and to_char(eipd.create_time, 'YYYY-MM-DD') >= #{firstDay}))
+          and coalesce(ecb.depreciation_reserves_amount, 0) &lt; 0
+          and to_char(ecb.voucher_date, 'YYYY-MM-DD') >= #{firstDay}
+          and ecb.period_code = #{periodCode}
+        group by
+            eipd.impairment_type
+    </select>
+
+    <select id="selectSummary"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionDetailSummaryVO">
+        select
+        sum(risk_exposure) as riskExposureSummary,
+        sum(provision_total) as provisionTotalSummary,
+        sum(last_month_balance) as lastMonthBalanceSummary,
+        sum(this_month_provision) as thisMonthProvisionSummary
+        from eg_impairment_provision_detail eipd
+        left join eg_contract_month ec on ec.contract_code =eipd.contract_code and ec.org_id =eipd.org_id and ec.del_flag ='0'
+        where eipd.del_flag ='0'
+        <if test="queryDTO.impairmentProvisionId!=null ">
+            and eipd.impairment_provision_id = #{queryDTO.impairmentProvisionId}
+        </if>
+        <if test="queryDTO.contractCode!=null and queryDTO.contractCode!=''">
+            and ec.contract_code like concat('%', #{queryDTO.contractCode}::text, '%')
+        </if>
+        <if test="queryDTO.clientName!=null and queryDTO.clientName!=''">
+            and ec.client_name like concat('%', #{queryDTO.clientName}::text, '%')
+        </if>
+        <if test="queryDTO.orgId!=null and queryDTO.orgId!=''">
+            and ec.org_id = #{queryDTO.orgId}
+        </if>
+        <!--        <if test="queryDTO.financialContractStatus!=null and queryDTO.financialContractStatus!=''">-->
+        <!--            and ec.financial_contract_status = #{queryDTO.financialContractStatus}-->
+        <!--        </if>-->
+        <if test="queryDTO.financialContractStatus != null and queryDTO.financialContractStatus.size() != 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="queryDTO.financialContractStatus" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.contractStatus!=null and queryDTO.contractStatus!=''">
+            and ec.contract_status = #{queryDTO.contractStatus}
+        </if>
+        <if test="queryDTO.businessType!=null and queryDTO.businessType!=''">
+            and eipd.business_type = #{queryDTO.businessType}
+        </if>
+        <if test="queryDTO.fiveClass!=null and queryDTO.fiveClass!=''">
+            and eipd.five_class = #{queryDTO.fiveClass}
+        </if>
+        <if test="queryDTO.threeStep!=null and queryDTO.threeStep!=''">
+            and eipd.three_step = #{queryDTO.threeStep}
+        </if>
+        <if test="queryDTO.impairmentType!=null and queryDTO.impairmentType!=''">
+            and eipd.impairment_type = #{queryDTO.impairmentType}
+        </if>
+        <if test="queryDTO.impairmentCreateTime!=null ">
+            and date_trunc('month', eipd.create_time) = date_trunc('month', #{queryDTO.impairmentCreateTime})
+        </if>
+        <if test="queryDTO.idList != null and queryDTO.idList.size > 0">
+            and eipd.id in
+            <foreach item="item" index="index" collection="queryDTO.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getThisMonthDataList" resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionDetailVO">
+        select
+            *
+        from
+            eg_impairment_provision_detail t
+        where
+            t.del_flag = '0'
+          and coalesce (t.is_verification,'否') != '是'
+	and ((t.account_date is not null
+	and to_char(t.account_date, 'YYYYMM') = #{periodCode})
+           or (t.account_date is null and to_char(t.create_time, 'YYYY-MM-DD') >= #{firstDay}))
+    </select>
+</mapper>
+

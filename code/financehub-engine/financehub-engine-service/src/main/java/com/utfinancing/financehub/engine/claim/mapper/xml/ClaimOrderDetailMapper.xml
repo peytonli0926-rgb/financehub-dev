@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.claim.mapper.ClaimOrderDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.claim.entity.ClaimOrderDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="claim_order_id" property="claimOrderId" />
+                    <result column="order_no" property="orderNo" />
+                    <result column="cost_bear_company" property="costBearCompany" />
+                    <result column="cost_bear_department" property="costBearDepartment" />
+                    <result column="start_time" property="startTime" />
+                    <result column="end_time" property="endTime" />
+                    <result column="order_status" property="orderStatus" />
+                    <result column="expense_type" property="expenseType" />
+                    <result column="claim_amount" property="claimAmount" />
+                    <result column="reception_time" property="receptionTime" />
+                    <result column="head_count" property="headCount" />
+                    <result column="head_avg_amount" property="headAvgAmount" />
+                    <result column="city" property="city" />
+                    <result column="serve_activity_project" property="serveActivityProject" />
+                    <result column="description" property="description" />
+                    <result column="comment" property="comment" />
+                    <result column="depart_city" property="departCity" />
+                    <result column="arrive_city" property="arriveCity" />
+                    <result column="transport_means" property="transportMeans" />
+                    <result column="depart_date" property="departDate" />
+                    <result column="trip_name" property="tripName" />
+                    <result column="monthly_amount" property="monthlyAmount" />
+                    <result column="check_in_date" property="checkInDate" />
+                    <result column="check_out_date" property="checkOutDate" />
+                    <result column="stay_city" property="stayCity" />
+                    <result column="contract_no" property="contractNo" />
+                    <result column="client_no" property="clientNo" />
+                    <result column="client_name" property="clientName" />
+                    <result column="invoice_type" property="invoiceType" />
+                    <result column="claim_year_month" property="claimYearMonth" />
+                    <result column="per_head_standard" property="perHeadStandard" />
+                    <result column="receipt_title" property="receiptTitle" />
+                    <result column="payment_amount" property="paymentAmount" />
+                    <result column="payee" property="payee" />
+                    <result column="ride_date" property="rideDate" />
+                    <result column="ride_city" property="rideCity" />
+                    <result column="get_on_location" property="getOnLocation" />
+                    <result column="get_out_location" property="getOutLocation" />
+                    <result column="mileage" property="mileage" />
+                    <result column="expense_description" property="expenseDescription" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="ly_order_status" property="lyOrderStatus" />
+                    <result column="travel_city" property="travelCity" />
+                    <result column="subsidy_standard" property="subsidyStandard" />
+                    <result column="start_date" property="startDate" />
+                    <result column="end_date" property="endDate" />
+                    <result column="trip_days" property="tripDays" />
+                    <result column="subsidy_amount" property="subsidyAmount" />
+                    <result column="settle_mode" property="settleMode" />
+                    <result column="visiting_plan_id" property="visitingPlanId" />
+                    <result column="content" property="content" />
+                    <result column="business_staff" property="businessStaff" />
+                    <result column="visiting_address" property="visitingAddress" />
+                    <result column="beforehand_apply_no" property="beforehandApplyNo" />
+                    <result column="expense_happen_date" property="expenseHappenDate" />
+                    <result column="back_date" property="backDate" />
+                    <result column="days" property="days" />
+                    <result column="estimate_trip_total_amount" property="estimateTripTotalAmount" />
+                    <result column="estimate_amount" property="estimateAmount" />
+                    <result column="serve_date" property="serveDate" />
+                    <result column="serve_target" property="serveTarget" />
+                    <result column="passenger" property="passenger" />
+                    <result column="employee_no" property="employeeNo" />
+                    <result column="content_abstract" property="contentAbstract" />
+                    <result column="expense_date" property="expenseDate" />
+                    <result column="no_tax_amount" property="noTaxAmount" />
+                    <result column="tax_amount" property="taxAmount" />
+                    <result column="receipt_name" property="receiptName" />
+                    <result column="payment_way" property="paymentWay" />
+                    <result column="ebank_no" property="ebankNo" />
+                    <result column="expense_amount" property="expenseAmount" />
+                    <result column="invoice_no_tax_amount" property="invoiceNoTaxAmount" />
+                    <result column="invoice_tax_amount" property="invoiceTaxAmount" />
+                    <result column="claim_date" property="claimDate" />
+                    <result column="invoice_comment" property="invoiceComment" />
+                    <result column="tax_deductible_amount" property="taxDeductibleAmount" />
+                    <result column="pre_payment_amount" property="prePaymentAmount" />
+                    <result column="invoice_date" property="invoiceDate" />
+                    <result column="pre_payment_target" property="prePaymentTarget" />
+                    <result column="trading_amount" property="tradingAmount" />
+                    <result column="surplus_trading_amount" property="surplusTradingAmount" />
+                    <result column="lease_contract_no" property="leaseContractNo" />
+                    <result column="transfer_out_tax_amount" property="transferOutTaxAmount" />
+                    <result column="all_traded_amount" property="allTradedAmount" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="expense_type_code" property="expenseTypeCode" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, claim_order_id, order_no, cost_bear_company, cost_bear_department, start_time, end_time, order_status, expense_type, claim_amount, reception_time, head_count, head_avg_amount, city, serve_activity_project, description, comment, depart_city, arrive_city, transport_means, depart_date, trip_name, monthly_amount, check_in_date, check_out_date, stay_city, contract_no, client_no, client_name, invoice_type, claim_year_month, per_head_standard, receipt_title, payment_amount, payee, ride_date, ride_city, get_on_location, get_out_location, mileage, expense_description, tax_rate, ly_order_status, travel_city, subsidy_standard, start_date, end_date, trip_days, subsidy_amount, settle_mode, visiting_plan_id, content, business_staff, visiting_address, beforehand_apply_no, expense_happen_date, back_date, days, estimate_trip_total_amount, estimate_amount, serve_date, serve_target, passenger, employee_no, content_abstract, expense_date, no_tax_amount, tax_amount, receipt_name, payment_way, ebank_no, expense_amount, invoice_no_tax_amount, invoice_tax_amount, claim_date, invoice_comment, tax_deductible_amount, pre_payment_amount, invoice_date, pre_payment_target, trading_amount, surplus_trading_amount, lease_contract_no, transfer_out_tax_amount, all_traded_amount, create_by, create_time, update_by, update_time, del_flag, expense_type_code
+        </sql>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.engine.claim.model.vo.ClaimOrderDetailVO">
+        select
+            x.*
+        from
+            financialdb.eg_claim_order_detail x
+                inner join financialdb.financialdb.eg_claim_order eco on
+                x.claim_order_id = eco.id
+        where
+            1 = 1
+          and x.del_flag = '0'
+          and eco.del_flag = '0'
+        <if test="condition.expenseTypeList != null and condition.expenseTypeList.size > 0">
+            and x.expense_type in
+            <foreach item="item" index="index" collection="condition.expenseTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="condition.orderStatus!=null and condition.orderStatus!=''">
+            and eco.order_status = #{condition.orderStatus}
+        </if>
+        <if test="condition.isGenerateVoucher!=null and condition.isGenerateVoucher!=''">
+            and eco.is_generate_voucher = #{condition.isGenerateVoucher}
+        </if>
+        isGenerateVoucher
+    </select>
+</mapper>
+

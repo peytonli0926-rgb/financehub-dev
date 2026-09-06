@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.VoucherAmountInitMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.VoucherAmountInitEntity">
+                    <id column="id" property="id" />
+                    <result column="fid" property="fid" />
+                    <result column="org_id" property="orgId" />
+                    <result column="period" property="period" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="account_number" property="accountNumber" />
+                    <result column="account_name" property="accountName" />
+                    <result column="fab_stract" property="fabStract" />
+                    <result column="dt_amount" property="dtAmount" />
+                    <result column="cr_amount" property="crAmount" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, fid, org_id, period, contract_code, client_code, account_number, account_name, fab_stract, dt_amount, cr_amount
+        </sql>
+
+        <select id="selectDtAmountInit" resultMap="BaseResultMap">
+            select
+                contract_code, sum(dt_amount) as dt_amount
+            from eg_voucher_amount_init
+            group by contract_code
+        </select>
+</mapper>
+

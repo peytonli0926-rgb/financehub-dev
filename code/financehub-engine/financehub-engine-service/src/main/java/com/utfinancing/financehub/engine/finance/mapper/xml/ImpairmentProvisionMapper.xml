@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ImpairmentProvisionMapper">
+
+    <select id="getLastMonthBalance"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ImpairmentProvisionDetailEntity">
+        select *
+        from eg_impairment_provision_detail eipd
+        where eipd.del_flag ='0'
+        <if test="queryDTO.contractCode != '' and queryDTO.contractCode != null">
+            and eipd.contract_code = #{queryDTO.contractCode}::text
+        </if>
+        <if test="queryDTO.clientName != '' and queryDTO.clientName != null">
+            and eipd.client_name = #{queryDTO.clientName}::text
+        </if>
+        <if test="queryDTO.orgId != '' and queryDTO.orgId != null">
+            and eipd.org_id = #{queryDTO.orgId}::text
+        </if>
+        <if test="queryDTO.impairmentType != '' and queryDTO.impairmentType != null">
+            and eipd.impairment_type = #{queryDTO.impairmentType}::text
+        </if>
+        <if test="queryDTO.businessType != '' and queryDTO.businessType != null">
+            and eipd.business_type = #{queryDTO.businessType}::text
+        </if>
+        and date_trunc('month', eipd.create_time) = date_trunc('month', current_date - interval '1 month')
+    </select>
+    <select id="getLastMonthByExcelType"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ImpairmentProvisionDetailEntity">
+        select *
+        from eg_impairment_provision_detail eipd
+        where eipd.del_flag ='0'
+        <if test="excelType != '' and excelType != null">
+            and eipd.excel_type = #{excelType}::text
+        </if>
+        and date_trunc('month', eipd.create_time) = date_trunc('month', current_date - interval '1 month')
+    </select>
+    <select id="getExportExcel1"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionExcelVOExport1">
+        select
+            eoc.org_name ,
+            '1221.04' as accountCode,
+            '应收诉讼保全费' as accountName,
+            ecbl.contract_code,
+            ea.assist_flags,
+            ec.client_name,
+            '人民币' as currencyName,
+            ecbl.receivable_litigation_expenses_balance as amount,
+            ecbl.voucher_date,
+            ((date_trunc('month', current_date) - INTERVAL '1 day')::date - voucher_date::date)::integer AS aging
+        from eg_contract_balance_latest ecbl
+            left join eg_org_company eoc on ecbl.org_id=eoc.org_id and eoc.del_flag='0'
+            left join eg_account ea on ea.account_code='1221.04' and ea.del_flag ='0'
+            left join eg_contract_month ec on ecbl.contract_code =ec.contract_code and ecbl.client_code =ec.client_code and ecbl.org_id =ec.org_id and ec.del_flag ='0'
+        where ecbl.del_flag ='0'
+          and receivable_litigation_expenses_balance != 0
+    </select>
+    <select id="getExportExcel2"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionExcelVOExport2">
+        select
+            t.*,
+            case when t.aging>365 then '一年以上'
+                 when t.aging>180 then '半年到一年'
+                 when t.aging>60 then '三-六个月'
+                 when t.aging>30 then '两个月'
+                 when t.aging>0 then '一个月'
+                end as agingGroup
+        from (
+                 select
+                     eoc.org_name ,
+                     ecbl.contract_code,
+                     ec.client_name,
+                     SUBSTRING(ecbl.period_code::text FROM 1 FOR 4) AS periodYear,
+                     SUBSTRING(ecbl.period_code::text FROM 5 FOR 2) AS periodMonth,
+                     '1122.08' as accountCode,
+                     '其他应收款项' as accountName,
+                     ecbl.receivable_other_balance as amount,
+                     ecbl.voucher_date,
+                     ((date_trunc('month', current_date) - INTERVAL '1 day')::date - voucher_date::date)::integer AS aging
+        from eg_contract_balance_latest ecbl
+            left join eg_org_company eoc on ecbl.org_id=eoc.org_id and eoc.del_flag='0'
+            left join eg_contract_month ec on ecbl.contract_code =ec.contract_code and ecbl.client_code =ec.client_code and ecbl.org_id =ec.org_id and ec.del_flag ='0'
+        where ecbl.del_flag ='0'
+          and receivable_other_balance != 0
+            ) t
+    </select>
+    <select id="getExportExcel3"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionExcelVOExport3">
+        select t.*,
+               case when t.aging>365 then '一年以上'
+                    when t.aging>180 then '半年到一年'
+                    when t.aging>60 then '三-六个月'
+                    when t.aging>30 then '两个月'
+                    when t.aging>0 then '一个月' end as agingGroup
+        from (
+                 select
+                     '财务中台' as systemReport,
+                     ecbl.contract_code,
+                     ec.contract_name,
+                     SUBSTRING(ecbl.period_code::text FROM 1 FOR 4) AS periodYear,
+                     SUBSTRING(ecbl.period_code::text FROM 5 FOR 2) AS periodMonth,
+                     '1221.13' as accountCode,
+                     '投资性房地产应收租金' as accountName,
+                     ecbl.receivable_rent_investment_property_balance as amount,
+                     ecbl.voucher_date,
+                     ((date_trunc('month', current_date) - INTERVAL '1 day')::date - voucher_date::date)::integer AS aging
+        from eg_contract_balance_latest ecbl
+            left join eg_contract_month ec on ecbl.contract_code =ec.contract_code and ecbl.org_id =ec.org_id and ec.del_flag ='0'
+        where ecbl.del_flag ='0'
+          and receivable_rent_investment_property_balance != 0
+            ) t
+    </select>
+    <select id="getExportExcel4"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionExcelVOExport4">
+        select t.*,
+               ec.contract_name ,
+               ec.client_name ,
+               t.receivable_rent_balance + t.receivable_residual_value_balance + t.receivable_outtax_balance - t.unrealized_revenue_balance as boolValue
+        from (
+                 select
+                     ecbl.contract_code ,
+                     ecbl.org_id ,
+                     sum(receivable_rent_balance) as receivable_rent_balance,
+                     sum(receivable_residual_value_balance) as receivable_residual_value_balance,
+                     sum(receivable_outtax_balance) as receivable_outtax_balance,
+                     sum(unrealized_revenue_balance) as unrealized_revenue_balance
+                 from eg_contract_balance_latest ecbl
+                 where ecbl.del_flag ='0'
+                   and ecbl.org_id in ('01-C0001','01-C0001-old')
+                   and ecbl.contract_code like 'D%'
+                   and (ecbl.receivable_rent_balance !=0 or ecbl.receivable_residual_value_balance !=0 or ecbl.receivable_outtax_balance!=0 or ecbl.unrealized_revenue_balance!=0)
+                 group by ecbl.contract_code ,ecbl.org_id
+             )t
+                 left join eg_contract_month ec on t.contract_code =ec.contract_code and t.org_id =ec.org_id and ec.del_flag ='0'
+    </select>
+    <select id="getExportExcel5"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ImpairmentProvisionExcelVOExport5">
+        select
+            *
+        from
+            (
+                select
+                    ecbl.org_id,
+                    eoc.org_name ,
+                    ecbl.contract_code,
+                    ec.contract_name,
+                    SUBSTRING(ecbl.period_code::text from 1 for 4) as periodYear,
+                    SUBSTRING(ecbl.period_code::text from 5 for 2) as periodMonth,
+                    '长期应收款' as accountName,
+                    (coalesce(ecbl.receive_sum_debt_restructure_balance, 0) - coalesce(ecbl.unrealized_revenue_debt_restructure_balance, 0) + coalesce(ecbl.receivable_outtax_debt_restructure_balance, 0) - coalesce(ecbl.other_long_margin_balance, 0) - coalesce(ecbl.unrealized_revenue_other_debt_restructure_balance, 0)) as amount
+                from
+                    eg_contract_balance_latest ecbl
+                        left join eg_org_company eoc on
+                            ecbl.org_id = eoc.org_id
+                            and eoc.del_flag = '0'
+                        left join eg_contract_month ec on
+                            ecbl.contract_code = ec.contract_code
+                            and ecbl.client_code = ec.client_code
+                            and ecbl.org_id = ec.org_id
+                            and ec.del_flag = '0'
+                where
+                    ecbl.del_flag = '0' ) t
+        where
+            t.amount != 0
+    </select>
+
+    <select id="getLastMonthByPeriodCode" resultType="com.utfinancing.financehub.engine.finance.entity.ImpairmentProvisionDetailEntity">
+        select
+        eipd.id,
+        eipd.contract_code,
+        eipd.impairment_type,
+        eipd.business_type,
+        eipd.org_id,
+        eipd.five_class,
+        eipd.three_step,
+        eipd.risk_exposure,
+        eipd.provision_total,
+        eipd.last_month_balance,
+        eipd.this_month_provision,
+        eipd.voucher_id,
+        eipd.account_date,
+        eipd.del_flag,
+        eipd.create_by,
+        eipd.create_time,
+        eipd.update_by,
+        eipd.update_time,
+        eipd.is_verification,
+        eipd.rent_receivable_balance,
+        eipd.hub_rent_receivable_balance,
+        (case
+        when eipd.client_code is not null then eipd.client_code
+        else
+        (case
+        when eipd.client_name is not null then (
+        select
+        ec.client_code
+        from
+        eg_contract_month ec
+        where
+        ec.contract_code = eipd.contract_code
+        and ec.org_id = eipd.org_id
+        and ec.del_flag = '0'
+        and ec.client_name = eipd.client_name
+        order by
+        ec.create_time desc
+        limit 1 )
+        else (
+        select
+        ec.client_code
+        from
+        eg_contract_month ec
+        where
+        ec.contract_code = eipd.contract_code
+        and ec.org_id = eipd.org_id
+        and ec.del_flag = '0'
+        order by
+        ec.create_time desc
+        limit 1 )
+        end)
+        end ) client_code,
+        (case
+        when eipd.client_name is not null then eipd.client_name
+        else
+        (case
+        when eipd.client_code is not null then (
+        select
+        ec.client_name
+        from
+        eg_contract_month ec
+        where
+        ec.contract_code = eipd.contract_code
+        and ec.org_id = eipd.org_id
+        and ec.del_flag = '0'
+        and ec.client_code = eipd.client_code
+        order by
+        ec.create_time desc
+        limit 1 )
+        else (
+        select
+        ec.client_name
+        from
+        eg_contract_month ec
+        where
+        ec.contract_code = eipd.contract_code
+        and ec.org_id = eipd.org_id
+        and ec.del_flag = '0'
+        order by
+        ec.create_time desc
+        limit 1 )
+        end)
+        end ) client_name,
+        (
+        select
+        ec.financial_contract_status
+        from
+        eg_contract_month ec
+        where
+        ec.contract_code = eipd.contract_code
+        and ec.org_id = eipd.org_id
+        and ec.del_flag = '0'
+        order by ec.create_time desc
+        limit 1 )  financial_contract_status,
+        eipd.contract_name,
+        eipd.excel_type,
+        eipd.error_info,
+        eipd.impairment_provision_id,
+        eipd.target_amount,
+        eipd.exchange_rate,
+        eipd.origin_currency,
+        eipd.target_currency,
+        eipd.financial_institution,
+        eipd.history_flag,
+        eipd.import_flag
+        from eg_impairment_provision_detail eipd
+        where eipd.del_flag ='0' and eipd.account_date is not null
+        and exists (
+        select
+        1
+        from
+        eg_impairment_provision t2
+        where
+        t2.id = eipd.impairment_provision_id
+        and t2.write_off_original_id is null
+        and COALESCE(t2.is_write_off, '0') != '1')
+        <if test="excelType != '' and excelType != null">
+            and eipd.excel_type = #{excelType}::text
+        </if>
+        <if test="periodCode != '' and periodCode != null">
+            and to_char(eipd.account_date , 'YYYYMM') = #{periodCode}::text
+        </if>
+
+    </select>
+
+</mapper>
+

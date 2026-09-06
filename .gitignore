@@ -1,0 +1,30 @@
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build products and dependencies
+**/target/
+**/dist/
+**/node_modules/
+*.class
+*.jar
+
+# Runtime output
+logs/
+runtime-logs/
+*.log
+*.pid
+
+# Local-only configuration; keep the checked-in local engine placeholder file
+.local/*
+!.local/engine-local-overrides.properties
+
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+

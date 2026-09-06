@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.claim.mapper.ClaimOrderMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.claim.entity.ClaimOrderEntity">
+                    <id column="id" property="id" />
+                    <result column="message_id" property="messageId" />
+                    <result column="order_no" property="orderNo" />
+                    <result column="order_type" property="orderType" />
+                    <result column="apply_no" property="applyNo" />
+                    <result column="claim_name" property="claimName" />
+                    <result column="belong_company" property="belongCompany" />
+                    <result column="department" property="department" />
+                    <result column="base_amount" property="baseAmount" />
+                    <result column="apply_amount" property="applyAmount" />
+                    <result column="apply_date" property="applyDate" />
+                    <result column="order_status" property="orderStatus" />
+                    <result column="claim_amount" property="claimAmount" />
+                    <result column="voucher_header_no" property="voucherHeaderNo" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="claim_total_amount" property="claimTotalAmount" />
+                    <result column="contact_phone" property="contactPhone" />
+                    <result column="online_car_invoice_count" property="onlineCarInvoiceCount" />
+                    <result column="apply_name" property="applyName" />
+                    <result column="travel_type" property="travelType" />
+                    <result column="destination" property="destination" />
+                    <result column="cost_bear_company" property="costBearCompany" />
+                    <result column="cost_bear_department" property="costBearDepartment" />
+                    <result column="start_time" property="startTime" />
+                    <result column="end_time" property="endTime" />
+                    <result column="cross_company_claim" property="crossCompanyClaim" />
+                    <result column="travel_reason" property="travelReason" />
+                    <result column="reason" property="reason" />
+                    <result column="company" property="company" />
+                    <result column="submit_date" property="submitDate" />
+                    <result column="has_apply_oa" property="hasApplyOa" />
+                    <result column="client_name" property="clientName" />
+                    <result column="input_tax_amount" property="inputTaxAmount" />
+                    <result column="payment_currency_type" property="paymentCurrencyType" />
+                    <result column="comment" property="comment" />
+                    <result column="has_explicit_item" property="hasExplicitItem" />
+                    <result column="payment_currency_category" property="paymentCurrencyCategory" />
+                    <result column="has_bank_mandate" property="hasBankMandate" />
+                    <result column="total_amount" property="totalAmount" />
+                    <result column="no_tax_amount" property="noTaxAmount" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, message_id, order_no, order_type, apply_no, claim_name, belong_company, department, base_amount, apply_amount, apply_date, order_status, claim_amount, voucher_header_no, currency_type, claim_total_amount, contact_phone, online_car_invoice_count, apply_name, travel_type, destination, cost_bear_company, cost_bear_department, start_time, end_time, cross_company_claim, travel_reason, reason, company, submit_date, has_apply_oa, client_name, input_tax_amount, payment_currency_type, comment, has_explicit_item, payment_currency_category, has_bank_mandate, total_amount, no_tax_amount, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.engine.claim.model.vo.ClaimOrderVO">
+        select
+        distinct eco.*,
+        eoc.org_id
+        from
+        eg_claim_order eco
+        inner join eg_claim_order_detail ecod on
+        eco.id = ecod.claim_order_id
+        left join eg_org_company eoc on
+        eco.cost_bear_company = eoc.org_name
+        where
+            1 = 1
+          and eco.del_flag = '0'
+          and ecod.del_flag = '0'
+          <if test="condition.isGenerateVoucher!=null and condition.isGenerateVoucher!=''">
+              and eco.is_generate_voucher = #{condition.isGenerateVoucher}
+          </if>
+        <if test="condition.expenseTypeList != null and condition.expenseTypeList.size > 0">
+            and ecod.expense_type in
+            <foreach item="item" index="index" collection="condition.expenseTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="condition.orderStatus !=null and condition.orderStatus!=''">
+            and eco.order_status = #{condition.orderStatus}
+        </if>
+        order by eco.id asc limit 500
+    </select>
+</mapper>
+

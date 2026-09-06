@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.OutTableContractDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.OutTableContractDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="out_table_abs_id" property="outTableAbsId" />
+                    <result column="loan_contract_code" property="loanContractCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="receivable_rent" property="receivableRent" />
+                    <result column="receivable_residual_value" property="receivableResidualValue" />
+                    <result column="receivable_outtax" property="receivableOuttax" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="lessee_margin" property="lesseeMargin" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="transfer_price" property="transferPrice"/>
+                    <result column="period_code" property="periodCode"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, out_table_abs_id, loan_contract_code, contract_code, client_code, client_name, org_id, financial_contract_status, receivable_rent, receivable_residual_value, receivable_outtax, unrealized_revenue, lessee_margin, voucher_id, error_info, del_flag, create_by, create_time, update_by, update_time, transfer_price,period_code
+        </sql>
+
+        <select id="getOutTableContractDetailInfoByTaId" resultType="com.utfinancing.financehub.engine.finance.entity.OutTableContractDetailEntity">
+
+            with abs as (
+                select * from eg_out_table_contract_detail t1 where exists (select 1 from (
+                  select eotcd.org_id ,eotcd.contract_code ,max(eotcd.create_time) create_time from eg_out_table_contract_detail eotcd
+
+                    join eg_out_table_abs eota on eotcd.out_table_abs_id = eota.id
+                  where eota.process_status in ('2','3','4')
+                  group by eotcd.org_id ,eotcd.contract_code
+              )tmp where t1.org_id = tmp.org_id and t1.contract_code = tmp.contract_code and t1.create_time = tmp.create_time)
+            )
+            select abs.org_id,abs.contract_code,abs.loan_contract_code loan_contract_code from abs join eg_ta_reclassification_detail etrd
+                    on coalesce(abs.org_id,'') = coalesce(etrd.org_id ,'') and coalesce(abs.contract_code,'') = coalesce(etrd.contract_code ,'')
+            where etrd.ta_reclassification_id = #{taId}
+        </select>
+    <select id="selectDetailsByParams"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.OutTableContractDetailVO">
+        select
+        eotcd.*,
+        eota.account_date
+        from
+        eg_out_table_contract_detail eotcd
+        inner join eg_out_table_abs eota on
+        eotcd.out_table_abs_id = eota.id
+        where
+        1 = 1
+        and eotcd.del_flag = '0'
+        and eota.del_flag = '0'
+        <if test="param.outTableAbsIdList != null and param.outTableAbsIdList.size > 0">
+            and eota.id in
+            <foreach item="item" index="index" collection="param.outTableAbsIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>
+

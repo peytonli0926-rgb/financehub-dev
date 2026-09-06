@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.CheckAccountMiddleTmpMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.CheckAccountMiddleTmpEntity">
+                    <id column="id" property="id" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="voucher_date" property="voucherDate" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="bank_account" property="bankAccount" />
+                    <result column="bill_contract_code" property="billContractCode" />
+                    <result column="debit_amount" property="debitAmount" />
+                    <result column="credit_amount" property="creditAmount" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, business_date, voucher_date, system_code, period_code, currency_type, org_id, account_code, client_code, contract_code, bank_account, bill_contract_code, debit_amount, credit_amount
+        </sql>
+
+        <delete id="clearTableData">
+            truncate table eg_check_account_middle_tmp
+        </delete>
+</mapper>
+

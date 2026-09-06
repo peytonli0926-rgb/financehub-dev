@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.VoucherEntryMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.VoucherEntryEntity">
+                    <id column="id" property="id" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="fund_type" property="fundType" />
+                    <result column="relate_bank_flag" property="relateBankFlag" />
+                    <result column="bank_account" property="bankAccount" />
+                    <result column="cash_attribute" property="cashAttribute" />
+                    <result column="voucher_summary" property="voucherSummary" />
+                    <result column="voucher_amount" property="voucherAmount" />
+                    <result column="client_flag" property="clientFlag" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="contract_flag" property="contractFlag" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_name" property="accountName" />
+                    <result column="debit_credit_type" property="debitCreditType" />
+                    <result column="account_period" property="accountPeriod" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="debit_amount" property="debitAmount" />
+                    <result column="credit_amount" property="creditAmount" />
+            <result column="employee_code" property="employeeCode"/>
+            <result column="expense_type" property="expenseType"/>
+            <result column="financial_institution" property="financialInstitution"/>
+            <result column="cost_centre" property="costCentre"/>
+            <result column="receipt_number" property="receiptNumber"/>
+            <result column="derivative_contract_number" property="derivativeContractNumber"/>
+            <result column="batch_number" property="batchNumber"/>
+            <result column="eas_voucher_number" property="easVoucherNumber"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, voucher_id, fund_type, relate_bank_flag, bank_account, cash_attribute, voucher_summary, voucher_amount, client_flag, client_code, client_name, contract_flag, contract_code, contract_name, account_code, account_name, debit_credit_type, account_period, create_by, create_time, update_by, update_time, del_flag, debit_amount, credit_amount, eas_voucher_number
+        </sql>
+    <update id="removeByIds">
+        update eg_voucher_entry set del_flag = '1'
+                                where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>
+

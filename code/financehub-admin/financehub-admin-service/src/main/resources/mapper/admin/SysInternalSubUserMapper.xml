@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.admin.mapper.SysInternalSubUserMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.admin.entity.SysInternalSubUserEntity">
+                    <id column="id" property="id" />
+                    <result column="parent_user_id" property="parentUserId" />
+                    <result column="sub_user_id" property="subUserId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, parent_user_id, sub_user_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectPageByCondition"
+            resultType="com.utfinancing.financehub.admin.model.vo.SysInternalSubUserVO">
+        select
+            x.*,
+            s1.user_name as parent_user_name,
+            s2.user_name as sub_user_name
+        from
+            sys_internal_sub_user x
+                inner join sys_internal_user s1 on
+                x.parent_user_id = s1.id
+                inner join sys_internal_user s2 on
+                x.sub_user_id = s2.id
+            where 1=1 and x.del_flag = '0' and s1.del_flag = '0' and s2.del_flag = '0'
+            <if test="condition.subUserName!=null and condition.subUserName!=''">
+                and s2.user_name like concat('%',#{condition.subUserName}::text,'%')
+            </if>
+           <if test="condition.parentUserId!=null">
+               and x.parent_user_id = #{condition.parentUserId}
+           </if>
+    </select>
+</mapper>
+

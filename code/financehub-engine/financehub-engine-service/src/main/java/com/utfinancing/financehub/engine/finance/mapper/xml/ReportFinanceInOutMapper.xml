@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ReportFinanceInOutMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ReportFinanceInOutEntity">
+                    <id column="id" property="id" />
+                    <result column="execute_date" property="executeDate" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="inbound_date" property="inboundDate" />
+                    <result column="receivable_rent_balance" property="receivableRentBalance" />
+                    <result column="receivable_residual_value_balance" property="receivableResidualValueBalance" />
+                    <result column="receivable_outtax_balance" property="receivableOuttaxBalance" />
+                    <result column="unrealized_revenue_balance" property="unrealizedRevenueBalance" />
+                    <result column="lessee_margin_balance" property="lesseeMarginBalance" />
+                    <result column="financial_exposure" property="financialExposure" />
+                    <result column="recycling_equipment_cost" property="recyclingEquipmentCost" />
+                    <result column="recycling_equipment_account_balance" property="recyclingEquipmentAccountBalance" />
+                    <result column="provision_for_impairment" property="provisionForImpairment" />
+                    <result column="substract_balance" property="substractBalance" />
+                    <result column="net_worth" property="netWorth" />
+                    <result column="provisional_receipts_balance" property="provisionalReceiptsBalance" />
+                    <result column="outbound_date" property="outboundDate" />
+                    <result column="outbound_type" property="outboundType" />
+                    <result column="deal_amount" property="dealAmount" />
+                    <result column="receivable_service_outtax_amount" property="receivableServiceOuttaxAmount" />
+                    <result column="profit_loss" property="profitLoss" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, execute_date, period_code, contract_code, client_code, org_id, inbound_date, receivable_rent_balance, receivable_residual_value_balance, receivable_outtax_balance, unrealized_revenue_balance, lessee_margin_balance, financial_exposure, recycling_equipment_cost, provision_for_impairment, substract_balance, net_worth, provisional_receipts_balance, outbound_date, outbound_type, deal_amount, receivable_service_outtax_amount, profit_loss, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+        <sql id="inAndOutData">
+            with sub as (
+            select ereid.contract_code --合同编码
+            ,ereid.client_code --客户编码
+            ,ereid.client_name --客户名称
+            ,ereid.org_id --签约主体
+            ,ereid.inbound_date --入库日期
+            ,ereid.receivable_rent_balance  --应收租金
+            ,ereid.receivable_residual_value_balance  --应收期末残值
+            ,ereid.receivable_outtax_balance  --应收销项税
+            ,ereid.unrealized_revenue_balance  --未实现收益
+            ,ereid.lessee_margin_balance  --承租人保证金
+            --         ,ecbl_t.receivable_rent_balance --应收租金
+            --         ,ecbl_t.receivable_residual_value_balance --应收期末残值
+            --         ,ecbl_t.receivable_outtax_balance --应收销项税
+            --         ,ecbl.unrealized_revenue_balance --未实现收益
+            --         ,ecbl_t.lessee_margin_balance --承租人保证金
+            ,ereid.recycling_equipment_cost --回收设备成本
+            ,ereid.provision_for_impairment --入库时计提减值
+            --         ,COALESCE(ereod.provision_for_impairment,0)-COALESCE(ereid.provision_for_impairment,0) substract_balance --回收设备减值
+            ,ecbl_t.provisional_receipts_balance --暂收款项
+            ,COALESCE(substring(ertd1.business_date,1,10), substring(ertd2.message_content ->>'businessDate',1,10),ereod.outbound_date) outbound_date --出库日期
+            ,case when ertd1.business_date is not null then '处置' when ertd2.message_content ->>'businessDate' is not null then '赎回' else null end as outbound_type --出库类型
+            ,case when ertd1.business_date is not null then ertd1.deal_amount else null end as deal_amount_temp --处置金额
+            --        ,greatest(COALESCE(ecb.receivable_outtax_amount,0),0)+greatest(COALESCE(ecb.receivable_service_outtax_amount,0),0) receivable_service_outtax_amount --应交销项税
+            --        ,COALESCE(ecbl.asset_dispose_gain_balance,0)+COALESCE(ecbl.asset_dispose_loss_balance,0) profit_loss --融资租赁资产处置损益
+            from (select * from eg_recycling_equipment_in_detail detail where detail.del_flag='0' and exists (select 1 from eg_recycling_equipment_in head where head.del_flag ='0' and head.process_status in ('2','3','4') and detail.inbound_date = head.inbound_date and detail.org_id = head.org_id and detail.recycle_id = head.id)) ereid
+            left join (select org_id,contract_code,sum(unrealized_revenue_balance) unrealized_revenue_balance,sum(asset_dispose_gain_balance) asset_dispose_gain_balance,sum(asset_dispose_loss_balance) asset_dispose_loss_balance from eg_contract_balance_latest where del_flag = '0' group by org_id,contract_code) ecbl on ereid.org_id = ecbl.org_id and ereid.contract_code = ecbl.contract_code
+            left join (select org_id, contract_code, sum(provisional_receipts_balance) provisional_receipts_balance from eg_contract_balance_latest where del_flag = '0' and coalesce(scene_code,'')  not in('RKCZ', 'RKSH', 'CWCK') group by org_id, contract_code) ecbl_t on ereid.org_id = ecbl_t.org_id and ereid.contract_code = ecbl_t.contract_code
+            left join eg_recycling_equipment_out_detail ereod on ereid.org_id = ereod.org_id and ereid.contract_code = ereod.contract_code and ereod.del_flag = '0'
+            --        left join eg_contract_balance ecb on ereid.org_id = ecb.org_id and ereid.contract_code = ecb.contract_code and ereid.client_code = ecb.client_code
+            left join (
+            select rkcz.contract_code, rkcz.org_id, rkcz.business_date,rkcz.create_time,sum(rkcz.ebankAmount::numeric) deal_amount from (
+            select
+            id,
+            contract_code ,
+            --	json_array_elements((message_content ->>'receivableUnconfirmList')::json)->> 'orgId' org_id ,
+            org_id,
+            json_array_elements((message_content ->>'receivableUnconfirmList')::json)->> 'ebankAmount' ebankAmount,
+            message_content ->>'businessDate' business_date,
+            create_time
+            from
+            eg_raw_transaction_data t1
+            where
+            t1.del_flag = '0' and t1.message_status ='SUCCESS' and
+            exists (
+            select
+            1
+            from
+            (
+            select
+            distinct field_code,
+            source_value,
+            target_value
+            from
+            eg_field_mapping
+            where
+            field_code = 'sceneCode')t2
+            where
+            t1.scene_code = t2.source_value
+            and t2.target_value = 'RKCZ' ) )rkcz group by rkcz.contract_code, rkcz.org_id, rkcz.business_date,rkcz.create_time) ertd1 on ereid.org_id = ertd1.org_id and ereid.contract_code = ertd1.contract_code and ertd1.create_time >=to_date(ereid.inbound_date, 'YYYY-MM-DD')
+            left join (select * from eg_raw_transaction_data t1 where t1.del_flag = '0' and t1.message_status ='SUCCESS' and exists (
+            select
+            1
+            from
+            (
+            select
+            distinct field_code,
+            source_value,
+            target_value
+            from
+            eg_field_mapping
+            where
+            field_code = 'sceneCode')t2
+            where
+            t1.scene_code = t2.source_value
+            and t2.target_value = 'RKSH' )) ertd2 on ereid.org_id = ertd2.org_id and ereid.contract_code = ertd2.contract_code and ertd2.create_time >=to_date(ereid.inbound_date, 'YYYY-MM-DD')
+            )
+
+            , basic as (
+            select distinct org_id ,contract_code ,to_char(to_date(outbound_date,'YYYY-MM-DD'), 'YYYYMM')::integer outbound_date from sub --where outbound_type = '处置' and contract_code = 'KCE21124462'
+            )
+            , ev_eve as (
+            select ev.*,eve.account_code, eve.debit_amount, eve.credit_amount from eg_voucher ev
+            join eg_voucher_entry eve on ev.id = eve.voucher_id  and eve.del_flag ='0'
+            where ev.del_flag = '0'  and exists (select 1 from basic where basic.outbound_date is not null and ev.org_id = basic.org_id and ev.contract_code = basic.contract_code and ev.period_code <![CDATA[>=]]> basic.outbound_date-1 and ev.period_code <![CDATA[<=]]> basic.outbound_date+1)
+            )
+            , ev_val as (
+            select
+            ev_eve.org_id, ev_eve.contract_code,sub.outbound_type,ev_eve.scene_code,ev_eve.account_code,ev_eve.interface_data_id,max(ev_eve.interface_data_id) over(partition by ev_eve.org_id, ev_eve.contract_code),
+            case when sub.outbound_type = '处置'
+            and ev_eve.scene_code = 'RKCZ'
+            and (ev_eve.account_code = '6115.01.01'
+            or ev_eve.account_code = '6115.01.02')
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id)
+            then sum(ev_eve.credit_amount)
+            else null
+            end profit_loss,
+            case when sub.outbound_type = '处置'
+            and ev_eve.scene_code = 'RKCZ'
+            and ev_eve.account_code = '2221.01.05'
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id)
+            then sum(ev_eve.credit_amount)
+            else null
+            end receivable_service_outtax_amount,
+            case when sub.outbound_type = '处置'
+            and ev_eve.scene_code = 'RKCZ'
+            and ev_eve.account_code = '2241.19'
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id)
+            then sum(ev_eve.debit_amount)
+            else null
+            end provisional_receipts_amount,
+            case when sub.outbound_type = '处置'
+            and ev_eve.scene_code = 'RKCZ'
+            and ev_eve.account_code = '1461.02.02'
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id)
+            then sum(ev_eve.debit_amount)
+            when sub.outbound_type = '赎回'
+            and ev_eve.scene_code = 'RKSH'
+            and ev_eve.account_code = '1461.02.02'
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id)
+            then sum(ev_eve.credit_amount) * -1
+            else sum(ereod.provision_for_impairment)
+            end substract_balance,
+            case when sub.outbound_type = '处置'
+            and ev_eve.scene_code = 'RKCZ'
+            and ev_eve.account_code = '1461.02.01'
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id)
+            then sum(ev_eve.debit_amount)
+            when sub.outbound_type = '赎回'
+            and ev_eve.scene_code = 'RKSH'
+            and ev_eve.account_code = '1461.02.02'
+            and ev_eve.interface_data_id = max(ev_eve.interface_data_id) over(partition by ev_eve.org_id, ev_eve.contract_code)
+            then sum(ev_eve.debit_amount)
+            else sum(ereod.recycling_equipment_cost)
+            end recycling_equipment_account_balance
+            from ev_eve
+            left join sub on sub.org_id = ev_eve.org_id and sub.contract_code = ev_eve.contract_code
+            left join eg_recycling_equipment_out_detail ereod on ev_eve.org_id = ereod.org_id and ev_eve.contract_code = ereod.contract_code and ereod.del_flag ='0'
+            group by ev_eve.org_id, ev_eve.contract_code,sub.outbound_type,ev_eve.scene_code,ev_eve.account_code,ev_eve.interface_data_id
+            )
+            , ev_val_grp as (
+            select ev_val.org_id, ev_val.contract_code,
+            sum(COALESCE(ev_val.provisional_receipts_amount,0)) provisional_receipts_amount,
+            sum(ev_val.profit_loss) profit_loss, sum(ev_val.receivable_service_outtax_amount) receivable_service_outtax_amount,
+            sum(ev_val.substract_balance) substract_balance, sum(ev_val.recycling_equipment_account_balance) recycling_equipment_account_balance
+            from ev_val group by ev_val.org_id, ev_val.contract_code
+            )
+            ,balance_max_id as (
+            select ecb.org_id, ecb.contract_code, ecb.client_code,ecb.bill_contract_code, max(id) max_id from eg_contract_balance ecb join sub on ecb.contract_code = sub.contract_code and ecb.org_id = sub.org_id
+            and sub.outbound_date is not null
+            where ecb.del_flag = '0' and ecb.period_code::text <![CDATA[<=]]> replace(substring(sub.outbound_date,1,7) ,'-','') and ecb.scene_code in ('RKCZ', 'RKSH', 'CWCK') and sub.outbound_type is not null
+            group by ecb.org_id, ecb.contract_code, ecb.client_code,ecb.bill_contract_code
+            )
+            ,balance_value as (
+            	select ecb.org_id, ecb.contract_code, sum(-1*ecb.receive_cost_amount) recycling_equipment_account_balance from eg_contract_balance ecb where ecb.del_flag  = '0' and id in (select max_id from balance_max_id) group by ecb.contract_code , ecb.org_id
+            )
+            , res as (
+            select sub.*,ev_val_grp.profit_loss, ev_val_grp.receivable_service_outtax_amount, ev_val_grp.substract_balance,
+            balance_value.recycling_equipment_account_balance,
+            COALESCE(sub.deal_amount_temp,0) + COALESCE(ev_val_grp.provisional_receipts_amount,0) as deal_amount
+            from sub left join ev_val_grp on sub.org_id = ev_val_grp.org_id and sub.contract_code = ev_val_grp.contract_code
+            left join balance_value on sub.org_id = balance_value.org_id and sub.contract_code = balance_value.contract_code
+            )
+        </sql>
+
+        <sql id="filterCondition">
+            where 1=1
+            <if test="param.contractCode != null and param.contractCode != ''">
+                and res.contract_code = #{param.contractCode}
+            </if>
+<!--            <if test="param.clientName != null and param.clientName != ''">-->
+<!--                and exists (select 1 from eg_client ec where ec.client_name like concat('%', #{param.clientName}::text, '%') and res.client_code = ec.client_code )-->
+<!--            </if>-->
+            <if test="param.clientName != null and param.clientName != ''">
+                and res.client_name like concat('%', #{param.clientName}::text, '%')
+            </if>
+            <if test="param.orgId != null and param.orgId != ''">
+                and res.org_id = #{param.orgId}
+            </if>
+            <if test="param.outboundType != null and param.outboundType != ''">
+                and res.outbound_type = #{param.outboundType}
+            </if>
+
+            <if test="param.inboundDateStart != null and param.inboundDateStart != ''">
+                and res.inbound_date <![CDATA[>=]]> #{param.inboundDateStart}
+            </if>
+
+            <if test="param.inboundDateEnd != null and param.inboundDateEnd != ''">
+                and res.inbound_date <![CDATA[<=]]> #{param.inboundDateEnd}
+            </if>
+
+            <if test="param.outboundDateStart != null and param.outboundDateStart != ''">
+                and res.outbound_date <![CDATA[>=]]> #{param.outboundDateStart}
+            </if>
+
+            <if test="param.outboundDateEnd != null and param.outboundDateEnd != ''">
+                and res.outbound_date <![CDATA[<=]]> #{param.outboundDateEnd}
+            </if>
+        </sql>
+
+        <select id="selectInAndOutDataByPeriodCode" resultType="com.utfinancing.financehub.engine.finance.model.dto.ReportFinanceInOutDTO">
+            <include refid="inAndOutData"/>
+            select * from res
+        </select>
+
+        <select id="selectFinanceInboundAndOutboundDataByPage" resultType="com.utfinancing.financehub.engine.finance.model.dto.ReportFinanceInOutDTO">
+            <include refid="inAndOutData"/>
+            select * from res
+            <include refid="filterCondition"></include>
+            <if test="params.pageSize != null and params.pageSize != 0">
+                limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+            </if>
+        </select>
+
+        <select id="selectFinanceInboundAndOutboundSize" resultType="java.util.Map">
+            <include refid="inAndOutData"/>
+            select count(1) total_size from res
+            <include refid="filterCondition"></include>
+        </select>
+
+    <select id="getFinanceInboundAndOutboundDataForCurrentMonth" resultType="com.utfinancing.financehub.engine.finance.model.dto.ReportFinanceInOutDTO">
+        <include refid="inAndOutData"/>
+        select * from res
+        <include refid="filterCondition"></include>
+    </select>
+
+
+</mapper>
+

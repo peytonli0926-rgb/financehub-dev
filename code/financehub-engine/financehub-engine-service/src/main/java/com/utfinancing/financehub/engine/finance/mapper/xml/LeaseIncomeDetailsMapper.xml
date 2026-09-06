@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.LeaseIncomeDetailsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.LeaseIncomeDetailsEntity">
+                    <id column="id" property="id" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="lease_income_id" property="leaseIncomeId" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="business_type" property="businessType" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="xirr_rate" property="xirrRate" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="rental_income_before_total" property="rentalIncomeBeforeTotal" />
+                    <result column="rental_income" property="rentalIncome" />
+                    <result column="rental_income_after_total" property="rentalIncomeAfterTotal" />
+                    <result column="overdue_days" property="overdueDays" />
+                    <result column="overdue_earnings" property="overdueEarnings" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="previous_paid_period" property="previousPaidPeriod" />
+                    <result column="overdue_adjustment_amount" property="overdueAdjustmentAmount" />
+                    <result column="total_recorded_amount" property="totalRecordedAmount" />
+                    <result column="confirmed_actual_receipt" property="confirmedActualReceipt" />
+                    <result column="accrued" property="accrued" />
+                    <result column="income_provision_method" property="incomeProvisionMethod" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="exception_type" property="exceptionType" />
+                    <result column="invoicing_flag" property="invoicingFlag" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+            <result column="ta_amount" property="taAmount" />
+            <result column="last_repayment_date" property="lastRepaymentDate" />
+            <result column="next_repayment_date" property="nextRepaymentDate" />
+            <result column="history_overdue" property="historyOverdue" />
+            <result column="paid_interest" property="paidInterest" />
+            <result column="confirmed_income" property="confirmedIncome" />
+            <result column="paid_handling_fees" property="paidHandlingFees" />
+            <result column="other_income" property="otherIncome" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="cash_change" property="cashChange" />
+                    <result column="rental_income_on_balance" property="rentalIncomeOnBalance" />
+                    <result column="rental_income_off_balance" property="rentalIncomeOffBalance" />
+                    <result column="intable_transfer_outtable_amount" property="intableTransferOuttableAmount" />
+                    <result column="outtable_transfer_intable_amount" property="outtableTransferIntableAmount" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, business_date, account_date, lease_income_id, system_code, contract_code, client_code, client_name, org_id, business_type, business_code,
+            business_name, contract_status, currency_type, tax_rate, xirr_rate, unrealized_revenue, rental_income_before_total, rental_income,
+            rental_income_after_total, overdue_days, overdue_earnings, lease_date_start, lease_date_end, previous_paid_period, overdue_adjustment_amount,
+            total_recorded_amount, confirmed_actual_receipt, accrued, income_provision_method, is_generate_voucher, exception_type, invoicing_flag,
+            voucher_id, del_flag, create_by, create_time, update_by, update_time, ta_amount, last_repayment_date, next_repayment_date, history_overdue,
+            paid_interest, confirmed_income, paid_handling_fees, other_income, financial_contract_status, cash_change,
+            rental_income_on_balance, rental_income_off_balance, intable_transfer_outtable_amount, outtable_transfer_intable_amount
+        </sql>
+
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="selectLeaseIncomeInfoMap" type="com.utfinancing.financehub.engine.finance.model.vo.LeaseIncomeDetailsVO">
+        <id column="id" property="id" />
+        <result column="business_date" property="businessDate" />
+        <result column="account_date" property="accountDate" />
+        <result column="lease_income_id" property="leaseIncomeId" />
+        <result column="system_code" property="systemCode" />
+        <result column="contract_code" property="contractCode" />
+        <result column="client_code" property="clientCode" />
+        <result column="client_name" property="clientName" />
+        <result column="org_id" property="orgId" />
+        <result column="business_type" property="businessType" />
+        <result column="business_code" property="businessCode" />
+        <result column="business_name" property="businessName" />
+        <result column="contract_status" property="contractStatus" />
+        <result column="currency_type" property="currencyType" />
+        <result column="tax_rate" property="taxRate" />
+        <result column="xirr_rate" property="xirrRate" />
+        <result column="unrealized_revenue" property="unrealizedRevenue" />
+        <result column="rental_income_before_total" property="rentalIncomeBeforeTotal" />
+        <result column="rental_income" property="rentalIncome" />
+        <result column="rental_income_after_total" property="rentalIncomeAfterTotal" />
+        <result column="overdue_days" property="overdueDays" />
+        <result column="overdue_earnings" property="overdueEarnings" />
+        <result column="lease_date_start" property="leaseDateStart" />
+        <result column="lease_date_end" property="leaseDateEnd" />
+        <result column="previous_paid_period" property="previousPaidPeriod" />
+        <result column="overdue_adjustment_amount" property="overdueAdjustmentAmount" />
+        <result column="total_recorded_amount" property="totalRecordedAmount" />
+        <result column="confirmed_actual_receipt" property="confirmedActualReceipt" />
+        <result column="accrued" property="accrued" />
+        <result column="income_provision_method" property="incomeProvisionMethod" />
+        <result column="is_generate_voucher" property="isGenerateVoucher" />
+        <result column="exception_type" property="exceptionType" />
+        <result column="invoicing_flag" property="invoicingFlag" />
+        <result column="voucher_id" property="voucherId" />
+        <result column="del_flag" property="delFlag" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="manual_lease_flag" property="manualLeaseFlag" />
+        <result column="financial_contract_status" property="financialContractStatus" />
+        <result column="manual_change_mark" property="manualChangeMark" />
+        <result column="last_repayment_date" property="lastRepaymentDate" />
+        <result column="ta_amount" property="taAmount" />
+        <result column="observed" property="observed" />
+        <result column="observed_expiration_date" property="observedExpirationDate" />
+        <result column="last_repayment_date" property="lastRepaymentDate" />
+        <result column="next_repayment_date" property="nextRepaymentDate" />
+        <result column="history_overdue" property="historyOverdue" />
+        <result column="paid_interest" property="paidInterest" />
+        <result column="confirmed_income" property="confirmedIncome" />
+        <result column="paid_handling_fees" property="paidHandlingFees" />
+        <result column="other_income" property="otherIncome" />
+        <result column="financial_contract_status" property="financialContractStatus" />
+        <result column="transfer_boyuan_debt" property="transferBoyuanDebt" />
+        <result column="pay_method" property="repaymentNode" />
+        <result column="return_type" property="repaymentRule" />
+
+        <result column="rental_income_on_balance" property="rentalIncomeOnBalance" />
+        <result column="rental_income_off_balance" property="rentalIncomeOffBalance" />
+        <result column="intable_transfer_outtable_amount" property="intableTransferOuttableAmount" />
+        <result column="outtable_transfer_intable_amount" property="outtableTransferIntableAmount" />
+        <result column="last_month_overdue_earnings" property="lastMonthOverdueEarnings" />
+        <result column="cash_change" property="cashChange" />
+    </resultMap>
+    <select id="selectLeaseIncomeInfo" resultMap="selectLeaseIncomeInfoMap">
+        select distinct
+            a.id, a.business_date, a.account_date, a.lease_income_id, a.system_code, a.contract_code, a.client_code, ecli.client_name, a.org_id,
+            a.business_type, a.business_code, a.business_name, a.contract_status, a.currency_type, a.tax_rate, a.xirr_rate, a.unrealized_revenue,
+            a.rental_income_before_total, a.rental_income, a.rental_income_after_total, a.overdue_days, a.overdue_earnings, a.lease_date_start,
+            a.lease_date_end, a.previous_paid_period, a.overdue_adjustment_amount, a.total_recorded_amount, a.confirmed_actual_receipt, a.accrued,
+            a.income_provision_method, a.is_generate_voucher, a.exception_type, a.invoicing_flag, a.voucher_id, a.del_flag, a.create_by, a.create_time,
+            a.update_by, a.update_time, a.ta_amount, a.observed, a.observed_expiration_date, a.history_overdue, a.paid_interest, a.confirmed_income,
+            a.paid_handling_fees, a.other_income, a.financial_contract_status, a.rental_income_on_balance, a.rental_income_off_balance,
+            a.intable_transfer_outtable_amount, a.outtable_transfer_intable_amount,
+            case when ec.manual_lease_flag = '0' then '否'
+                 when ec.manual_lease_flag = '1' then '是'
+            end as manual_lease_flag,
+            case when a.manual_change_mark = '0' then '否'
+                 when a.manual_change_mark = '1' then '是'
+            end as manual_change_mark,
+            case when ec.special_flag = '博远' then '是'
+                 when ec.special_flag != '博远' then '否'
+            end as transfer_boyuan_debt,
+            a.last_repayment_date,
+            a.next_repayment_date,
+            ec.pay_method,
+            ec.return_type,
+            a.last_month_overdue_earnings,a.cash_change,a.lessor_other_costs,a.enter_observe_period,a.enter_observe_final_repayment_date
+        from eg_lease_income_details a
+        left join eg_contract ec on a.contract_code = ec.contract_code and a.org_id = ec.org_id
+        left join eg_lease_income esf on a.lease_income_id = esf.id
+        left join eg_client ecli on a.client_code = ecli.client_code and ecli.del_flag = '0'
+        where a.del_flag = '0'
+        <if test="param.leaseIncomeId != null ">
+            and a.lease_income_id = #{param.leaseIncomeId}
+        </if>
+        <if test="param.businessDate != null ">
+            and to_char(a.business_date, 'yyyy-mm') = #{param.businessDate}
+        </if>
+        <if test="param.businessType != null ">
+            and a.business_type = #{param.businessType}
+        </if>
+        <if test="param.repaymentFlag != null and param.repaymentFlag == '1' ">
+            and erp.last_repayment_date <![CDATA[>=]]> #{param.lastRepaymentDate}
+        </if>
+        <if test="param.repaymentFlag != null and param.repaymentFlag == '0' ">
+            and erp.last_repayment_date <![CDATA[<]]> #{param.lastRepaymentDate}
+        </if>
+        <if test="param.manualLease != null">
+            <if test="param.manualLease == '1' ">
+                and a.system_code = 'FINHUB'
+            </if>
+            <if test="param.manualLease == '0' ">
+                and a.system_code != 'FINHUB'
+            </if>
+        </if>
+        <if test="param.accrued != null and param.accrued != ''">
+            and a.accrued = #{param.accrued}
+        </if>
+        <if test="param.manualChangeMark != null and param.manualChangeMark != ''">
+            and a.manual_change_mark = #{param.manualChangeMark}
+        </if>
+        <if test="param.incomeProvisionMethod != null and param.incomeProvisionMethod != ''">
+            and a.income_provision_method = #{param.incomeProvisionMethod}
+        </if>
+        <if test="param.exceptionType != null and param.exceptionType != ''">
+            and a.exception_type = #{param.exceptionType}
+        </if>
+        <if test="param.contractStatus != null and param.contractStatus != ''">
+            and ec.contract_status = #{param.contractStatus}
+        </if>
+        <if test="param.voucherStatus != null and param.voucherStatus != ''">
+            and esf.process_status = #{param.voucherStatus}
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and esf.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.leaseDateStart != null ">
+            and a.lease_date_start &gt;= #{param.leaseDateStart}
+        </if>
+        <if test="param.leaseDateEnd != null ">
+            and a.lease_date_end &lt;= #{param.leaseDateEnd}
+        </if>
+        <if test="param.businessStartDate != null ">
+            and a.business_date &gt;= #{param.businessStartDate}
+        </if>
+        <if test="param.businessEndDate != null ">
+            and a.business_date &lt;= #{param.businessEndDate}
+        </if>
+        <if test="param.contractCode != null and param.contractCode != ''">
+            and a.contract_code like concat('%', #{param.contractCode}, '%')
+        </if>
+        <if test="param.manualLease != null and param.manualLease != ''">
+            and ec.manual_lease_flag = #{param.manualLease}
+        </if>
+        <if test="param.clientName != null and param.clientName != ''">
+            and a.client_name like concat('%', #{param.clientName}, '%')
+        </if>
+        <if test="param.manualLease != null and param.manualLease != ''">
+            and a.client_name
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and a.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.leaseIncomeIdList != null and param.leaseIncomeIdList.size > 0">
+            and a.lease_income_id in
+            <foreach item="item" index="index" collection="param.leaseIncomeIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.systemCodeList != null and param.systemCodeList.size > 0">
+            and a.system_code in
+            <foreach item="item" index="index" collection="param.systemCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by contract_code
+    </select>
+    <select id="selectDetailsByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.LeaseIncomeDetailsVO">
+        select
+            x.contract_code,
+            x.org_id,
+            x.account_date,
+            x.rental_income_after_total,
+            x.overdue_days,
+            ec.special_flag
+        from
+            eg_lease_income_details x
+                inner join eg_contract ec on
+                    x.contract_code = ec.contract_code
+                    and x.org_id = ec.org_id
+        where
+            1 = 1 and x.del_flag ='0' and ec.del_flag ='0'
+          <if test="param.accountDate!=null">
+              and to_char(x.account_date,'YYYY-MM-DD') = to_char(to_date(#{param.accountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+          </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and x.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and x.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectDetailsByPage" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectDetailsByPageDTO" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from eg_lease_income_details
+        where
+            lease_income_id = #{param.leaseIncomeId} AND del_flag = '0'
+        order by id
+            limit #{param.size} offset #{param.startIndex}
+    </select>
+
+    <update id="leaseIncomeDataValidation">
+        update eg_lease_income_details set exception_type='合同已结束,逾期收益不为0'
+        where contract_status in ('合同结束', '合同结清', '买断结清', '亏损结清', '内部结清', '处置结清', '提前结清', '结清')
+        and overdue_earnings != 0
+    </update>
+</mapper>
+

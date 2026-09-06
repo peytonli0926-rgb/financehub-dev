@@ -1,0 +1,140 @@
+server:
+  port: 8201
+
+spring:
+  application:
+    name: financehub-admin-service
+---
+#开发环境
+spring:
+  profiles: dev
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        namespace: financehub-local
+        group: financehub-local
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        # 配置文件格式
+        file-extension: yml
+        username: nacos
+        password: nacos
+        namespace: financehub-local
+        group: financehub-local
+        # 共享配置
+        shared-configs[0]:
+          data-id: financehub-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+          group: financehub-local
+          refresh: true
+knife4j:
+  enable: true
+  basic:
+    enable: true
+    username: admin
+    password: 123456
+logging:
+  level:
+    root: info
+    druid.sql.ResultSet: debug
+    druid.sql.Statement: debug
+
+---
+#UAT环境
+spring:
+  profiles: uat
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 192.168.13.230:8848
+        username: dept2
+        password: dept2@Gjsdhn
+        namespace: dept2
+        group: financehubuat
+      config:
+        # 配置中心地址
+        server-addr: 192.168.13.230:8848
+        # 配置文件格式
+        file-extension: yml
+        username: dept2
+        password: dept2@Gjsdhn
+        namespace: dept2
+        group: financehub
+        # 共享配置
+        shared-configs[0]:
+          data-id: financehub-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+          group: financehub
+          refresh: true
+---
+#测试环境
+spring:
+  profiles: sit
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 192.168.13.118:9050
+        username: nacos
+        password: platform
+        namespace: finance
+        group: financehub
+      config:
+        # 配置中心地址
+        server-addr: 192.168.13.118:9050
+        # 配置文件格式
+        file-extension: yml
+        username: nacos
+        password: platform
+        namespace: finance
+        group: financehub
+        # 共享配置
+        shared-configs[0]:
+          data-id: financehub-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+          group: financehub
+          refresh: true
+knife4j:
+  enable: true
+  basic:
+    enable: true
+    username: admin
+    password: 123456
+logging:
+  level:
+    root: info
+    druid.sql.ResultSet: debug
+    druid.sql.Statement: debug
+---
+#生产环境
+spring:
+  profiles: prod
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: nacos2x.utfinancing.com:18848
+        username: dept2
+        password: Chr#kxR2p9
+        namespace: dept2
+        group: financehub
+      config:
+        # 配置中心地址
+        server-addr: nacos2x.utfinancing.com:18848
+        # 配置文件格式
+        file-extension: yml
+        username: dept2
+        password: Chr#kxR2p9
+        namespace: dept2
+        group: financehub
+        # 共享配置
+        shared-configs[0]:
+          data-id: financehub-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+          group: financehub
+          refresh: true
+logging:
+  level:
+    root: info

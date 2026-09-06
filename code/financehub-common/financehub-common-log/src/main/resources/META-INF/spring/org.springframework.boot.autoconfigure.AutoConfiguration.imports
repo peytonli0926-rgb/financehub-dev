@@ -1,0 +1,2 @@
+com.utfinancing.financehub.common.log.service.AsyncLogService
+com.utfinancing.financehub.common.log.aspect.LogAspect

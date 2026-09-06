@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.middle.mapper.MiddleCheckMapper">
+    <select id="getMiddleCheckData">
+        SELECT
+            TO_char(evh.BZDATE, 'YYYY-MM-DD') business_date,
+            TO_char(evh.FINANCIALDATE, 'YYYY-MM-DD') voucher_date,
+            evh.SYSTEM_ system_code,
+            evh.ORGNUMBER org_id,
+            eva.ASSTACTNUMBER contract_code,
+            eva1.ASSTACTNUMBER client_code,
+            eva2.ASSTACTNUMBER batch_number,
+            EVA3.ASSTACTNUMBER bank_number,
+            eve.ACCOUNTNUMBER account_code,
+            eve.CURRENCYNUMBER currency_code,
+            SUM(eve.DEBITAMOUNT) debit_amount,
+            SUM(eve.CREDITAMOUNT) credit_amount
+        FROM
+            EAS_VOUCHER_HEAD evh
+                LEFT OUTER JOIN EAS_VOUCHER_ENTRY eve ON
+                evh.VOUCHERNUMBER = eve.EAS_VOUCHER_ID
+                LEFT OUTER JOIN EAS_VOUCHER_ASSTACT EVA ON
+                        eva.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+                    AND eva.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+                    AND eva.ASSTACTTYPENAME = '合同号'
+                LEFT OUTER JOIN EAS_VOUCHER_ASSTACT EVA1 ON
+                        eva1.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+                    AND eva1.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+                    AND eva1.ASSTACTTYPENAME = '客户'
+                LEFT OUTER JOIN EAS_VOUCHER_ASSTACT EVA2 ON
+                        eva2.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+                    AND eva2.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+                    AND eva2.ASSTACTTYPENAME = '批次号'
+                LEFT OUTER JOIN EAS_VOUCHER_ASSTACT EVA3 ON
+                        eva3.EAS_VOUCHER_ID = eve.EAS_VOUCHER_ID
+                    AND eva3.EAS_VOUCHER_ENTRY_ID = eve.ENTRYSEQ
+                    AND eva3.ASSTACTTYPENAME = '银行账户'
+        WHERE
+            1 = 1
+          --eve.EAS_VOUCHER_ID ='zjdb20231225193503800002'
+          AND evh.EASFLAG = 1
+          AND evh.PERIODMONTH = #{month}
+          AND evh.PERIODYEAR = #{year}
+--           AND to_char(evh.CREATE_DATE, 'YYYY-MM-DD') = '2020-10-23'
+        --to_char(sysdate,'YYYY-MM-DD')
+        GROUP BY
+            TO_char(evh.BZDATE, 'YYYY-MM-DD'),
+            TO_char(evh.FINANCIALDATE, 'YYYY-MM-DD'),
+            evh.SYSTEM_,
+            evh.ORGNUMBER,
+            eva.ASSTACTNUMBER ,
+            eva1.ASSTACTNUMBER,
+            eva2.ASSTACTNUMBER,
+            EVA3.ASSTACTNUMBER,
+            eve.ACCOUNTNUMBER,
+            eve.CURRENCYNUMBER
+    </select>
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.DwDictDataMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.dw.entity.DwDictDataEntity">
+        <id column="nu_id" property="nuId"/>
+        <result column="vc_mingc" property="vcMingc"/>
+        <result column="vc_zhi" property="vcZhi"/>
+        <result column="vc_fujdid" property="vcFujdid"/>
+        <result column="vc_shifyzj" property="vcShifyzj"/>
+        <result column="vc_beiz" property="vcBeiz"/>
+        <result column="ch_youxbs" property="chYouxbs"/>
+        <result column="vc_chuangjr" property="vcChuangjr"/>
+        <result column="dt_chuangjsj" property="dtChuangjsj"/>
+        <result column="vc_gengxr" property="vcGengxr"/>
+        <result column="dt_gengxsj" property="dtGengxsj"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        nu_id, vc_mingc, vc_zhi, vc_fujdid, vc_shifyzj, vc_beiz, ch_youxbs, vc_chuangjr, dt_chuangjsj, vc_gengxr,
+        dt_gengxsj
+    </sql>
+</mapper>
+

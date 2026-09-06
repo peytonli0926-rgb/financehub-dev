@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.LeaseIncomeMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.LeaseIncomeEntity">
+                    <id column="id" property="id" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="org_id" property="orgId" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="lease_income_amount" property="leaseIncomeAmount" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="submit_by" property="submitBy" />
+                    <result column="system_code" property="systemCode"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, account_date, business_date, org_id, unrealized_revenue, lease_income_amount, process_status, is_generate_voucher, del_flag, create_by, create_time, update_by, update_time, submit_by, system_code
+        </sql>
+    <select id="countFromDetailData" parameterType="com.utfinancing.financehub.engine.finance.model.dto.LeaseIncomeQueryDTO"
+            resultType="com.utfinancing.financehub.engine.finance.entity.LeaseIncomeEntity">
+        select org_id, system_code, sum(unrealized_revenue) as unrealized_revenue,sum(rental_income) as leaseIncomeAmount
+        from eg_lease_income_details
+        where business_date = #{param.businessDate}
+        and del_flag = '0'
+        <if test="param.notGenerateOrgIds != null and param.notGenerateOrgIds.size > 0">
+            and org_id not in
+            <foreach item="item" index="index" collection="param.notGenerateOrgIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by org_id, system_code;
+    </select>
+</mapper>
+

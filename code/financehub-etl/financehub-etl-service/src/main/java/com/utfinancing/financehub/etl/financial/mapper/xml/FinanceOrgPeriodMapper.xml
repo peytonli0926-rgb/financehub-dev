@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.FinanceOrgPeriodMapper">
+
+    <select id="selectCurrentPeriodCodeByOrgIds" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.OrgPeriodDTO">
+        select ecbl.org_id orgId, max(ecbl.period_code) periodCode from eg_contract_balance_latest ecbl
+        where ecbl.org_id in
+        <foreach item="item" index="index" collection="param" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        group by ecbl.org_id
+    </select>
+</mapper>
+

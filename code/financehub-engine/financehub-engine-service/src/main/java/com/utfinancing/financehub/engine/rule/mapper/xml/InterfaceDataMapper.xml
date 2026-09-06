@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.rule.mapper.InterfaceDataMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.rule.entity.InterfaceDataEntity">
+                    <id column="id" property="id" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="system_name" property="systemName" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="order_id" property="orderId" />
+                    <result column="scene_code" property="sceneCode" />
+                    <result column="scene_name" property="sceneName" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="org_name" property="orgName" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="finance_date" property="financeDate" />
+                    <result column="client_type" property="clientType" />
+                    <result column="interface_data" property="interfaceData" typeHandler="com.baomidou.mybatisplus.extension.handlers.FastjsonTypeHandler"/>
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="bank_org_id" property="bankOrgId" />
+                    <result column="ebank_batch_no" property="ebankBatchNo"/>
+            <result column="is_extract_data" property="isExtractData" />
+            <result column="voucher_date" property="voucherDate" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, system_code, system_name, business_code, business_name, order_id, scene_code, scene_name, contract_code, contract_name, client_code, client_name, org_id, org_name, business_date, finance_date, client_type, interface_data, create_by, create_time, update_by, update_time, del_flag, ebank_serial_number, bank_org_id, ebank_batch_no, is_extract_data, voucher_date
+        </sql>
+    
+        <select id="selectPaybackPage" resultType="com.utfinancing.financehub.engine.verification.model.vo.VerificationPaybackVO" >
+            <include refid="selectSummaryVerification"/>
+        </select>
+
+    <select id="selectPaybackDetailsPage" resultType="com.utfinancing.financehub.engine.verification.model.vo.VerificationPaybackDetailsVO" >
+        <include refid="selectDetailsVerification"/>
+    </select>
+
+    <select id="selectPayBackAmount" resultType="com.utfinancing.financehub.engine.verification.model.vo.VerificationPaybackDetailsVO" >
+        select
+        ec.financial_contract_status as financialContractStatus,
+        coalesce(ecb.receivable_rent_amount,0) as receivableLeaseAmount,
+        coalesce(ecb.receivable_residual_value_amount,0) as receivableLastAmount,
+        coalesce(ecb.receivable_outtax_amount,0) as receivableLastAmountd,
+        coalesce(ecb.receivable_downpayment_amount,0) as receivableFirstAmount,
+        coalesce(ecb.receivable_insurance_amount,0) as receivableInsuranceAmount,
+        coalesce(ecb.receivable_commission_amount,0) as receivableProcedureAmount,
+        coalesce(ecb.receivable_otherincome_amount,0) as receiveOtherRevenues,
+        coalesce(ecb.unrealized_revenue_amount,0) as receiveOtherRevenuesd,
+        coalesce(ecb.receivable_default_interest_amount,0) as recycleDefaultInterestAmount,
+        coalesce(ecb.receivable_terminate_amount,0) as receiveTerminateProcedureAmount,
+        coalesce(ecb.lessee_margin_amount,0) as receivableMarginAmount,
+        coalesce(ecb.lease_revenue_balance,0) as leaseRevenueAmount,
+        coalesce(ecb.receivable_outtax_balance,0) as receivableOuttaxAmount,
+        coalesce(ecb.depreciation_loss_reverse_amount,0) as depreciationLossAmount,
+        (coalesce(ecb.depreciation_reserves_balance,0) + coalesce(ecb.depreciation_loss_reverse_amount,0))  as depreciationReservesAmount,
+        coalesce(ecb.depreciation_reserves_balance,0) as depreciationAmount
+        from
+            eg_voucher ev
+                inner join eg_contract_balance ecb on
+                ev.id = ecb.voucher_id
+        inner join eg_contract ec on ecb.contract_code = ec.contract_code
+        where
+            1 = 1
+            and ev.del_flag ='0' and ecb.del_flag ='0'
+          and ev.sub_scene_type = '25'
+        <if test="condition.interfaceDataId!=null">
+            and ev.interface_data_id = #{condition.interfaceDataId}
+        </if>
+<!--        <if test="condition.periodCode!=null">-->
+<!--            and ev.period_code = #{condition.periodCode}-->
+<!--            and ecb.period_code = #{condition.periodCode}-->
+<!--        </if>-->
+    </select>
+    <select id="listPaybackDetails"
+            resultType="com.utfinancing.financehub.engine.verification.model.vo.VerificationPaybackDetailsVO">
+        select * from (
+        select
+        ecb.id,
+        eid.business_date,
+        ec.org_id as org_id,
+        ec.contract_code as contract_code,
+        ec.contract_name as contract_name,
+        ec.client_code as client_code,
+        ec.client_name as client_name,
+        ec.financial_contract_status as financialContractStatus,
+        coalesce(ecb.receivable_rent_amount,0) as receivableLeaseAmount,
+        coalesce(ecb.receivable_residual_value_amount,0) as receivableLastAmount,
+        coalesce(ecb.receivable_outtax_amount,0) as receivableLastAmountd,
+        coalesce(ecb.receivable_downpayment_amount,0) as receivableFirstAmount,
+        coalesce(ecb.receivable_insurance_amount,0) as receivableInsuranceAmount,
+        coalesce(ecb.receivable_commission_amount,0) as receivableProcedureAmount,
+        coalesce(ecb.receivable_otherincome_amount,0) as receiveOtherRevenues,
+        coalesce(ecb.unrealized_revenue_amount,0) as receiveOtherRevenuesd,
+        coalesce(ecb.receivable_default_interest_amount,0) as recycleDefaultInterestAmount,
+        coalesce(ecb.receivable_terminate_amount,0) as receiveTerminateProcedureAmount,
+        coalesce(ecb.lessee_margin_amount,0)as receivableMarginAmount,
+        coalesce(ecb.lease_revenue_amount,0)+coalesce(ecb.lease_revenue3_amount,0)+coalesce(ecb.lease_revenue6_amount,0) as leaseRevenueAmount,
+        coalesce(ecb.receivable_outtax_amount,0) as receivableOuttaxAmount,
+        coalesce(ecb.depreciation_loss_reverse_amount,0) as depreciationLossAmount,
+        coalesce(ecb.depreciation_reserves_balance,0) +coalesce(ecb.depreciation_loss_reverse_amount,0) as
+        depreciationReservesAmount,
+        coalesce(ecb.depreciation_reserves_balance,0) as depreciationAmount
+        from
+        eg_interface_data eid
+        inner join eg_voucher ev on eid.id = ev.interface_data_id
+        inner join eg_contract_balance ecb on
+        ev.id = ecb.voucher_id
+        inner join eg_contract ec on ecb.contract_code = ec.contract_code and ec.org_id = ecb.org_id
+        where
+        1 = 1
+        and eid.org_id is not null and eid.business_date is not null
+        and ev.del_flag ='0' and ecb.del_flag ='0'
+        and ev.sub_scene_type = '25'
+        and eid.del_flag = '0'
+        <if test="condition.businessDate != null and condition.businessDate !=''">
+            and to_char(eid.business_date, 'yyyy-MM') = #{condition.businessDate}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and eid.org_id = #{condition.orgId}
+        </if>
+        <if test="condition.contractCode !=null and condition.contractCode!=''">
+            and eid.contract_code like #{condition.contractCode}
+        </if>
+        <if test="condition.clientName !=null and condition.clientName!=''">
+            and eid.client_name like #{condition.clientName}
+        </if>
+        <if test="condition.financialContractStatus !=null and condition.financialContractStatus!=''">
+            and ec.financial_contract_status = #{condition.financialContractStatus}
+        </if>
+        <!--        <if test="condition.periodCode!=null">-->
+        <!--            and ev.period_code = #{condition.periodCode}-->
+        <!--            and ecb.period_code = #{condition.periodCode}-->
+        <!--        </if>-->
+        ) s where 1=1
+        <if test="condition.isAbnormal != null and condition.isAbnormal !=''">
+            <if test="'1'.toString() == condition.isAbnormal">
+                and s.depreciationAmount != 0
+            </if>
+            <if test="'0'.toString() == condition.isAbnormal">
+                and s.depreciationAmount = 0
+            </if>
+        </if>
+        order by s.contract_code,s.client_code,s.id asc
+    </select>
+
+
+    <select id="selectEbankSerialNumberNotNullData" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List" />
+        from eg_interface_data i
+        where ebank_batch_no is not null
+        and del_flag = '0'
+        and (is_extract_data = '0' or is_extract_data is null)
+        and ((coalesce(interface_data->>'receiveTA','') <![CDATA[<>]]> interface_data->>'receiveUnconfirmed' and interface_data->>'receiveUnconfirmed' <![CDATA[<>]]>'0')
+            or (interface_data->>'payableReceivableUnconfirmReceipt'<![CDATA[<>]]>'0')
+            or (interface_data->>'payableOverdeposit'<![CDATA[<>]]>'0')
+            or (interface_data->>'receivableUnconfirm'<![CDATA[<>]]>'0'))
+        and voucher_date is not null
+        and (org_id in ('01-C0001','02-C0001','80001','30001') OR bank_org_id in ('01-C0001','02-C0001','80001','30001'))
+    </select>
+    <select id="contractTransactionByPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractTransactionVO">
+        select
+        eid.id as interfaceId,
+        eid.business_date,
+        null as voucherDate,
+        eid.scene_code,
+        es.scene_name,
+        null as periodCode,
+        eid.client_code,
+        eid.client_name
+        from
+        eg_interface_data eid
+        inner join eg_scene es on
+        eid.scene_code = es.scene_code
+        where 1=1
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and eid.contract_code = #{param.contractCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and eid.org_id = #{param.orgId}
+        </if>
+    </select>
+
+    <select id="selectHtqzScene" parameterType="com.utfinancing.financehub.engine.rule.model.dto.SelectHtqzSceneInputDTO" resultMap="BaseResultMap">
+        select
+        eid.id, eid.system_code, eid.system_name, eid.business_code, eid.business_name, eid.order_id, eid.scene_code, eid.scene_name, eid.contract_code, eid.contract_name, eid.client_code, eid.client_name,
+        eid.org_id, eid.org_name, eid.business_date, eid.finance_date, eid.client_type, eid.interface_data, eid.create_by, eid.create_time, eid.update_by, eid.update_time, eid.del_flag, eid.ebank_serial_number,
+        eid.bank_org_id, eid.ebank_batch_no, eid.is_extract_data, eid.voucher_date
+        from eg_interface_data eid
+            inner join eg_raw_transaction_data raw on eid.interface_id = raw.id
+        where raw.message_status = 'SUCCESS'
+            and eid.scene_code ='HTQZ'
+            and eid.business_date <![CDATA[<]]> #{params.endDate}
+            and eid.business_date <![CDATA[>=]]> '2025-11-01'
+            <!--and business_date <![CDATA[>=]]> #{params.startDate}-->
+            and eid.del_flag = '0'
+            and eid.contract_code not like 'CS%'
+            and eid.contract_code not in (
+                select
+                    distinct contract_code
+                from eg_repayment_plan
+                where del_flag = '0'
+            )
+            and eid.contract_code in (select contract_code from eg_repayment_plan_pl
+                                union select contract_code from eg_repayment_plan_xw
+                                union select contract_code from eg_repayment_plan_hy
+                                )
+    </select>
+    <select id="selectPaybackList"
+            resultType="com.utfinancing.financehub.engine.verification.model.vo.VerificationPaybackVO">
+        <include refid="selectSummaryVerification"/>
+    </select>
+    <select id="selectPaybackDetailsList"
+            resultType="com.utfinancing.financehub.engine.verification.model.vo.VerificationPaybackDetailsVO">
+        <include refid="selectDetailsVerification"/>
+    </select>
+
+    <sql id="selectSummaryVerification">
+        select
+        to_char(to_date(cast(b.period_code as varchar),'YYYYMM'),'yyyy-MM') businessDate,
+        b.org_id,
+        sum(b.depreciationLossAmount) as reversalProvisionAmount,
+        sum(b.leaseRevenueAmount) as revenueFinance
+        from
+        (
+        select
+        a.*, (
+        select
+        sum(coalesce(c.receivable_outtax_amount, 0))
+        from
+        eg_voucher v
+        inner join eg_contract_balance c on
+        v.id = c.voucher_id
+        where
+        1 = 1
+        and v.del_flag = '0'
+        and c.del_flag = '0'
+        and v.scene_code = 'KJFP'
+        and v.voucher_status in ('2', '3', '4')
+        and v.valid_flag = '1'
+        and a.contract_code = c.contract_code
+        and a.org_id = c.org_id
+        <if test="condition.startPeriodCode != null">
+            and v.period_code  <![CDATA[>=]]> #{condition.startPeriodCode}
+            and c.period_code  <![CDATA[>=]]> #{condition.startPeriodCode}
+        </if>
+        <if test="condition.endPeriodCode != null">
+            and v.period_code <![CDATA[<=]]> #{condition.endPeriodCode}
+            and c.period_code <![CDATA[<=]]> #{condition.endPeriodCode}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and c.org_id = #{condition.orgId}
+        </if>
+        ) as receivableLastAmountd, (
+        select
+        sum(coalesce(eve2.credit_amount, 0))
+        from
+        eg_voucher ev2
+        inner join eg_voucher_entry eve2 on
+        ev2.id = eve2.voucher_id
+        where
+        1 = 1
+        <if test="condition.startPeriodCode != null">
+            and ev2.period_code  <![CDATA[>=]]> #{condition.startPeriodCode}
+            and eve2.period_code  <![CDATA[>=]]> #{condition.startPeriodCode}
+        </if>
+        <if test="condition.endPeriodCode != null">
+            and ev2.period_code <![CDATA[<=]]> #{condition.endPeriodCode}
+            and eve2.period_code <![CDATA[<=]]> #{condition.endPeriodCode}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and ev2.org_id = #{condition.orgId}
+        </if>
+        and ev2.contract_code = a.contract_code
+        and ev2.org_id = a.org_id
+        and sub_scene_type in ('25', '核销回款')
+        and eve2.account_code = '2221.01.05'
+        and ev2.del_flag = '0'
+        and eve2.del_flag = '0'
+        and ev2.voucher_status in ('2', '3', '4')
+        and ev2.valid_flag = '1'
+        )as receivableOuttaxAmount,
+        ec.client_code, ec.financial_contract_status, ec.client_name
+        from
+        (
+        select
+        ecb.period_code, ecb.org_id, ecb.contract_code, sum(coalesce(ecb.receivable_rent_amount, 0)) as receivableLeaseAmount, sum(coalesce(ecb.receivable_residual_value_amount, 0)) as receivableLastAmount,
+        sum(coalesce(ecb.receivable_downpayment_amount, 0)) as receivableFirstAmount, sum(coalesce(ecb.receivable_insurance_amount, 0)) as receivableInsuranceAmount, sum(coalesce(ecb.receivable_commission_amount, 0)) as receivableProcedureAmount, sum(coalesce(ecb.receivable_otherincome_amount, 0)) as receiveOtherRevenues, sum(coalesce(ecb.unrealized_revenue_amount, 0)) as receiveOtherRevenuesd, sum(coalesce(ecb.receivable_default_interest_amount, 0)) as recycleDefaultInterestAmount, sum(coalesce(ecb.receivable_terminate_amount, 0)) as receiveTerminateProcedureAmount, sum(coalesce(ecb.lessee_margin_amount, 0))as receivableMarginAmount, sum(coalesce(ecb.depreciation_loss_reverse_amount, 0))*-1 as depreciationLossAmount, sum(coalesce(ecb.lease_revenue_amount, 0)+ coalesce(ecb.lease_revenue3_amount, 0)+ coalesce(ecb.lease_revenue6_amount, 0)) as leaseRevenueAmount
+        --        coalesce(ecb.depreciation_reserves_balance,0) +coalesce(ecb.depreciation_loss_reverse_amount,0) as
+        --        depreciationReservesAmount,
+        --        coalesce(ecb.depreciation_reserves_balance,0) as depreciationAmount
+
+        from eg_voucher ev
+        inner join eg_contract_balance ecb on
+        ev.id = ecb.voucher_id
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and ecb.del_flag = '0'
+        and ev.sub_scene_type in ('25', '核销回款')
+        and ev.voucher_status in ('2', '3', '4')
+        and ev.valid_flag = '1'
+        <if test="condition.startPeriodCode != null">
+            and ev.period_code  <![CDATA[>=]]> #{condition.startPeriodCode}
+            and ecb.period_code  <![CDATA[>=]]> #{condition.startPeriodCode}
+        </if>
+        <if test="condition.endPeriodCode != null">
+            and ev.period_code <![CDATA[<=]]> #{condition.endPeriodCode}
+            and ecb.period_code <![CDATA[<=]]> #{condition.endPeriodCode}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and ecb.org_id = #{condition.orgId}
+        </if>
+        group by
+        ecb.period_code, ecb.org_id, ecb.contract_code ) a
+        inner join eg_contract ec on
+        a.contract_code = ec.contract_code
+        and a.org_id = ec.org_id
+        and ec.del_flag = '0' ) b
+        group by
+        b.period_code,
+        b.org_id
+    </sql>
+    <sql id="selectDetailsVerification">
+        select k.*,
+        to_char(to_date(cast(k.period_code as varchar),'YYYYMM'),'yyyy-MM') businessDate,
+        (coalesce(k.depreciationReservesAmount,0)-coalesce(k.depreciationLossAmount,0)) as depreciationAmount
+        from (
+        select
+        a.*,
+        (
+        select
+        sum(coalesce(eve2.debit_amount, 0))
+        from
+        eg_voucher ev2
+        inner join eg_voucher_entry eve2 on
+        ev2.id = eve2.voucher_id
+        where
+        1 = 1
+        <if test="condition.periodCode != null">
+            and ev2.period_code  <![CDATA[=]]> #{condition.periodCode}
+            and eve2.period_code  <![CDATA[=]]> #{condition.periodCode}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and ev2.org_id = #{condition.orgId}
+        </if>
+        and ev2.contract_code = a.contract_code
+        and ev2.org_id = a.org_id
+        and sub_scene_type = '25'
+        and eve2.account_code = '1531.01.09'
+        and ev2.del_flag = '0'
+        and eve2.del_flag = '0'
+        and ev2.voucher_status in ('2', '3', '4')
+        and ev2.valid_flag = '1'
+        ) as receivableLastAmountd, (
+        select
+        sum(coalesce(eve2.credit_amount, 0))
+        from
+        eg_voucher ev2
+        inner join eg_voucher_entry eve2 on
+        ev2.id = eve2.voucher_id
+        where
+        1 = 1
+        <if test="condition.periodCode != null">
+            and ev2.period_code  <![CDATA[=]]> #{condition.periodCode}
+            and eve2.period_code  <![CDATA[=]]> #{condition.periodCode}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and ev2.org_id = #{condition.orgId}
+        </if>
+        and ev2.contract_code = a.contract_code
+        and ev2.org_id = a.org_id
+        and sub_scene_type = '25'
+        and eve2.account_code = '2221.01.05'
+        and ev2.del_flag = '0'
+        and eve2.del_flag = '0'
+        and ev2.voucher_status in ('2', '3', '4')
+        and ev2.valid_flag = '1'
+        )as receivableOuttaxAmount,
+        (
+        select max(r.bad_debt_write_off_balance) from eg_charge_off_summary_report r
+        where 1=1
+        <if test="condition.lastPeriodCode">
+            and r.period_code <![CDATA[=]]> #{condition.lastPeriodCode}
+        </if>
+        <if test="condition.orgId">
+            and r.org_id = #{condition.orgId}
+        </if>
+        and r.contract_code = a.contract_code
+        and r.org_id = a.org_id
+        and r.del_flag ='0'
+        ) as depreciationReservesAmount,
+        ec.client_code, ec.financial_contract_status, ec.client_name
+        from
+        (
+        select
+        ecb.period_code, ecb.org_id, ecb.contract_code,
+        sum(coalesce(ecb.receivable_rent_amount, 0)) as receivableLeaseAmount,
+        sum(coalesce(ecb.receivable_residual_value_amount, 0)) as receivableLastAmount,
+        sum(coalesce(ecb.receivable_downpayment_amount, 0)) as receivableFirstAmount,
+        sum(coalesce(ecb.receivable_insurance_amount, 0)) as receivableInsuranceAmount,
+        sum(coalesce(ecb.receivable_commission_amount, 0)) as receivableProcedureAmount,
+        sum(coalesce(ecb.receivable_otherincome_amount, 0)) as receiveOtherRevenues,
+        sum(coalesce(ecb.unrealized_revenue_amount, 0)) as receiveOtherRevenuesd,
+        sum(coalesce(ecb.receivable_default_interest_amount, 0)) as recycleDefaultInterestAmount,
+        sum(coalesce(ecb.receivable_terminate_amount, 0)) as receiveTerminateProcedureAmount,
+        sum(coalesce(ecb.lessee_margin_amount, 0))as receivableMarginAmount,
+        sum(coalesce(ecb.depreciation_loss_reverse_amount, 0))*-1 as depreciationLossAmount,
+        sum(coalesce(ecb.lease_revenue_amount, 0)+ coalesce(ecb.lease_revenue3_amount, 0)+ coalesce(ecb.lease_revenue6_amount, 0)) as leaseRevenueAmount
+        from eg_voucher ev
+        inner join eg_contract_balance ecb on
+        ev.id = ecb.voucher_id
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and ecb.del_flag = '0'
+        and ev.sub_scene_type = '25'
+        and ev.voucher_status in ('2', '3', '4')
+        and ev.valid_flag = '1'
+        <if test="condition.periodCode != null">
+            and ev.period_code  <![CDATA[=]]> #{condition.periodCode}
+            and ecb.period_code  <![CDATA[=]]> #{condition.periodCode}
+        </if>
+        <if test="condition.orgId != null and condition.orgId!=''">
+            and ecb.org_id = #{condition.orgId}
+        </if>
+        group by
+        ecb.period_code, ecb.org_id, ecb.contract_code ) a
+        inner join eg_contract ec on
+        a.contract_code = ec.contract_code
+        and a.org_id = ec.org_id
+        and ec.del_flag = '0'
+        <if test="condition.clientName !=null and condition.clientName!=''">
+            and ec.client_name like #{condition.clientName}
+        </if>
+        <if test="condition.financialContractStatus !=null and condition.financialContractStatus!=''">
+            and ec.financial_contract_status = #{condition.financialContractStatus}
+        </if>
+        <if test="condition.contractCode !=null and condition.contractCode!=''">
+            and ec.contract_code like #{condition.contractCode}
+        </if>
+        <if test="condition.clientCode !=null and condition.clientCode!=''">
+            and ec.client_code like #{condition.clientCode}
+        </if>
+        ) k where 1=1
+        <if test="condition.isAbnormal != null and condition.isAbnormal !=''">
+            <if test="'1'.toString() == condition.isAbnormal">
+                and k.depreciationAmount != 0
+            </if>
+            <if test="'0'.toString() == condition.isAbnormal">
+                and k.depreciationAmount = 0
+            </if>
+        </if>
+        order by k.contract_code,k.client_code asc
+    </sql>
+
+    <select id="contractDetailQuery" parameterType="com.utfinancing.financehub.engine.finance.model.dto.ContractDetailQueryInputDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.ContractDetailQueryOutputDTO">
+        select
+            eid.org_id ,
+            eoc.org_name,
+            eid.business_date ,
+            eid.system_code ,
+            eid.scene_name ,
+            eid.contract_code ,
+            eid.client_code ,
+            ec.client_name ,
+            eid.interface_id,
+            eid.id
+        from
+            eg_interface_data eid
+        left join eg_org_company eoc  on eid.org_id = eoc.org_id  and eoc.del_flag ='0'
+        left join eg_client ec on ec.client_code = eid.client_code and ec.del_flag ='0'
+        where
+            eid.del_flag = '0'
+            and (payable_number = #{param.paymentIdentifier}
+            or payment_order = #{param.paymentIdentifier})
+    </select>
+</mapper>
+

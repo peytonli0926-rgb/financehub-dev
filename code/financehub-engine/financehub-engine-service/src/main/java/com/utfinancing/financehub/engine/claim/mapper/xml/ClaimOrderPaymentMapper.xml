@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.claim.mapper.ClaimOrderPaymentMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.claim.entity.ClaimOrderPaymentEntity">
+                    <id column="id" property="id" />
+                    <result column="claim_order_id" property="claimOrderId" />
+                    <result column="order_no" property="orderNo" />
+                    <result column="payee_name" property="payeeName" />
+                    <result column="receipt_account" property="receiptAccount" />
+                    <result column="receipt_branch_bank" property="receiptBranchBank" />
+                    <result column="receipt_bank_union_num" property="receiptBankUnionNum" />
+                    <result column="payment_way" property="paymentWay" />
+                    <result column="payment_amount" property="paymentAmount" />
+                    <result column="swift_code" property="swiftCode" />
+                    <result column="bank_name" property="bankName" />
+                    <result column="bank_num" property="bankNum" />
+                    <result column="deal_addition" property="dealAddition" />
+                    <result column="city" property="city" />
+                    <result column="province" property="province" />
+                    <result column="receipt_country" property="receiptCountry" />
+                    <result column="payee_country" property="payeeCountry" />
+                    <result column="receipt_bank_overseas_address" property="receiptBankOverseasAddress" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, claim_order_id, order_no, payee_name, receipt_account, receipt_branch_bank, receipt_bank_union_num, payment_way, payment_amount, swift_code, bank_name, bank_num, deal_addition, city, province, receipt_country, payee_country, receipt_bank_overseas_address, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

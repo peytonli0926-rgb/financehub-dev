@@ -1,0 +1,953 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.VoucherMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.VoucherEntity">
+        <id column="id" property="id"/>
+        <result column="interface_data_id" property="interfaceDataId"/>
+        <result column="source" property="source"/>
+        <result column="system_code" property="systemCode"/>
+        <result column="system_name" property="systemName"/>
+        <result column="business_code" property="businessCode"/>
+        <result column="business_name" property="businessName"/>
+        <result column="order_id" property="orderId"/>
+        <result column="scene_code" property="sceneCode"/>
+        <result column="scene_name" property="sceneName"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="contract_name" property="contractName"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="client_name" property="clientName"/>
+        <result column="org_id" property="orgId"/>
+        <result column="org_name" property="orgName"/>
+        <result column="voucher_type" property="voucherType"/>
+        <result column="sign_company" property="signCompany"/>
+        <result column="business_date" property="businessDate"/>
+        <result column="voucher_date" property="voucherDate"/>
+        <result column="currency" property="currency"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="voucher_summary" property="voucherSummary"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="voucher_num" property="voucherNum"/>
+        <result column="voucher_way" property="voucherWay"/>
+        <result column="create_user_no" property="createUserNo"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="recheck_user_no" property="recheckUserNo"/>
+        <result column="recheck_user_name" property="recheckUserName"/>
+        <result column="voucher_status" property="voucherStatus"/>
+        <result column="batch_id" property="batchId"/>
+        <result column="batch_type" property="batchType"/>
+        <result column="sub_scene_type" property="subSceneType"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, interface_data_id, source, system_code, system_name, business_code, business_name, order_id, scene_code,
+        scene_name, contract_code, contract_name, client_code, client_name, org_id, org_name, voucher_type,
+        sign_company, business_date, voucher_date, currency, dept_name, voucher_summary, create_by, create_time,
+        update_by, update_time, del_flag, voucher_num, voucher_way, create_user_no, create_user_name, recheck_user_no,
+        recheck_user_name, voucher_status, batch_id, batch_type, sub_scene_type
+    </sql>
+
+    <select id="selectFinhubVoucherEntryByDate" resultType="com.utfinancing.financehub.etl.middle.model.dto.MidVoucherEntryDTO">
+        select
+            to_char(ev.business_date, 'yyyy-mm-dd') business_date,
+            to_char(ev.voucher_date, 'yyyy-mm-dd') voucher_date,
+            ev.voucher_num as voucher_number,
+            ev.system_code ,
+            ev.scene_code scene_name,
+            ev.org_id,
+            ev.contract_code ,
+            eve.account_code ,
+            eve.debit_amount debit_amount,
+            eve.credit_amount credit_amount
+        from
+            eg_voucher_entry eve,
+            eg_voucher ev
+        where
+            eve.voucher_id = ev.id
+            and to_char(ev.business_date, 'yyyy-mm-dd') = #{voucherDate}
+            and ev.period_code = #{periodCode}
+            and eve.period_code = #{periodCode}
+        order by 1,2,3,4,5
+    </select>
+
+
+    <select id="selectFinhubData" resultType="java.util.Map">
+        ${statement}
+    </select>
+    <select id="selectFinhubVoucherData"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        select t.fid as fid,
+        t.fid as primaryKey,
+        t.system_code as systemCode,
+        t.scene_code as sceneCode,
+        t.org_id as companyNumber,
+        '' as voucherNumber,
+        to_char(t.voucher_date, 'YYYY') as periodYear,
+        to_char(t.voucher_date, 'MM') as periodNumber,
+        t.voucher_date as bookedDate,
+        t.business_date as bizDate,
+        t.voucher_type as voucherType,
+        t.scene_name as description,
+        t.scene_name || '-' || t.business_date as voucherAbstract,
+        null as attaches,
+        case when t.scene_code='WYLSSK' then 'true' else 'false' end as isCheck,
+        case when t.scene_code='WYLSFK' then '888888' else '100343' end as creator,
+        case when t.scene_code='WYLSFK' then '' else '101431' end as auditor,
+        case when t.scene_code='WYLSFK' then '' else '101431' end as poster,
+        case when t.scene_code='WYLSFK' then '1' else '0' end as isStage,
+        case when t.scene_code='WYLSSK' then '100789' else '' end as cashier,
+        '' as importKey,
+        null as sourceBillId,
+        '' as sourceSysNo,
+        '' as sourceSysBillUrl,
+        null as entrySeq,
+        t.cost_centre as profitCenterNumber,
+        t.account_code as accountNumber,
+        t.currencyNumber as currencyNumber,
+        case
+        when t.debit_credit_type = 'CR' then '0'
+        else '1'
+        end as entryDC,
+        '' as measurement,
+        '0' "cussent",
+        '' as customerNumber,
+        null as localRate,
+        case when t.debit_amount!=0 then t.debit_amount else t.credit_amount end as originalAmount,
+        t.debit_amount as debitAmount,
+        t.credit_amount as creditAmount,
+        null as qty,
+        null as price,
+        null as asstSeq,
+        t.scene_name || '-' || t.business_date as assistAbstract,
+        t.business_date as assistBizDate,
+        null as assistEndDate,
+        '' as settlementType,
+        '' as settlementNumber,
+        '' as bizNumber,
+        '' as ticketNumber,
+        '' as invoiceNumber,
+        '物料' asstActType1,
+        t.contract_code as asstActNumber1,
+        t.contract_code as asstActName1,
+        '客户' asstActType2,
+        t.client_code as asstActNumber2,
+        t.client_code as asstActName2,
+        '银行账户' as asstActType3,
+        t.bank_account as asstActNumber3,
+        t.bank_account as asstActName3,
+        '成本中心' as asstActType6,
+        t.cost_centre as asstActNumber6,
+        t.cost_centre as asstActName6,
+        '职员' as asstActType7,
+        t.employee_code as asstActNumber7,
+        t.employee_code as asstActName7,
+        '费用类型' as asstActType8,
+        t.expense_type as asstActNumber8,
+        t.expense_type as asstActName8,
+        '借据号' as asstActType9,
+        t.receipt_number as asstActNumber9,
+        t.receipt_number as asstActName9,
+        '借款合同编号' as asstActType10,
+        t.bill_contract_code as asstActNumber10,
+        t.bill_contract_code as asstActName10,
+        '衍生合约编号' as asstActType12,
+        t.derivative_contract_number as asstActNumber12,
+        t.derivative_contract_number as asstActName12,
+        '批次号' as asstActType14,
+        t.batch_number as asstActNumber12,
+        t.batch_number as asstActName12
+        from
+        (
+        select
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_date,
+        ev.business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        cy.eas_code as currencyNumber,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.client_code,
+        eba.bank_account_code as bank_account,
+        eve.employee_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        string_agg(ev.id::text, ',') as fid,
+        sum(eve.debit_amount) as debit_amount,
+        sum(eve.credit_amount) as credit_amount
+        from
+        eg_voucher ev
+        inner join eg_voucher_entry eve
+        on
+        ev.id = eve.voucher_id
+        left join eg_currency cy on
+        ev.currency = cy.currency_code
+        left join eg_bank_account eba on eve.bank_account = eba.bank_account_number
+        where
+        1 = 1
+        and ev.is_send_kingdee = '0'
+        and ev.del_flag='0'
+        and eve.del_flag ='0'
+        and ev.voucher_status='3'
+        and ev.valid_flag='1'
+        and eve.account_code ~ '^[123456]'
+        and ev.org_id in ('01-C0001','30001','80001','02-C0001')
+        and ev.system_code !='FINHUB'
+        and eve.account_code not in (select ea.account_code from eg_account ea where 1=1 and ea.account_category='6' and ea.del_flag='0')
+        and ev.is_summary='0'
+        and ev.period_code = #{periodCode}
+        and to_char(ev.voucher_date,'yyyy-MM-dd') = #{voucherDate}
+        group by
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_date,
+        ev.business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        cy.eas_code,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.client_code,
+        eba.bank_account_code,
+        eve.employee_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number
+        order by
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_type
+        ) t
+        where
+        1 = 1
+    </select>
+    <select id="selectFinhubInterVoucherData"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        select t.fid as fid,
+        t.fid as primaryKey,
+        t.system_code as systemCode,
+        t.scene_code as sceneCode,
+        t.org_id as companyNumber,
+        '提交' as dataStatus,
+        '' as voucherNumber,
+        to_char(t.voucher_date, 'YYYY') as periodYear,
+        to_char(t.voucher_date, 'MM') as periodNumber,
+        t.voucher_date as bookedDate,
+        t.business_date as bizDate,
+        t.voucher_type as voucherType,
+        t.scene_name as description,
+        t.scene_name || '-' || t.business_date as voucherAbstract,
+        null as attaches,
+        'false' as isCheck,
+        t.create_by as creator,
+        t.auditor as auditor,
+        t.poster as poster,
+        '0' as isStage,
+        '' as importKey,
+        null as sourceBillId,
+        '' as sourceSysNo,
+        '' as sourceSysBillUrl,
+        null as entrySeq,
+        t.cost_centre as profitCenterNumber,
+        t.account_code as accountNumber,
+        t.currencyNumber as currencyNumber,
+        case
+        when t.debit_credit_type = 'CR' then '0'
+        else '1'
+        end as entryDC,
+        '' as measurement,
+        '0' "cussent",
+        '' as customerNumber,
+        null as localRate,
+        case when t.debit_amount!=0 then t.debit_amount else t.credit_amount end as originalAmount,
+        t.debit_amount as debitAmount,
+        t.credit_amount as creditAmount,
+        null as qty,
+        null as price,
+        null as asstSeq,
+        t.scene_name || '-' || t.business_date as assistAbstract,
+        t.business_date as assistBizDate,
+        null as assistEndDate,
+        '' as settlementType,
+        '' as settlementNumber,
+        '' as bizNumber,
+        '' as ticketNumber,
+        '' as invoiceNumber,
+        '物料' asstActType1,
+        t.contract_code as asstActNumber1,
+        t.contract_code as asstActName1,
+        '客户' asstActType2,
+        t.client_code as asstActNumber2,
+        t.client_code as asstActName2,
+        '银行账户' as asstActType3,
+        t.bank_account as asstActNumber3,
+        t.bank_account as asstActName3,
+        '成本中心' as asstActType6,
+        t.cost_centre as asstActNumber6,
+        t.cost_centre as asstActName6,
+        '职员' as asstActType7,
+        t.employee_code as asstActNumber7,
+        t.employee_code as asstActName7,
+        '费用类型' as asstActType8,
+        t.expense_type as asstActNumber8,
+        t.expense_type as asstActName8,
+        '借据号' as asstActType9,
+        t.receipt_number as asstActNumber9,
+        t.receipt_number as asstActName9,
+        '借款合同编号' as asstActType10,
+        t.bill_contract_code as asstActNumber10,
+        t.bill_contract_code as asstActName10,
+        '衍生合约编号' as asstActType12,
+        t.derivative_contract_number as asstActNumber12,
+        t.derivative_contract_number as asstActName12,
+        '批次号' as asstActType14,
+        t.batch_number as asstActNumber12,
+        t.batch_number as asstActName12
+        from
+        (
+        select
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_date,
+        ev.business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        cy.eas_code as currencyNumber,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.client_code,
+        eba.bank_account_code as bank_account,
+        eve.employee_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        ev.create_by,
+        ev.recheck_user_no as auditor,
+        ev.recheck_user_no as poster,
+        string_agg(ev.id::text, ',') as fid,
+        sum(eve.debit_amount) as debit_amount,
+        sum(eve.credit_amount) as credit_amount
+        from
+        eg_voucher ev
+        inner join eg_voucher_entry eve
+        on
+        ev.id = eve.voucher_id
+        left join eg_currency cy on
+        ev.currency = cy.currency_code
+        left join eg_bank_account eba on eve.bank_account = eba.bank_account_number
+        where
+        1 = 1
+        and ev.is_send_kingdee = '0'
+        and ev.recheck_user_no is not null
+        and ev.del_flag ='0'
+        and eve.del_flag ='0'
+        and ev.valid_flag='1'
+        and ev.voucher_status='3'
+        and eve.account_code ~ '^[123456]'
+        and ev.org_id in ('01-C0001','30001','80001','02-C0001')
+        and ev.system_code = 'FINHUB'
+        and ev.is_summary='0'
+        and eve.account_code not in (select ea.account_code from eg_account ea where 1=1 and ea.account_category='6' and ea.del_flag='0')
+        and ev.period_code = #{periodCode}
+        and to_char(ev.voucher_date,'yyyy-MM-dd') = #{voucherDate}
+        group by
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_date,
+        ev.business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        cy.eas_code,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.client_code,
+        eba.bank_account_code,
+        eve.employee_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        ev.create_by,
+        ev.recheck_user_no
+        order by
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_type
+        ) t
+        where
+        1 = 1
+    </select>
+    <select id="selectNoSummaryFinhubVoucherData"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        select t.fid as fid,
+        t.primaryKey as primaryKey,
+        t.system_code as systemCode,
+        t.scene_code as sceneCode,
+        t.sub_scene_type as subSceneType,
+        t.interface_id as interfaceId,
+        t.org_id as companyNumber,
+        t.ev_voucher_summary as evVoucherSummary,
+        t.voucher_num as voucherNumber,
+        to_char(t.voucher_date, 'YYYY') as periodYear,
+        to_char(t.voucher_date, 'MM') as periodNumber,
+        t.voucher_date as bookedDate,
+        t.business_date as bizDate,
+        t.voucher_type as voucherType,
+        t.scene_name as description,
+        t.voucher_summary as voucherAbstract,
+        null as attaches,
+        'false' as isCheck,
+        case when t.scene_code='WYLSFK' then '888888' else '100343' end as creator,
+        '' as auditor,
+        '' as poster,
+        '1' as isStage,
+        case when t.scene_code='WYLSSK' then '100789' else '' end as cashier,
+        '' as importKey,
+        null as sourceBillId,
+        '' as sourceSysNo,
+        '' as sourceSysBillUrl,
+        null as entrySeq,
+        t.cost_centre as profitCenterNumber,
+        t.account_code as accountNumber,
+        t.currencyNumber as currencyNumber,
+        case
+        when t.debit_credit_type = 'CR' then '0'
+        else '1'
+        end as entryDC,
+        '' as measurement,
+        '0' "cussent",
+        '' as customerNumber,
+        null as localRate,
+        case when t.debit_amount!=0 then t.debit_amount else t.credit_amount end as originalAmount,
+        t.debit_amount as debitAmount,
+        t.credit_amount as creditAmount,
+        null as qty,
+        null as price,
+        null as asstSeq,
+        t.voucher_summary as assistAbstract,
+        t.business_date as assistBizDate,
+        null as assistEndDate,
+        '' as settlementType,
+        '' as settlementNumber,
+        '' as bizNumber,
+        '' as ticketNumber,
+        '' as invoiceNumber,
+        '物料' asstActType1,
+        t.contract_code as asstActNumber1,
+        t.contract_code as asstActName1,
+        '客户' asstActType2,
+        t.client_code as asstActNumber2,
+        t.client_code as asstActName2,
+        '银行账户' as asstActType3,
+        t.bank_account as asstActNumber3,
+        t.bank_account as asstActName3,
+        '成本中心' as asstActType6,
+        t.cost_centre as asstActNumber6,
+        t.cost_centre as asstActName6,
+        '职员' as asstActType7,
+        t.employee_code as asstActNumber7,
+        t.employee_code as asstActName7,
+        '费用类型' as asstActType8,
+        t.expense_type as asstActNumber8,
+        t.expense_type as asstActName8,
+        '借据号' as asstActType9,
+        t.receipt_number as asstActNumber9,
+        t.receipt_number as asstActName9,
+        '借款合同编号' as asstActType10,
+        t.bill_contract_code as asstActNumber10,
+        t.bill_contract_code as asstActName10,
+        '衍生合约编号' as asstActType12,
+        t.derivative_contract_number as asstActNumber12,
+        t.derivative_contract_number as asstActName12,
+        '批次号' as asstActType14,
+        t.batch_number as asstActNumber12,
+        t.batch_number as asstActName12,
+        t.entryId as entryId,
+        t.zjBatchNo as zjBatchNo,
+        t.business_operation as businessOperation
+        from
+        (
+        select
+        ev.voucher_num,
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_date,
+        ev.business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        ev.voucher_summary ev_voucher_summary,
+        eve.voucher_summary,
+        cy.eas_code as currencyNumber,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.client_code,
+        eba.bank_account_code as bank_account,
+        eve.employee_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        case when ${isEntryFlag} then eve.id else ev.id end primaryKey,
+        ev.id as fid,
+        eve.debit_amount as debit_amount,
+        eve.credit_amount as credit_amount,
+        ev.sub_scene_type,
+        ev.interface_id,
+        eve.id as entryId,
+        fpd.batch_number as zjBatchNo,
+        fpd.business_operation
+        from
+        eg_voucher ev
+        inner join eg_voucher_entry eve
+        on
+        ev.id = eve.voucher_id
+        left join eg_currency cy on
+        ev.currency = cy.currency_code
+        left join eg_bank_account eba on eve.bank_account = eba.bank_account_number
+        left join eg_fund_payment_data fpd on ev.batch_id = fpd.id
+        where
+        1 = 1
+        and ev.del_flag='0'
+        and eve.del_flag ='0'
+        and ev.valid_flag='1'
+        and eve.account_code ~ '^[123456]'
+        and ev.org_id in ('01-C0001','30001','80001','02-C0001')
+        and ev.system_code !='FINHUB'
+        <choose>
+            <when test="isEntryFlag">
+                and eve.is_send_kingdee = '0'
+                and ev.voucher_status in ('3','4')
+            </when>
+            <otherwise>
+                and ev.is_summary='1'
+                and ev.voucher_status='3'
+            </otherwise>
+        </choose>
+        and eve.account_code not in (select ea.account_code from eg_account ea where 1=1 and ea.account_category='6' and ea.del_flag='0')
+        and ev.period_code = #{periodCode}
+        and to_char(ev.voucher_date,'yyyy-MM-dd') = #{voucherDate}
+        order by
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_type
+        ) t
+        where
+        1 = 1
+    </select>
+
+    <update id="updateVoucherNumForWYLSFK">
+        update eg_voucher ev set voucher_num = cast(ev.voucher_summary as int8)
+        from eg_voucher_entry eve
+        where ev.scene_code ='WYLSFK' and ev.period_code = #{periodCode} and ev.del_flag ='0'
+        and ev.voucher_summary is not null and ev.voucher_summary != '' and to_char(ev.voucher_date,'yyyy-MM-dd') = #{voucherDate}
+        and ev.id = eve.voucher_id and eve.is_send_kingdee = '0'
+    </update>
+
+    <select id="selectNoSummaryFinhubVoucherDataForWYLSFK"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        select
+        t.fid as fid,
+        t.primaryKey as primaryKey,
+        t.system_code as systemCode,
+        t.scene_code as sceneCode,
+        t.sub_scene_type as subSceneType,
+        t.interface_id as interfaceId,
+        t.org_id as companyNumber,
+        t.voucher_num as voucherNumber,
+        to_char(t.voucher_date, 'YYYY') as periodYear,
+        to_char(t.voucher_date, 'MM') as periodNumber,
+        t.voucher_date as bookedDate,
+        t.business_date as bizDate,
+        t.voucher_type as voucherType,
+        t.scene_name as description,
+        t.voucher_summary as voucherAbstract,
+        null as attaches,
+        case
+        when t.scene_code = 'WYLSSK' then 'true'
+        else 'false'
+        end as isCheck,
+        case
+        when t.scene_code = 'WYLSFK' then '888888'
+        else '100343'
+        end as creator,
+        case
+        when t.scene_code = 'WYLSFK' then ''
+        else '101431'
+        end as auditor,
+        case
+        when t.scene_code = 'WYLSFK' then ''
+        else '101431'
+        end as poster,
+        case
+        when t.scene_code = 'WYLSFK' then '1'
+        else '0'
+        end as isStage,
+        case
+        when t.scene_code = 'WYLSSK' then '100789'
+        else ''
+        end as cashier,
+        '' as importKey,
+        null as sourceBillId,
+        '' as sourceSysNo,
+        '' as sourceSysBillUrl,
+        null as entrySeq,
+        t.cost_centre as profitCenterNumber,
+        t.account_code as accountNumber,
+        t.currencyNumber as currencyNumber,
+        case
+        when t.debit_credit_type = 'CR' then '0'
+        else '1'
+        end as entryDC,
+        '' as measurement,
+        '0' "cussent",
+        '' as customerNumber,
+        null as localRate,
+        case
+        when t.debit_amount != 0 then t.debit_amount
+        else t.credit_amount
+        end as originalAmount,
+        t.debit_amount as debitAmount,
+        t.credit_amount as creditAmount,
+        null as qty,
+        null as price,
+        null as asstSeq,
+        t.voucher_summary as assistAbstract,
+        t.business_date as assistBizDate,
+        null as assistEndDate,
+        '' as settlementType,
+        '' as settlementNumber,
+        '' as bizNumber,
+        '' as ticketNumber,
+        '' as invoiceNumber,
+        '物料' asstActType1,
+        t.contract_code as asstActNumber1,
+        t.contract_code as asstActName1,
+        '客户' asstActType2,
+        t.client_code as asstActNumber2,
+        t.client_code as asstActName2,
+        '银行账户' as asstActType3,
+        t.bank_account as asstActNumber3,
+        t.bank_account as asstActName3,
+        '成本中心' as asstActType6,
+        t.cost_centre as asstActNumber6,
+        t.cost_centre as asstActName6,
+        '职员' as asstActType7,
+        t.employee_code as asstActNumber7,
+        t.employee_code as asstActName7,
+        '费用类型' as asstActType8,
+        t.expense_type as asstActNumber8,
+        t.expense_type as asstActName8,
+        '借据号' as asstActType9,
+        t.receipt_number as asstActNumber9,
+        t.receipt_number as asstActName9,
+        '借款合同编号' as asstActType10,
+        t.bill_contract_code as asstActNumber10,
+        t.bill_contract_code as asstActName10,
+        '衍生合约编号' as asstActType12,
+        t.derivative_contract_number as asstActNumber12,
+        t.derivative_contract_number as asstActName12,
+        '批次号' as asstActType14,
+        t.batch_number as asstActNumber12,
+        t.batch_number as asstActName12,
+        t.entryId as entryId
+        from
+        (
+        select
+        max(ev.voucher_num) voucher_num,
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        max(ev.voucher_date) voucher_date,
+        max(ev.business_date) business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        eve.voucher_summary,
+        cy.eas_code as currencyNumber,
+        eve.debit_credit_type,
+        eve.contract_code,
+        '' client_code,
+        '' bank_account,
+        '' employee_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        case
+        when ${isEntryFlag} then max(eve.id)
+        else max(ev.id)
+        end primaryKey,
+        max(ev.id) as fid,
+        sum(eve.debit_amount) as debit_amount,
+        sum(eve.credit_amount) as credit_amount,
+        ev.sub_scene_type,
+        max(ev.interface_id) interface_id,
+        max(eve.id) as entryId
+        from
+        eg_voucher ev
+        inner join eg_voucher_entry eve
+        on
+        ev.id = eve.voucher_id
+        left join eg_currency cy on
+        ev.currency = cy.currency_code
+        left join eg_bank_account eba on
+        eve.bank_account = eba.bank_account_number
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and eve.del_flag = '0'
+        and ev.valid_flag = '1'
+        and eve.account_code ~ '^[123456]'
+        and ev.org_id in ('01-C0001', '30001', '80001', '02-C0001')
+        and ev.system_code != 'FINHUB'
+        and ev.scene_code = 'WYLSFK'
+        <choose>
+            <when test = "isEntryFlag">
+                and eve.is_send_kingdee = '0'
+                and ev.voucher_status in ('3', '4')
+            </when>
+            <otherwise>
+                and ev.is_summary = '1'
+                and ev.voucher_status = '3'
+            </otherwise>
+        </choose>
+        and eve.account_code not in (
+        select
+        ea.account_code
+        from
+        eg_account ea
+        where
+        1 = 1
+        and ea.account_category = '6'
+        and ea.del_flag = '0')
+        and ev.period_code = #{periodCode}
+        and to_char(ev.voucher_date, 'yyyy-MM-dd') = #{voucherDate}
+        group by
+        ev.voucher_summary,
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        eve.voucher_summary,
+        cy.eas_code,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.expense_type,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        ev.sub_scene_type
+        order by
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_type
+        ) t
+        where
+        1 = 1
+    </select>
+    <select id="selectNoSummaryFinhubInterVoucherData"
+            resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+        select t.fid as fid,
+        t.primaryKey as primaryKey,
+        t.system_code as systemCode,
+        t.scene_code as sceneCode,
+        t.sub_scene_type as subSceneType,
+        t.interface_id as interfaceId,
+        t.org_id as companyNumber,
+        '提交' as dataStatus,
+        t.voucher_num as voucherNumber,
+        to_char(t.voucher_date, 'YYYY') as periodYear,
+        to_char(t.voucher_date, 'MM') as periodNumber,
+        t.voucher_date as bookedDate,
+        t.business_date as bizDate,
+        t.voucher_type as voucherType,
+        t.scene_name as description,
+        t.voucher_summary as voucherAbstract,
+        null as attaches,
+        'false' as isCheck,
+        t.create_by as creator,
+        '' as auditor,
+        '' as poster,
+        '0' as isStage,
+        '' as importKey,
+        null as sourceBillId,
+        '' as sourceSysNo,
+        '' as sourceSysBillUrl,
+        null as entrySeq,
+        t.cost_centre as profitCenterNumber,
+        t.account_code as accountNumber,
+        t.currencyNumber as currencyNumber,
+        case
+        when t.debit_credit_type = 'CR' then '0'
+        else '1'
+        end as entryDC,
+        '' as measurement,
+        '0' "cussent",
+        '' as customerNumber,
+        null as localRate,
+        case when t.debit_amount!=0 then t.debit_amount else t.credit_amount end as originalAmount,
+        t.debit_amount as debitAmount,
+        t.credit_amount as creditAmount,
+        null as qty,
+        null as price,
+        null as asstSeq,
+        t.voucher_summary as assistAbstract,
+        t.business_date as assistBizDate,
+        null as assistEndDate,
+        '' as settlementType,
+        '' as settlementNumber,
+        '' as bizNumber,
+        '' as ticketNumber,
+        '' as invoiceNumber,
+        '物料' asstActType1,
+        t.contract_code as asstActNumber1,
+        t.contract_code as asstActName1,
+        '客户' asstActType2,
+        t.client_code as asstActNumber2,
+        t.client_code as asstActName2,
+        '银行账户' as asstActType3,
+        case when '1'=t.is_stage then '888' else t.bank_account end as asstActNumber3,
+        t.bank_account as asstActName3,
+        '成本中心' as asstActType6,
+        t.cost_centre as asstActNumber6,
+        t.cost_centre as asstActName6,
+        '职员' as asstActType7,
+        t.employee_code as asstActNumber7,
+        t.employee_code as asstActName7,
+        '费用类型' as asstActType8,
+        t.expense_type as asstActNumber8,
+        t.expense_type as asstActName8,
+        '借据号' as asstActType9,
+        t.receipt_number as asstActNumber9,
+        t.receipt_number as asstActName9,
+        '借款合同编号' as asstActType10,
+        t.bill_contract_code as asstActNumber10,
+        t.bill_contract_code as asstActName10,
+        '衍生合约编号' as asstActType12,
+        t.derivative_contract_number as asstActNumber12,
+        t.derivative_contract_number as asstActName12,
+        '批次号' as asstActType14,
+        t.batch_number as asstActNumber12,
+        t.batch_number as asstActName12,
+        t.is_stage
+        from
+        (
+        select
+        ev.voucher_num,
+        ev.system_code,
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_date,
+        ev.business_date,
+        ev.voucher_type,
+        ev.scene_code,
+        ev.scene_name,
+        eve.cost_centre,
+        eve.account_code,
+        cy.eas_code as currencyNumber,
+        eve.debit_credit_type,
+        eve.contract_code,
+        eve.client_code,
+        eba.bank_account_code as bank_account,
+        eve.employee_code,
+        eve.expense_type,
+        eve.voucher_summary,
+        eve.receipt_number,
+        eve.bill_contract_code,
+        eve.derivative_contract_number,
+        eve.batch_number,
+        ev.create_by,
+        ev.recheck_user_no as auditor,
+        ev.recheck_user_no as poster,
+        case when ${isEntryFlag} then eve.id else ev.id end primaryKey,
+        ev.id as fid,
+        eve.debit_amount as debit_amount,
+        eve.credit_amount as credit_amount,
+        case WHEN EXISTS (select 1 from eg_voucher_entry eve2 where 1=1 and eve2.voucher_id =ev.id and eve2.is_related_other_customer ='1' limit 1)
+        THEN 1 ELSE 0 END AS is_stage,
+        ev.sub_scene_type,
+        ev.interface_id
+        from
+        eg_voucher ev
+        inner join eg_voucher_entry eve
+        on
+        ev.id = eve.voucher_id
+        left join eg_currency cy on
+        ev.currency = cy.currency_code
+        left join eg_bank_account eba on eve.bank_account = eba.bank_account_number
+        where
+        1 = 1
+        and ev.recheck_user_no is not null
+        and ev.del_flag ='0'
+        and eve.del_flag ='0'
+        and ev.valid_flag='1'
+        and eve.account_code ~ '^[123456]'
+        and ev.org_id in ('01-C0001','30001','80001','02-C0001')
+        and ev.system_code = 'FINHUB'
+        <choose>
+            <when test="isEntryFlag">
+                and eve.is_send_kingdee = '0'
+                and ev.voucher_status in ('3','4')
+            </when>
+            <otherwise>
+                and ev.is_summary='1'
+                and ev.voucher_status='3'
+            </otherwise>
+        </choose>
+        and eve.account_code not in (select ea.account_code from eg_account ea where 1=1 and ea.account_category='6' and ea.del_flag='0')
+        and ev.period_code = #{periodCode}
+        and to_char(ev.voucher_date,'yyyy-MM-dd') = #{voucherDate}
+        order by
+        ev.org_id,
+        ev.period_code,
+        ev.voucher_type
+        ) t
+        where
+        1 = 1
+    </select>
+</mapper>
+

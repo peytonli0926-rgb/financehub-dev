@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ParityTransferDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ParityTransferDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="parity_transfer_id" property="parityTransferId" />
+                    <result column="batch" property="batch" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="receivable_rent" property="receivableRent" />
+                    <result column="receivable_residual_value" property="receivableResidualValue" />
+                    <result column="receivable_outtax" property="receivableOuttax" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="lessee_margin" property="lesseeMargin" />
+                    <result column="payable_agency_estimate" property="payableAgencyEstimate" />
+                    <result column="payable_vehicle_estimate" property="payableVehicleEstimate" />
+                    <result column="payable_band_cost_estimate" property="payableBandCostEstimate" />
+                    <result column="payable_pledge_estimate" property="payablePledgeEstimate" />
+                    <result column="payable_unpledge_estimate" property="payableUnpledgeEstimate" />
+                    <result column="payable_other_cost_estimate" property="payableOtherCostEstimate" />
+                    <result column="depreciation_reserves" property="depreciationReserves" />
+                    <result column="appraised_value" property="appraisedValue" />
+                    <result column="voucher_ids" property="voucherIds" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, parity_transfer_id, batch, contract_code, client_code, client_name, org_id, financial_contract_status, tax_rate, receivable_rent, receivable_residual_value, receivable_outtax, unrealized_revenue, lessee_margin, payable_agency_estimate, payable_vehicle_estimate, payable_band_cost_estimate, payable_pledge_estimate, payable_unpledge_estimate, payable_other_cost_estimate, depreciation_reserves, appraised_value, voucher_ids, del_flag, error_info, period_code, create_by, create_time, update_by, update_time
+        </sql>
+</mapper>
+

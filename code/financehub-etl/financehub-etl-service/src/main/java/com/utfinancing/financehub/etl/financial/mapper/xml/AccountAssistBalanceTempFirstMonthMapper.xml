@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.AccountAssistBalanceTempFirstMonthMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.AccountAssistBalanceTempFirstMonthEntity">
+                    <id column="id" property="id" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="bill_contract_code" property="billContractCode" />
+                    <result column="currency_code" property="currencyCode" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_name" property="accountName" />
+                    <result column="year_begin_debit_balance" property="yearBeginDebitBalance" />
+                    <result column="year_begin_credit_balance" property="yearBeginCreditBalance" />
+                    <result column="month_begin_debit_balance" property="monthBeginDebitBalance" />
+                    <result column="month_begin_credit_balance" property="monthBeginCreditBalance" />
+                    <result column="month_debit_amount" property="monthDebitAmount" />
+                    <result column="month_credit_amount" property="monthCreditAmount" />
+                    <result column="year_debit_amount" property="yearDebitAmount" />
+                    <result column="year_credit_amount" property="yearCreditAmount" />
+                    <result column="month_end_debit_balance" property="monthEndDebitBalance" />
+                    <result column="month_end_credit_balance" property="monthEndCreditBalance" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, period_code, contract_code, client_code, business_code, org_id, bill_contract_code, currency_code, account_code, account_name, year_begin_debit_balance, year_begin_credit_balance, month_begin_debit_balance, month_begin_credit_balance, month_debit_amount, month_credit_amount, year_debit_amount, year_credit_amount, month_end_debit_balance, month_end_credit_balance, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+
+        <delete id="deleteTable">
+            truncate table eg_account_assist_balance_temp_fist_month
+        </delete>
+</mapper>
+

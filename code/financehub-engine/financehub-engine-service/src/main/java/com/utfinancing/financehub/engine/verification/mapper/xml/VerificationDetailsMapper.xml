@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.verification.mapper.VerificationDetailsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.verification.entity.VerificationDetailsEntity">
+                    <id column="id" property="id" />
+                    <result column="verification_id" property="verificationId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="receivable_rent" property="receivableRent" />
+                    <result column="receivable_residual_value" property="receivableResidualValue" />
+                    <result column="receivable_downpayment" property="receivableDownpayment" />
+                    <result column="receivable_commission" property="receivableCommission" />
+                    <result column="receivable_insurance" property="receivableInsurance" />
+                    <result column="receivable_otherincome" property="receivableOtherincome" />
+                    <result column="receivable_outtax" property="receivableOuttax" />
+                    <result column="unrealized_revenue" property="unrealizedRevenue" />
+                    <result column="payable_device_estimate" property="payableDeviceEstimate" />
+                    <result column="payable_agency_estimate" property="payableAgencyEstimate" />
+                    <result column="payable_vehicle_estimate" property="payableVehicleEstimate" />
+                    <result column="payable_band_cost_estimate" property="payableBandCostEstimate" />
+                    <result column="payable_pledge_estimate" property="payablePledgeEstimate" />
+                    <result column="payable_unpledge_estimate" property="payableUnpledgeEstimate" />
+                    <result column="payable_other_cost_estimate" property="payableOtherCostEstimate" />
+                    <result column="financial_expense_amount" property="financialExpenseAmount" />
+                    <result column="compensation_provision_amount" property="compensationProvisionAmount" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="depreciation_reserves" property="depreciationReserves" />
+                    <result column="error_info" property="errorInfo"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, verification_id, contract_code, financial_contract_status, account_date, client_name, org_id, receivable_rent, receivable_residual_value, receivable_downpayment, receivable_commission, receivable_insurance, receivable_otherincome, receivable_outtax, unrealized_revenue, payable_device_estimate, payable_agency_estimate, payable_vehicle_estimate, payable_band_cost_estimate, payable_pledge_estimate, payable_unpledge_estimate, payable_other_cost_estimate, del_flag, create_by, create_time, update_by, update_time, financial_expense_amount, compensation_provision_amount, client_code, depreciation_reserves
+        </sql>
+    <select id="checkDataPage"
+            resultType="com.utfinancing.financehub.engine.verification.model.dto.VerificationCheckDTO">
+        select
+        a.contract_code,
+        a.client_code,
+        a.client_name,
+        a.org_id,
+        a.financial_contract_status,
+        a.account_date,
+        (a.receivable_rent_balance + coalesce(b.receivable_rent_amount,0)) as receivable_rent,
+        (a.receivable_residual_value_balance + coalesce(b.receivable_residual_value_amount,0)) as receivable_residual_value,
+        (a.receivable_downpayment_balance + coalesce(b.receivable_downpayment_amount,0)) as receivable_downpayment,
+        (a.receivable_commission_balance + coalesce(b.receivable_commission_amount,0)) as receivable_commission,
+        (a.receivable_insurance_balance + coalesce(b.receivable_insurance_amount,0)) as receivable_insurance,
+        (a.receivable_otherincome_balance + coalesce(b.receivable_otherincome_amount,0)) as receivable_otherincome,
+        (a.receivable_outtax_balance + coalesce(b.receivable_outtax_amount,0)) as receivable_outtax,
+        (a.unrealized_revenue_balance + coalesce(b.unrealized_revenue_amount,0)) as unrealized_revenue,
+        (a.payable_device_estimate_balance + coalesce(b.payable_device_estimate_amount,0)) as payable_device_estimate,
+        (a.payable_agency_estimate_balance + coalesce(b.payable_agency_estimate_amount,0)) as payable_agency_estimate,
+        (a.payable_vehicle_estimate_balance + coalesce(b.payable_vehicle_estimate_amount,0)) as payable_vehicle_estimate,
+        (a.payable_band_cost_estimate_balance + coalesce(b.payable_band_cost_estimate_amount,0)) as payable_band_cost_estimate,
+        (a.payable_pledge_estimate_balance + coalesce(b.payable_pledge_estimate_amount,0)) as payable_pledge_estimate,
+        (a.payable_unpledge_estimate_balance + coalesce(b.payable_unpledge_estimate_amount,0)) as payable_unpledge_estimate,
+        (a.depreciation_reserves_balance + coalesce(b.depreciation_reserves_amount,0)) as depreciation_reserves
+        from
+        (
+        select
+        evd.contract_code,
+        evd.client_code,
+        evd.client_name,
+        evd.org_id,
+        evd.financial_contract_status,
+        evd.account_date,
+        sum(coalesce(el.receivable_rent_balance , 0)) as receivable_rent_balance,
+        sum(coalesce(el.receivable_residual_value_balance, 0)) as receivable_residual_value_balance,
+        sum(coalesce(el.receivable_downpayment_balance, 0)) as receivable_downpayment_balance,
+        sum(coalesce(el.receivable_commission_balance, 0)) as receivable_commission_balance,
+        sum(coalesce(el.receivable_insurance_balance, 0)) as receivable_insurance_balance,
+        sum(coalesce(el.receivable_otherincome_balance, 0)) as receivable_otherincome_balance,
+        sum(coalesce(el.receivable_outtax_balance, 0)) as receivable_outtax_balance,
+        sum(coalesce(el.unrealized_revenue_balance, 0)) as unrealized_revenue_balance,
+        sum(coalesce(el.payable_device_estimate_balance, 0)) as payable_device_estimate_balance,
+        sum(coalesce(el.payable_agency_estimate_balance, 0)) as payable_agency_estimate_balance,
+        sum(coalesce(el.payable_vehicle_estimate_balance, 0)) as payable_vehicle_estimate_balance,
+        sum(coalesce(el.payable_band_cost_estimate_balance, 0)) as payable_band_cost_estimate_balance,
+        sum(coalesce(el.payable_pledge_estimate_balance, 0)) as payable_pledge_estimate_balance,
+        sum(coalesce(el.payable_unpledge_estimate_balance, 0)) as payable_unpledge_estimate_balance,
+        sum(coalesce(el.depreciation_reserves_balance, 0)) as depreciation_reserves_balance
+        from
+        eg_verification ev
+        inner join eg_verification_details evd on
+        ev.id = evd.verification_id
+        left join eg_contract_balance_latest el on
+        evd.contract_code = el.contract_code
+        and evd.org_id = el.org_id
+        and el.del_flag = '0'
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and evd.del_flag = '0'
+        and ev.id = #{param.id}
+        group by
+        evd.contract_code,
+        evd.client_code,
+        evd.client_name,
+        evd.org_id,
+        evd.financial_contract_status,
+        evd.account_date
+        ) a
+        left join (
+        select
+        max(t.interface_data_id),
+        t.contract_code,
+        t.org_id,
+        sum(coalesce(t.receivable_rent_amount, 0)) as receivable_rent_amount,
+        sum(coalesce(t.receivable_residual_value_amount, 0)) as receivable_residual_value_amount,
+        sum(coalesce(t.receivable_downpayment_amount, 0)) as receivable_downpayment_amount,
+        sum(coalesce(t.receivable_commission_amount, 0)) as receivable_commission_amount,
+        sum(coalesce(t.receivable_insurance_amount, 0)) as receivable_insurance_amount,
+        sum(coalesce(t.receivable_otherincome_amount, 0)) as receivable_otherincome_amount,
+        sum(coalesce(t.receivable_outtax_amount, 0)) as receivable_outtax_amount,
+        sum(coalesce(t.unrealized_revenue_amount, 0)) as unrealized_revenue_amount,
+        sum(coalesce(t.payable_device_estimate_amount, 0)) as payable_device_estimate_amount,
+        sum(coalesce(t.payable_agency_estimate_amount, 0)) as payable_agency_estimate_amount,
+        sum(coalesce(t.payable_vehicle_estimate_amount, 0)) as payable_vehicle_estimate_amount,
+        sum(coalesce(t.payable_band_cost_estimate_amount, 0)) as payable_band_cost_estimate_amount,
+        sum(coalesce(t.payable_pledge_estimate_amount, 0)) as payable_pledge_estimate_amount,
+        sum(coalesce(t.payable_unpledge_estimate_amount, 0)) as payable_unpledge_estimate_amount,
+        sum(coalesce(t.depreciation_reserves_amount, 0)) as depreciation_reserves_amount
+        from
+        eg_contract_balance_temp t
+        where
+        1 = 1
+        and t.del_flag='0'
+        and t.scene_code = 'HZHX'
+        group by
+        t.contract_code,
+        t.org_id
+        ) b on
+        a.contract_code = b.contract_code
+        and b.org_id = a.org_id
+        where
+        1 = 1
+    </select>
+</mapper>
+

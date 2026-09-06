@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.TailDifferenceAdjustmentMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.TailDifferenceAdjustmentEntity">
+                    <id column="id" property="id" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_name" property="accountName" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="approve_error_info" property="approveErrorInfo"/>
+                    <result column="is_generate_voucher" property="isGenerateVoucher"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, org_id, account_code, account_name, business_date, account_date, process_instance_id, process_status, del_flag, create_by, create_time, update_by, update_time,approve_error_info,is_generate_voucher
+        </sql>
+    <select id="selectDifferenceAdjustPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.TailDifferenceAdjustmentVO">
+        select * from (
+        select
+        t.id,
+        t.org_id,
+        t.account_code,
+        t.account_name,
+        t.business_date,
+        t.account_date,
+        t.process_instance_id,
+        t.process_status,
+        t.approve_error_info,
+        t.is_generate_voucher,
+        sum(coalesce(t1.account_balance,0)) as tailDifferenceBalance
+        from
+        eg_tail_difference_adjustment t
+        inner join (select * from eg_tail_difference_adjustment_detail where account_balance !=0
+         ) t1 on
+        t.id = t1.tail_difference_adjustment_id
+        where
+        1 = 1
+        and t.del_flag = '0'
+        and t1.del_flag='0'
+        <if test="param.id!=null">
+            and t.id = #{param.id}
+        </if>
+
+        <if test="param.businessDate!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[=]]> to_char(to_date(#{param.businessDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.accountDate!=null">
+            and to_char(t.account_date,'YYYY-MM-DD') <![CDATA[=]]> to_char(to_date(#{param.accountDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+            and t.account_code in
+            <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        t.id,
+        t.org_id,
+        t.account_code,
+        t.account_name,
+        t.business_date,
+        t.account_date,
+        t.process_instance_id,
+        t.process_status,
+        t.approve_error_info,
+        t.is_generate_voucher
+        ) a where 1=1
+    </select>
+</mapper>
+

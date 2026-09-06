@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RepaymentPlanExceldataMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanExceldataEntity">
+                    <id column="system_code" property="systemCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="periods" property="periods" />
+                    <result column="plan_date" property="planDate" />
+                    <result column="actual_repayment_rent_amount" property="actualRepaymentRentAmount" />
+                    <result column="actual_repayment_principal_amount" property="actualRepaymentPrincipalAmount" />
+                    <result column="actual_repayment_interes_amount" property="actualRepaymentInteresAmount" />
+                    <result column="ta" property="ta" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            system_code, contract_code, periods, plan_date, actual_repayment_rent_amount, actual_repayment_principal_amount, actual_repayment_interes_amount, ta
+        </sql>
+</mapper>
+

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.SendEas2ResultMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.SendEas2ResultEntity">
+                    <id column="id" property="id" />
+                    <result column="fid" property="fid" />
+                    <result column="is_success" property="isSuccess" />
+                    <result column="system_code" property="systemCode" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, fid, is_success, system_code
+        </sql>
+</mapper>
+

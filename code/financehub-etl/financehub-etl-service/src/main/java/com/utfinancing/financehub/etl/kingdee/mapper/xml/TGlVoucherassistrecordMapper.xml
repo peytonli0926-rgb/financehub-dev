@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TGlVoucherassistrecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TGlVoucherassistrecordEntity">
+        <id column="FID" property="fid"/>
+        <result column="FSEQ" property="fseq"/>
+        <result column="FBILLID" property="fbillid"/>
+        <result column="FENTRYID" property="fentryid"/>
+        <result column="FCOMPANYID" property="fcompanyid"/>
+        <result column="FPERIODID" property="fperiodid"/>
+        <result column="FACCOUNTID" property="faccountid"/>
+        <result column="FASSGRPID" property="fassgrpid"/>
+        <result column="FSETTLEMENTTYPEID" property="fsettlementtypeid"/>
+        <result column="FSETTLEMENTCODE" property="fsettlementcode"/>
+        <result column="FSTANDARDQUANTITY" property="fstandardquantity"/>
+        <result column="FBIZNUMBER" property="fbiznumber"/>
+        <result column="FENDDATE" property="fenddate"/>
+        <result column="FCUSTOMERID" property="fcustomerid"/>
+        <result column="FSUPPLIERID" property="fsupplierid"/>
+        <result column="FORGUNITID" property="forgunitid"/>
+        <result column="FMATERIALID" property="fmaterialid"/>
+        <result column="FVERIFIEDCUSSENTID" property="fverifiedcussentid"/>
+        <result column="FISFULLPROP" property="fisfullprop"/>
+        <result column="FREQSTATUS" property="freqstatus"/>
+        <result column="FREQCHECKSTATUS" property="freqcheckstatus"/>
+        <result column="FCHECKNUMBER" property="fchecknumber"/>
+        <result column="FINVOICENUMBER" property="finvoicenumber"/>
+        <result column="FTICKETNUMBER" property="fticketnumber"/>
+        <result column="FISVIERIFIED" property="fisvierified"/>
+        <result column="FRECEIPTFORMID" property="freceiptformid"/>
+        <result column="FRECEIPTFORMENTRYID" property="freceiptformentryid"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FNUMBER" property="fnumber"/>
+        <result column="FHANDLERID" property="fhandlerid"/>
+        <result column="FHASEFFECTED" property="fhaseffected"/>
+        <result column="FAUDITORID" property="fauditorid"/>
+        <result column="FSOURCEBILLID" property="fsourcebillid"/>
+        <result column="FSOURCEFUNCTION" property="fsourcefunction"/>
+        <result column="FMACTRLAMOUNT" property="fmactrlamount"/>
+        <result column="FPRICE" property="fprice"/>
+        <result column="FMEASUREUNITID" property="fmeasureunitid"/>
+        <result column="FMAHOLDAMOUNT" property="fmaholdamount"/>
+        <result column="FFEETYPE" property="ffeetype"/>
+        <result column="FASSISTPRICE" property="fassistprice"/>
+        <result column="FASSISTQTY" property="fassistqty"/>
+        <result column="FASSISTUNIT" property="fassistunit"/>
+        <result column="FBIZDATE" property="fbizdate"/>
+        <result column="FORIGINALAMOUNT" property="foriginalamount"/>
+        <result column="FLOCALAMOUNT" property="flocalamount"/>
+        <result column="FREPORTINGAMOUNT" property="freportingamount"/>
+        <result column="FQUANTITY" property="fquantity"/>
+        <result column="FDESCRIPTION" property="fdescription"/>
+        <result column="FPRIMARYITEMID" property="fprimaryitemid"/>
+        <result column="FSUPPLEMENTARYITEMID" property="fsupplementaryitemid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FSEQ, FBILLID, FENTRYID, FCOMPANYID, FPERIODID, FACCOUNTID, FASSGRPID, FSETTLEMENTTYPEID, FSETTLEMENTCODE,
+        FSTANDARDQUANTITY, FBIZNUMBER, FENDDATE, FCUSTOMERID, FSUPPLIERID, FORGUNITID, FMATERIALID, FVERIFIEDCUSSENTID,
+        FISFULLPROP, FREQSTATUS, FREQCHECKSTATUS, FCHECKNUMBER, FINVOICENUMBER, FTICKETNUMBER, FISVIERIFIED,
+        FRECEIPTFORMID, FRECEIPTFORMENTRYID, FCREATORID, FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME,
+        FCONTROLUNITID, FNUMBER, FHANDLERID, FHASEFFECTED, FAUDITORID, FSOURCEBILLID, FSOURCEFUNCTION, FMACTRLAMOUNT,
+        FPRICE, FMEASUREUNITID, FMAHOLDAMOUNT, FFEETYPE, FASSISTPRICE, FASSISTQTY, FASSISTUNIT, FBIZDATE,
+        FORIGINALAMOUNT, FLOCALAMOUNT, FREPORTINGAMOUNT, FQUANTITY, FDESCRIPTION, FPRIMARYITEMID, FSUPPLEMENTARYITEMID
+    </sql>
+</mapper>
+

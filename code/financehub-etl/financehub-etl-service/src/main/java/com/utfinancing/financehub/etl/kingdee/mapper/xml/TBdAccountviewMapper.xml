@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TBdAccountviewMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TBdAccountviewEntity">
+        <id column="FID" property="fid"/>
+        <result column="FNAME_L1" property="fnameL1"/>
+        <result column="FNAME_L2" property="fnameL2"/>
+        <result column="FNAME_L3" property="fnameL3"/>
+        <result column="FNUMBER" property="fnumber"/>
+        <result column="FDESCRIPTION_L1" property="fdescriptionL1"/>
+        <result column="FDESCRIPTION_L2" property="fdescriptionL2"/>
+        <result column="FDESCRIPTION_L3" property="fdescriptionL3"/>
+        <result column="FSIMPLENAME" property="fsimplename"/>
+        <result column="FISLEAF" property="fisleaf"/>
+        <result column="FLEVEL" property="flevel"/>
+        <result column="FLONGNUMBER" property="flongnumber"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FACCOUNTTABLEID" property="faccounttableid"/>
+        <result column="FACCOUNTTYPEID" property="faccounttypeid"/>
+        <result column="FLONGNAME_L1" property="flongnameL1"/>
+        <result column="FLONGNAME_L2" property="flongnameL2"/>
+        <result column="FLONGNAME_L3" property="flongnameL3"/>
+        <result column="FPARENTID" property="fparentid"/>
+        <result column="FISGFREEZE" property="fisgfreeze"/>
+        <result column="FGAA" property="fgaa"/>
+        <result column="FISCFREEZE" property="fiscfreeze"/>
+        <result column="FHELPCODE" property="fhelpcode"/>
+        <result column="FCOMPANYID" property="fcompanyid"/>
+        <result column="FCURRENCYID" property="fcurrencyid"/>
+        <result column="FDC" property="fdc"/>
+        <result column="FISCHANGECURRENCY" property="fischangecurrency"/>
+        <result column="FISCASHEQUIVALENT" property="fiscashequivalent"/>
+        <result column="FISCOUNTACCRUAL" property="fiscountaccrual"/>
+        <result column="FACCRUALPER" property="faccrualper"/>
+        <result column="FISQTY" property="fisqty"/>
+        <result column="FMEASUREUNITGROUPID" property="fmeasureunitgroupid"/>
+        <result column="FMEASUREUNITID" property="fmeasureunitid"/>
+        <result column="FAC" property="fac"/>
+        <result column="FPLTYPE" property="fpltype"/>
+        <result column="FCONTROL" property="fcontrol"/>
+        <result column="FCAA" property="fcaa"/>
+        <result column="FACCTCURRENCY" property="facctcurrency"/>
+        <result column="FISBANK" property="fisbank"/>
+        <result column="FISCASH" property="fiscash"/>
+        <result column="FHASUSERPROPERTY" property="fhasuserproperty"/>
+        <result column="FACCOUNTID" property="faccountid"/>
+        <result column="FGLEVEL" property="fglevel"/>
+        <result column="FISALLOWCA" property="fisallowca"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FUPPERID" property="fupperid"/>
+        <result column="FPARENTAAID" property="fparentaaid"/>
+        <result column="FISUPPERALLOWCA" property="fisupperallowca"/>
+        <result column="FISSELFFREEZE" property="fisselffreeze"/>
+        <result column="FISPARENTFREEZE" property="fisparentfreeze"/>
+        <result column="FREFID" property="frefid"/>
+        <result column="FCONTROLLEVEL" property="fcontrollevel"/>
+        <result column="FISOUTDAILYACCOUNT" property="fisoutdailyaccount"/>
+        <result column="FDISPLAYNAME_L1" property="fdisplaynameL1"/>
+        <result column="FDISPLAYNAME_L2" property="fdisplaynameL2"/>
+        <result column="FDISPLAYNAME_L3" property="fdisplaynameL3"/>
+        <result column="FACNOTICE" property="facnotice"/>
+        <result column="FBW" property="fbw"/>
+        <result column="FMAINCASHFLOWITEMID" property="fmaincashflowitemid"/>
+        <result column="FATTCASHFLOWITEMID" property="fattcashflowitemid"/>
+        <result column="FBORROWERMAINCASHFLOWITEMID" property="fborrowermaincashflowitemid"/>
+        <result column="FBORROWERATTCASHFLOWITEMID" property="fborrowerattcashflowitemid"/>
+        <result column="FLENDERMAINCASHFLOWITEMID" property="flendermaincashflowitemid"/>
+        <result column="FLENDERATTCASHFLOWITEMID" property="flenderattcashflowitemid"/>
+        <result column="FISCONTROL" property="fiscontrol"/>
+        <result column="FNAMEPINYIN" property="fnamepinyin"/>
+        <result column="FNAMESHORTPINYIN" property="fnameshortpinyin"/>
+        <result column="FACCRUALDIRECTION" property="faccrualdirection"/>
+        <result column="FISBIZCHANGECURRENCY" property="fisbizchangecurrency"/>
+        <result column="FISPROFITCENTER" property="fisprofitcenter"/>
+        <result column="FCATEGORY" property="fcategory"/>
+        <result column="FDIFFTYPE" property="fdifftype"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FNAME_L1, FNAME_L2, FNAME_L3, FNUMBER, FDESCRIPTION_L1, FDESCRIPTION_L2, FDESCRIPTION_L3, FSIMPLENAME,
+        FISLEAF, FLEVEL, FLONGNUMBER, FCREATORID, FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME, FACCOUNTTABLEID,
+        FACCOUNTTYPEID, FLONGNAME_L1, FLONGNAME_L2, FLONGNAME_L3, FPARENTID, FISGFREEZE, FGAA, FISCFREEZE, FHELPCODE,
+        FCOMPANYID, FCURRENCYID, FDC, FISCHANGECURRENCY, FISCASHEQUIVALENT, FISCOUNTACCRUAL, FACCRUALPER, FISQTY,
+        FMEASUREUNITGROUPID, FMEASUREUNITID, FAC, FPLTYPE, FCONTROL, FCAA, FACCTCURRENCY, FISBANK, FISCASH,
+        FHASUSERPROPERTY, FACCOUNTID, FGLEVEL, FISALLOWCA, FCONTROLUNITID, FUPPERID, FPARENTAAID, FISUPPERALLOWCA,
+        FISSELFFREEZE, FISPARENTFREEZE, FREFID, FCONTROLLEVEL, FISOUTDAILYACCOUNT, FDISPLAYNAME_L1, FDISPLAYNAME_L2,
+        FDISPLAYNAME_L3, FACNOTICE, FBW, FMAINCASHFLOWITEMID, FATTCASHFLOWITEMID, FBORROWERMAINCASHFLOWITEMID,
+        FBORROWERATTCASHFLOWITEMID, FLENDERMAINCASHFLOWITEMID, FLENDERATTCASHFLOWITEMID, FISCONTROL, FNAMEPINYIN,
+        FNAMESHORTPINYIN, FACCRUALDIRECTION, FISBIZCHANGECURRENCY, FISPROFITCENTER, FCATEGORY, FDIFFTYPE
+    </sql>
+
+    <select id="selectAllAccount" resultType="com.utfinancing.financehub.etl.financial.model.dto.KingdeeAccountDTO">
+        SELECT
+            t.fid AS eas_id,
+            t.FNAME_L2 AS account_name,
+            t.FNUMBER AS account_code,
+            org.FNUMBER AS org_id,
+            ty.FNUMBER AS account_type_code,
+            ty.FNAME_L2 AS account_type_name,
+            decode(t.fdc, -1, 'CR', 1, 'DR', null) AS drcr_type,
+            t.FISLEAF AS leaf_flag,
+            t.FLEVEL AS account_level,
+            t.FDISPLAYNAME_L2 AS account_full_name,
+            t.FLONGNUMBER AS account_full_code
+        FROM HXORACLE.T_BD_ACCOUNTVIEW t
+        JOIN HXORACLE.T_ORG_COMPANY org ON t.FCOMPANYID = org.FID
+        JOIN HXORACLE.T_BD_ACCOUNTTYPE ty ON t.FACCOUNTTYPEID = ty.FID
+    </select>
+
+</mapper>
+

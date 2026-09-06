@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TBdAssistanthgMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TBdAssistanthgEntity">
+        <id column="FID" property="fid"/>
+        <result column="FCOUNT" property="fcount"/>
+        <result column="FLONGNAMEGROUP_L1" property="flongnamegroupL1"/>
+        <result column="FLONGNAMEGROUP_L2" property="flongnamegroupL2"/>
+        <result column="FLONGNAMEGROUP_L3" property="flongnamegroupL3"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FASSTACCOUNTID" property="fasstaccountid"/>
+        <result column="FMATERIALID" property="fmaterialid"/>
+        <result column="FCUSTOMERID" property="fcustomerid"/>
+        <result column="FPROVIDERID" property="fproviderid"/>
+        <result column="FPROJECTID" property="fprojectid"/>
+        <result column="FBANKACCOUNTID" property="fbankaccountid"/>
+        <result column="FINDUSTRYID" property="findustryid"/>
+        <result column="FREGIONID" property="fregionid"/>
+        <result column="FCASHFLOWITEMID" property="fcashflowitemid"/>
+        <result column="FCOUNTRYID" property="fcountryid"/>
+        <result column="FPROVINCEID" property="fprovinceid"/>
+        <result column="FCITYID" property="fcityid"/>
+        <result column="FACCOUNTCUSSENTID" property="faccountcussentid"/>
+        <result column="FCOSTOBJECTID" property="fcostobjectid"/>
+        <result column="FADMINORGID" property="fadminorgid"/>
+        <result column="FCOMPANYORGID" property="fcompanyorgid"/>
+        <result column="FSALEORGID" property="fsaleorgid"/>
+        <result column="FPURCHASEORGID" property="fpurchaseorgid"/>
+        <result column="FSTOREAGEORGID" property="fstoreageorgid"/>
+        <result column="FCOSTORGID" property="fcostorgid"/>
+        <result column="FPROFITORGID" property="fprofitorgid"/>
+        <result column="FPERSONID" property="fpersonid"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FGENERALASSACTTYPE1ID" property="fgeneralassacttype1id"/>
+        <result column="FGENERALASSACTTYPE2ID" property="fgeneralassacttype2id"/>
+        <result column="FGENERALASSACTTYPE3ID" property="fgeneralassacttype3id"/>
+        <result column="FGENERALASSACTTYPE4ID" property="fgeneralassacttype4id"/>
+        <result column="FGENERALASSACTTYPE5ID" property="fgeneralassacttype5id"/>
+        <result column="FGENERALASSACTTYPE6ID" property="fgeneralassacttype6id"/>
+        <result column="FGENERALASSACTTYPE7ID" property="fgeneralassacttype7id"/>
+        <result column="FGENERALASSACTTYPE8ID" property="fgeneralassacttype8id"/>
+        <result column="FGENERALASSACTTYPE9ID" property="fgeneralassacttype9id"/>
+        <result column="FGENERALASSACTTYPE10ID" property="fgeneralassacttype10id"/>
+        <result column="FGENERALASSACTTYPE11ID" property="fgeneralassacttype11id"/>
+        <result column="FGENERALASSACTTYPE12ID" property="fgeneralassacttype12id"/>
+        <result column="FGENERALASSACTTYPE13ID" property="fgeneralassacttype13id"/>
+        <result column="FGENERALASSACTTYPE14ID" property="fgeneralassacttype14id"/>
+        <result column="FGENERALASSACTTYPE15ID" property="fgeneralassacttype15id"/>
+        <result column="FGENERALASSACTTYPE16ID" property="fgeneralassacttype16id"/>
+        <result column="FGENERALASSACTTYPE17ID" property="fgeneralassacttype17id"/>
+        <result column="FGENERALASSACTTYPE18ID" property="fgeneralassacttype18id"/>
+        <result column="FGENERALASSACTTYPE19ID" property="fgeneralassacttype19id"/>
+        <result column="FGENERALASSACTTYPE20ID" property="fgeneralassacttype20id"/>
+        <result column="FGENERALASSACTTYPE21ID" property="fgeneralassacttype21id"/>
+        <result column="FGENERALASSACTTYPE22ID" property="fgeneralassacttype22id"/>
+        <result column="FGENERALASSACTTYPE23ID" property="fgeneralassacttype23id"/>
+        <result column="FGENERALASSACTTYPE24ID" property="fgeneralassacttype24id"/>
+        <result column="FGENERALASSACTTYPE25ID" property="fgeneralassacttype25id"/>
+        <result column="FGENERALASSACTTYPE26ID" property="fgeneralassacttype26id"/>
+        <result column="FGENERALASSACTTYPE27ID" property="fgeneralassacttype27id"/>
+        <result column="FGENERALASSACTTYPE28ID" property="fgeneralassacttype28id"/>
+        <result column="FGENERALASSACTTYPE29ID" property="fgeneralassacttype29id"/>
+        <result column="FGENERALASSACTTYPE30ID" property="fgeneralassacttype30id"/>
+        <result column="FGENERALASSACTTYPE31ID" property="fgeneralassacttype31id"/>
+        <result column="FGENERALASSACTTYPE32ID" property="fgeneralassacttype32id"/>
+        <result column="FGENERALASSACTTYPE33ID" property="fgeneralassacttype33id"/>
+        <result column="FGENERALASSACTTYPE34ID" property="fgeneralassacttype34id"/>
+        <result column="FGENERALASSACTTYPE35ID" property="fgeneralassacttype35id"/>
+        <result column="FGENERALASSACTTYPE36ID" property="fgeneralassacttype36id"/>
+        <result column="FGENERALASSACTTYPE37ID" property="fgeneralassacttype37id"/>
+        <result column="FGENERALASSACTTYPE38ID" property="fgeneralassacttype38id"/>
+        <result column="FGENERALASSACTTYPE39ID" property="fgeneralassacttype39id"/>
+        <result column="FGENERALASSACTTYPE40ID" property="fgeneralassacttype40id"/>
+        <result column="FGENERALASSACTTYPE41ID" property="fgeneralassacttype41id"/>
+        <result column="FGENERALASSACTTYPE42ID" property="fgeneralassacttype42id"/>
+        <result column="FGENERALASSACTTYPE43ID" property="fgeneralassacttype43id"/>
+        <result column="FGENERALASSACTTYPE44ID" property="fgeneralassacttype44id"/>
+        <result column="FGENERALASSACTTYPE45ID" property="fgeneralassacttype45id"/>
+        <result column="FGENERALASSACTTYPE46ID" property="fgeneralassacttype46id"/>
+        <result column="FGENERALASSACTTYPE47ID" property="fgeneralassacttype47id"/>
+        <result column="FGENERALASSACTTYPE48ID" property="fgeneralassacttype48id"/>
+        <result column="FGENERALASSACTTYPE49ID" property="fgeneralassacttype49id"/>
+        <result column="FGENERALASSACTTYPE50ID" property="fgeneralassacttype50id"/>
+        <result column="FGENERALASSACTTYPE51ID" property="fgeneralassacttype51id"/>
+        <result column="FGENERALASSACTTYPE52ID" property="fgeneralassacttype52id"/>
+        <result column="FGENERALASSACTTYPE53ID" property="fgeneralassacttype53id"/>
+        <result column="FGENERALASSACTTYPE54ID" property="fgeneralassacttype54id"/>
+        <result column="FGENERALASSACTTYPE55ID" property="fgeneralassacttype55id"/>
+        <result column="FGENERALASSACTTYPE56ID" property="fgeneralassacttype56id"/>
+        <result column="FGENERALASSACTTYPE57ID" property="fgeneralassacttype57id"/>
+        <result column="FGENERALASSACTTYPE58ID" property="fgeneralassacttype58id"/>
+        <result column="FGENERALASSACTTYPE59ID" property="fgeneralassacttype59id"/>
+        <result column="FGENERALASSACTTYPE60ID" property="fgeneralassacttype60id"/>
+        <result column="FGENERALASSACTTYPE61ID" property="fgeneralassacttype61id"/>
+        <result column="FGENERALASSACTTYPE62ID" property="fgeneralassacttype62id"/>
+        <result column="FGENERALASSACTTYPE63ID" property="fgeneralassacttype63id"/>
+        <result column="FGENERALASSACTTYPE64ID" property="fgeneralassacttype64id"/>
+        <result column="FGENERALASSACTTYPE65ID" property="fgeneralassacttype65id"/>
+        <result column="FGENERALASSACTTYPE66ID" property="fgeneralassacttype66id"/>
+        <result column="FGENERALASSACTTYPE67ID" property="fgeneralassacttype67id"/>
+        <result column="FGENERALASSACTTYPE68ID" property="fgeneralassacttype68id"/>
+        <result column="FGENERALASSACTTYPE69ID" property="fgeneralassacttype69id"/>
+        <result column="FGENERALASSACTTYPE70ID" property="fgeneralassacttype70id"/>
+        <result column="FGENERALASSACTTYPE71ID" property="fgeneralassacttype71id"/>
+        <result column="FGENERALASSACTTYPE72ID" property="fgeneralassacttype72id"/>
+        <result column="FGENERALASSACTTYPE73ID" property="fgeneralassacttype73id"/>
+        <result column="FGENERALASSACTTYPE74ID" property="fgeneralassacttype74id"/>
+        <result column="FGENERALASSACTTYPE75ID" property="fgeneralassacttype75id"/>
+        <result column="FGENERALASSACTTYPE76ID" property="fgeneralassacttype76id"/>
+        <result column="FGENERALASSACTTYPE77ID" property="fgeneralassacttype77id"/>
+        <result column="FGENERALASSACTTYPE78ID" property="fgeneralassacttype78id"/>
+        <result column="FGENERALASSACTTYPE79ID" property="fgeneralassacttype79id"/>
+        <result column="FGENERALASSACTTYPE80ID" property="fgeneralassacttype80id"/>
+        <result column="FGENERALASSACTTYPE81ID" property="fgeneralassacttype81id"/>
+        <result column="FGENERALASSACTTYPE82ID" property="fgeneralassacttype82id"/>
+        <result column="FGENERALASSACTTYPE83ID" property="fgeneralassacttype83id"/>
+        <result column="FGENERALASSACTTYPE84ID" property="fgeneralassacttype84id"/>
+        <result column="FGENERALASSACTTYPE85ID" property="fgeneralassacttype85id"/>
+        <result column="FGENERALASSACTTYPE86ID" property="fgeneralassacttype86id"/>
+        <result column="FGENERALASSACTTYPE87ID" property="fgeneralassacttype87id"/>
+        <result column="FGENERALASSACTTYPE88ID" property="fgeneralassacttype88id"/>
+        <result column="FGENERALASSACTTYPE89ID" property="fgeneralassacttype89id"/>
+        <result column="FGENERALASSACTTYPE90ID" property="fgeneralassacttype90id"/>
+        <result column="FGENERALASSACTTYPE91ID" property="fgeneralassacttype91id"/>
+        <result column="FGENERALASSACTTYPE92ID" property="fgeneralassacttype92id"/>
+        <result column="FGENERALASSACTTYPE93ID" property="fgeneralassacttype93id"/>
+        <result column="FGENERALASSACTTYPE94ID" property="fgeneralassacttype94id"/>
+        <result column="FGENERALASSACTTYPE95ID" property="fgeneralassacttype95id"/>
+        <result column="FGENERALASSACTTYPE96ID" property="fgeneralassacttype96id"/>
+        <result column="FGENERALASSACTTYPE97ID" property="fgeneralassacttype97id"/>
+        <result column="FGENERALASSACTTYPE98ID" property="fgeneralassacttype98id"/>
+        <result column="FGENERALASSACTTYPE99ID" property="fgeneralassacttype99id"/>
+        <result column="FGENERALASSACTTYPE100ID" property="fgeneralassacttype100id"/>
+        <result column="FDISPLAYNAMEGROUP_L1" property="fdisplaynamegroupL1"/>
+        <result column="FDISPLAYNAMEGROUP_L2" property="fdisplaynamegroupL2"/>
+        <result column="FDISPLAYNAMEGROUP_L3" property="fdisplaynamegroupL3"/>
+        <result column="FINNERACCOUNTID" property="finneraccountid"/>
+        <result column="FFPITEMID" property="ffpitemid"/>
+        <result column="FNTTYPEID" property="fnttypeid"/>
+        <result column="FNUMBERGROUP_L1" property="fnumbergroupL1"/>
+        <result column="FNUMBERGROUP_L2" property="fnumbergroupL2"/>
+        <result column="FNUMBERGROUP_L3" property="fnumbergroupL3"/>
+        <result column="FFEETYPEID" property="ffeetypeid"/>
+        <result column="FCOSTITEMID" property="fcostitemid"/>
+        <result column="FGENERALASSACTTYPE101ID" property="fgeneralassacttype101id"/>
+        <result column="FGENERALASSACTTYPE102ID" property="fgeneralassacttype102id"/>
+        <result column="FGENERALASSACTTYPE103ID" property="fgeneralassacttype103id"/>
+        <result column="FGENERALASSACTTYPE104ID" property="fgeneralassacttype104id"/>
+        <result column="FGENERALASSACTTYPE105ID" property="fgeneralassacttype105id"/>
+        <result column="FGENERALASSACTTYPE106ID" property="fgeneralassacttype106id"/>
+        <result column="FGENERALASSACTTYPE107ID" property="fgeneralassacttype107id"/>
+        <result column="FGENERALASSACTTYPE108ID" property="fgeneralassacttype108id"/>
+        <result column="FGENERALASSACTTYPE109ID" property="fgeneralassacttype109id"/>
+        <result column="FGENERALASSACTTYPE110ID" property="fgeneralassacttype110id"/>
+        <result column="FNATIONID" property="fnationid"/>
+        <result column="FAREAID" property="fareaid"/>
+        <result column="FVILLAGEID" property="fvillageid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FCOUNT, FLONGNAMEGROUP_L1, FLONGNAMEGROUP_L2, FLONGNAMEGROUP_L3, FCREATORID, FCREATETIME,
+        FLASTUPDATEUSERID, FLASTUPDATETIME, FASSTACCOUNTID, FMATERIALID, FCUSTOMERID, FPROVIDERID, FPROJECTID,
+        FBANKACCOUNTID, FINDUSTRYID, FREGIONID, FCASHFLOWITEMID, FCOUNTRYID, FPROVINCEID, FCITYID, FACCOUNTCUSSENTID,
+        FCOSTOBJECTID, FADMINORGID, FCOMPANYORGID, FSALEORGID, FPURCHASEORGID, FSTOREAGEORGID, FCOSTORGID, FPROFITORGID,
+        FPERSONID, FCONTROLUNITID, FGENERALASSACTTYPE1ID, FGENERALASSACTTYPE2ID, FGENERALASSACTTYPE3ID,
+        FGENERALASSACTTYPE4ID, FGENERALASSACTTYPE5ID, FGENERALASSACTTYPE6ID, FGENERALASSACTTYPE7ID,
+        FGENERALASSACTTYPE8ID, FGENERALASSACTTYPE9ID, FGENERALASSACTTYPE10ID, FGENERALASSACTTYPE11ID,
+        FGENERALASSACTTYPE12ID, FGENERALASSACTTYPE13ID, FGENERALASSACTTYPE14ID, FGENERALASSACTTYPE15ID,
+        FGENERALASSACTTYPE16ID, FGENERALASSACTTYPE17ID, FGENERALASSACTTYPE18ID, FGENERALASSACTTYPE19ID,
+        FGENERALASSACTTYPE20ID, FGENERALASSACTTYPE21ID, FGENERALASSACTTYPE22ID, FGENERALASSACTTYPE23ID,
+        FGENERALASSACTTYPE24ID, FGENERALASSACTTYPE25ID, FGENERALASSACTTYPE26ID, FGENERALASSACTTYPE27ID,
+        FGENERALASSACTTYPE28ID, FGENERALASSACTTYPE29ID, FGENERALASSACTTYPE30ID, FGENERALASSACTTYPE31ID,
+        FGENERALASSACTTYPE32ID, FGENERALASSACTTYPE33ID, FGENERALASSACTTYPE34ID, FGENERALASSACTTYPE35ID,
+        FGENERALASSACTTYPE36ID, FGENERALASSACTTYPE37ID, FGENERALASSACTTYPE38ID, FGENERALASSACTTYPE39ID,
+        FGENERALASSACTTYPE40ID, FGENERALASSACTTYPE41ID, FGENERALASSACTTYPE42ID, FGENERALASSACTTYPE43ID,
+        FGENERALASSACTTYPE44ID, FGENERALASSACTTYPE45ID, FGENERALASSACTTYPE46ID, FGENERALASSACTTYPE47ID,
+        FGENERALASSACTTYPE48ID, FGENERALASSACTTYPE49ID, FGENERALASSACTTYPE50ID, FGENERALASSACTTYPE51ID,
+        FGENERALASSACTTYPE52ID, FGENERALASSACTTYPE53ID, FGENERALASSACTTYPE54ID, FGENERALASSACTTYPE55ID,
+        FGENERALASSACTTYPE56ID, FGENERALASSACTTYPE57ID, FGENERALASSACTTYPE58ID, FGENERALASSACTTYPE59ID,
+        FGENERALASSACTTYPE60ID, FGENERALASSACTTYPE61ID, FGENERALASSACTTYPE62ID, FGENERALASSACTTYPE63ID,
+        FGENERALASSACTTYPE64ID, FGENERALASSACTTYPE65ID, FGENERALASSACTTYPE66ID, FGENERALASSACTTYPE67ID,
+        FGENERALASSACTTYPE68ID, FGENERALASSACTTYPE69ID, FGENERALASSACTTYPE70ID, FGENERALASSACTTYPE71ID,
+        FGENERALASSACTTYPE72ID, FGENERALASSACTTYPE73ID, FGENERALASSACTTYPE74ID, FGENERALASSACTTYPE75ID,
+        FGENERALASSACTTYPE76ID, FGENERALASSACTTYPE77ID, FGENERALASSACTTYPE78ID, FGENERALASSACTTYPE79ID,
+        FGENERALASSACTTYPE80ID, FGENERALASSACTTYPE81ID, FGENERALASSACTTYPE82ID, FGENERALASSACTTYPE83ID,
+        FGENERALASSACTTYPE84ID, FGENERALASSACTTYPE85ID, FGENERALASSACTTYPE86ID, FGENERALASSACTTYPE87ID,
+        FGENERALASSACTTYPE88ID, FGENERALASSACTTYPE89ID, FGENERALASSACTTYPE90ID, FGENERALASSACTTYPE91ID,
+        FGENERALASSACTTYPE92ID, FGENERALASSACTTYPE93ID, FGENERALASSACTTYPE94ID, FGENERALASSACTTYPE95ID,
+        FGENERALASSACTTYPE96ID, FGENERALASSACTTYPE97ID, FGENERALASSACTTYPE98ID, FGENERALASSACTTYPE99ID,
+        FGENERALASSACTTYPE100ID, FDISPLAYNAMEGROUP_L1, FDISPLAYNAMEGROUP_L2, FDISPLAYNAMEGROUP_L3, FINNERACCOUNTID,
+        FFPITEMID, FNTTYPEID, FNUMBERGROUP_L1, FNUMBERGROUP_L2, FNUMBERGROUP_L3, FFEETYPEID, FCOSTITEMID,
+        FGENERALASSACTTYPE101ID, FGENERALASSACTTYPE102ID, FGENERALASSACTTYPE103ID, FGENERALASSACTTYPE104ID,
+        FGENERALASSACTTYPE105ID, FGENERALASSACTTYPE106ID, FGENERALASSACTTYPE107ID, FGENERALASSACTTYPE108ID,
+        FGENERALASSACTTYPE109ID, FGENERALASSACTTYPE110ID, FNATIONID, FAREAID, FVILLAGEID
+    </sql>
+</mapper>
+

@@ -1,0 +1,2091 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.AccountAssistBalanceMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.AccountAssistBalanceEntity">
+        <id column="id" property="id"/>
+        <result column="period_code" property="periodCode"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="business_code" property="businessCode"/>
+        <result column="org_id" property="orgId"/>
+        <result column="bill_contract_code" property="billContractCode"/>
+        <result column="currency_code" property="currencyCode"/>
+        <result column="account_code" property="accountCode"/>
+        <result column="account_name" property="accountName"/>
+        <result column="year_begin_debit_balance" property="yearBeginDebitBalance"/>
+        <result column="year_begin_credit_balance" property="yearBeginCreditBalance"/>
+        <result column="month_begin_debit_balance" property="monthBeginDebitBalance"/>
+        <result column="month_begin_credit_balance" property="monthBeginCreditBalance"/>
+        <result column="month_debit_amount" property="monthDebitAmount"/>
+        <result column="month_credit_amount" property="monthCreditAmount"/>
+        <result column="year_debit_amount" property="yearDebitAmount"/>
+        <result column="year_credit_amount" property="yearCreditAmount"/>
+        <result column="month_end_debit_balance" property="monthEndDebitBalance"/>
+        <result column="month_end_credit_balance" property="monthEndCreditBalance"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="del_flag" property="delFlag"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, period_code, contract_code, client_code, business_code, org_id, bill_contract_code, currency_code,
+        account_code, account_name, year_begin_debit_balance, year_begin_credit_balance, month_begin_debit_balance,
+        month_begin_credit_balance, month_debit_amount, month_credit_amount, year_debit_amount, year_credit_amount,
+        month_end_debit_balance, month_end_credit_balance, create_by, create_time, update_by, update_time, del_flag
+    </sql>
+
+    <sql id="currentBalance">
+        with sub as(
+        <foreach collection="param.periodCodeList" item="item" index="index" separator="union all">
+        select
+            string_agg(ev.id ::text, ',') voucher_ids ,
+            ev.period_code,
+            eve.account_code ,   --科目编码
+            eve.account_name ,   --科目名称
+            <if test="param.targetType != null and param.targetType != '' and param.targetType != 'account'">
+            eve.contract_code,   --合同编码
+            eve.contract_name,    ---合同名字  是否需要关联
+            eve.client_code,     --客户编码
+            </if>
+            ev.business_code,	--业务类型
+            ev.currency ,    --增加一个币种
+            to_char(ev.voucher_date, 'yyyy-mm-dd') voucher_date,  --记账日期
+            ev.org_id,   --改成名称
+            sum(eve.debit_amount) debit_amount,   --借方
+            sum(eve.credit_amount) credit_amount ---贷方
+        from
+            eg_voucher_entry eve join eg_voucher ev
+            on eve.voucher_id = ev.id and ev.period_code = eve.period_code
+        where 1=1
+          and ev.period_code = ${item}     --期间参数
+          and ev.org_id=#{param.orgId}        --机构参数
+          and eve.account_code=#{param.accountCode}   --科目参数
+        <if test="param.targetType != null and param.targetType != '' and param.targetType != 'account' and param.contractCode !=null and param.contractCode != ''">
+          and eve.contract_code=#{param.contractCode}  --合同参数
+        </if>
+        group by eve.account_code ,   --科目编码
+                 eve.account_name ,   --科目名称
+            <if test="param.targetType != null and param.targetType != '' and param.targetType != 'account'">
+                 eve.contract_code,   --合同编码
+                 eve.contract_name,    ---合同名字  是否需要关联
+                 eve.client_code,     --客户编码
+            </if>
+                 ev.business_code,	--业务类型
+                 ev.currency,    --增加一个币种
+                 to_char(ev.voucher_date, 'yyyy-mm-dd'),  --记账日期
+                 ev.period_code,
+                 ev.org_id  --改成名称
+        </foreach>
+        )
+    </sql>
+
+    <select id="selectCurrentBalance" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistCurrentBalanceSheetVO">
+        <include refid="currentBalance"/>
+        select * from sub
+        <if test="param.queryType != null and param.queryType != '' and param.queryType != 'export'">
+        limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectCurrentBalanceSize" resultType="java.util.Map">
+        <include refid="currentBalance"/>
+        select count(1) total_size from sub
+    </select>
+
+
+    <sql id="assistQuery">
+        --eg_account_assist_balance
+        with origin as(
+        select id,contract_code ,org_id ,account_code, bill_contract_code,currency_code
+        ,month_debit_amount,month_credit_amount,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance
+        ,eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_begin_debit_balance, eaab.month_begin_credit_balance
+        ,eaab.month_end_debit_balance, eaab.month_end_credit_balance
+        from eg_account_assist_balance eaab where 1=1
+        <if test="param.periodCodeStart != null and param.periodCodeStart != ''">
+            and eaab.period_code &gt;= #{param.periodCodeStart}
+        </if>
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and eaab.period_code &lt;= #{param.periodCodeEnd}
+        </if>
+        <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+        and contract_code in
+        <foreach item="item" index="index" collection="param.contractCodes" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        <if test="param.orgId != null and param.orgId != ''">
+            and org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+        and org_id in
+        <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        )
+        ,exceptFiltered as (
+        SELECT id,contract_code ,org_id ,account_code, bill_contract_code,currency_code,
+        month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance,
+        year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance,
+        month_end_debit_balance, month_end_credit_balance
+        FROM (
+        SELECT id,contract_code ,org_id ,account_code, bill_contract_code,currency_code
+        ,month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance
+        ,year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance
+        ,month_end_debit_balance,month_end_credit_balance,
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond1,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0 or month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond2,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond3,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+            COUNT(*) FILTER (WHERE year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond4,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0 or year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond5,
+        </if>
+        <if test="param.exceptList == null or param.exceptList.size()==0">
+            COUNT(*) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond0,
+        </if>
+        COUNT(*) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS total_rows
+        FROM origin
+        ) subquery WHERE 1=1
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+            and cond1 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+            and cond2 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+            and cond3 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+            and cond4 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+            and cond5 = total_rows
+        </if>
+        <if test="param.exceptList == null or param.exceptList.size()==0">
+            and cond0 = total_rows
+        </if>
+        )
+        , sub_account as (
+        select contract_code ,org_id ,account_code, bill_contract_code,min(id) min_id,max(id) max_id,currency_code from exceptFiltered
+        group by contract_code ,org_id ,account_code ,bill_contract_code,currency_code
+        )
+        ,sumtab as(
+        select eaab.contract_code ,eaab.org_id ,eaab.account_code , eaab.bill_contract_code,eaab.currency_code, sum(eaab.month_debit_amount) month_debit_amount, sum(eaab.month_credit_amount) month_credit_amount from eg_account_assist_balance eaab join sub_account on eaab.contract_code = sub_account.contract_code
+        and eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and COALESCE(eaab.bill_contract_code,'') =COALESCE(sub_account.bill_contract_code,'') and eaab.currency_code = sub_account.currency_code
+        and eaab.id &gt;= sub_account.min_id and eaab.id &lt;= sub_account.max_id
+        group by eaab.contract_code ,eaab.org_id ,eaab.account_code ,eaab.bill_contract_code,eaab.currency_code)
+        ,mintab as(
+        select eaab.contract_code ,eaab.org_id ,eaab.account_code , eaab.bill_contract_code, eaab.currency_code,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance, eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_begin_debit_balance, eaab.month_begin_credit_balance from eg_account_assist_balance eaab join sub_account on eaab.contract_code = sub_account.contract_code
+        and eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and COALESCE(eaab.bill_contract_code,'') =COALESCE(sub_account.bill_contract_code,'') and eaab.currency_code = sub_account.currency_code and eaab.id =sub_account.min_id )
+        ,maxtab as(
+        select eaab.contract_code ,eaab.org_id ,eaab.account_code , eaab.bill_contract_code, eaab.currency_code,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance, eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_end_debit_balance, eaab.month_end_credit_balance from eg_account_assist_balance eaab join sub_account on eaab.contract_code = sub_account.contract_code
+        and eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and COALESCE(eaab.bill_contract_code,'') =COALESCE(sub_account.bill_contract_code,'') and eaab.currency_code = sub_account.currency_code and eaab.id =sub_account.max_id )
+        ,res_account as (
+        select sumtab.contract_code ,sumtab.org_id ,sumtab.account_code ,sumtab.bill_contract_code,sumtab.currency_code,mintab.month_begin_debit_balance, mintab.month_begin_credit_balance,
+        sumtab.month_debit_amount,sumtab.month_credit_amount,mintab.year_begin_debit_balance, mintab.year_begin_credit_balance,maxtab.year_debit_amount,maxtab.year_credit_amount,maxtab.month_end_debit_balance,maxtab.month_end_credit_balance
+        from sumtab join mintab on sumtab.contract_code = mintab.contract_code and sumtab.org_id = mintab.org_id and sumtab.account_code = mintab.account_code and COALESCE(sumtab.bill_contract_code,'') =COALESCE(mintab.bill_contract_code,'') and sumtab.currency_code = mintab.currency_code
+        join maxtab on sumtab.contract_code = maxtab.contract_code and sumtab.org_id = maxtab.org_id and sumtab.account_code = maxtab.account_code and COALESCE(sumtab.bill_contract_code,'') =COALESCE(maxtab.bill_contract_code,'') and sumtab.currency_code = maxtab.currency_code)
+        --eg_voucher
+        ,ev_eve as (
+        select ev.id voucher_id,ev.contract_code ,ev.org_id ,eve.account_code, eve.bill_contract_code,eve.id,ev.currency,eve.debit_amount,eve.credit_amount from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+        where 1=1
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and ev.period_code =#{param.periodCodeEnd} and eve.period_code =#{param.periodCodeEnd}
+        </if>
+        <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+        and ev.contract_code in
+        <foreach item="item" index="index" collection="param.contractCodes" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        <if test="param.orgId != null and param.orgId != ''">
+            and ev.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and ev.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+        ,sub_ev as (
+        select string_agg(ev_eve.voucher_id::text, ',') voucher_id,ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code, ev_eve.bill_contract_code,ev_eve.currency,min(ev_eve.id) min_id,max(ev_eve.id) max_id from ev_eve
+        group by ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code ,ev_eve.bill_contract_code,ev_eve.currency
+        )
+        ,res_voucher as(
+        select ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code , ev_eve.bill_contract_code,ev_eve.currency currency_code, sum(ev_eve.debit_amount) debit_amount, sum(ev_eve.credit_amount) credit_amount from ev_eve join sub_ev on ev_eve.contract_code = sub_ev.contract_code
+        and ev_eve.org_id = sub_ev.org_id and ev_eve.account_code = sub_ev.account_code and COALESCE(ev_eve.bill_contract_code,'') =COALESCE(sub_ev.bill_contract_code,'') and ev_eve.currency = sub_ev.currency
+        and ev_eve.id &gt;= sub_ev.min_id and ev_eve.id &lt;= sub_ev.max_id
+        group by ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code ,ev_eve.bill_contract_code,ev_eve.currency)
+        --eg_manual
+        ,em_emv as (
+        select emv.contract_code ,em.org_id ,emv.account_code, emv.loans_contract_code,em.currency_code,emv.id,emv.debit_amount,emv.credit_amount,em.period_code  from eg_manual em join eg_manual_voucher emv on em.id = emv.manual_id
+        where 1=1
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and em.period_code =#{param.periodCodeEnd} and emv.period_code =#{param.periodCodeEnd}
+        </if>
+        <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+        and emv.contract_code in
+        <foreach item="item" index="index" collection="param.contractCodes" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        <if test="param.orgId != null and param.orgId != ''">
+            and em.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and em.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+        ,sub_em as (
+        select em_emv.contract_code ,em_emv.org_id ,em_emv.account_code, em_emv.loans_contract_code,em_emv.currency_code,min(em_emv.id) min_id,max(em_emv.id) max_id from em_emv
+        group by em_emv.contract_code ,em_emv.org_id ,em_emv.account_code ,em_emv.loans_contract_code,em_emv.currency_code
+        )
+        ,res_manual as(
+        select em_emv.contract_code ,em_emv.org_id ,em_emv.account_code , em_emv.loans_contract_code bill_contract_code,em_emv.currency_code, sum(em_emv.debit_amount) debit_amount, sum(em_emv.credit_amount) credit_amount from em_emv join sub_em on em_emv.contract_code = sub_em.contract_code
+        and em_emv.org_id = sub_em.org_id and em_emv.account_code = sub_em.account_code and COALESCE(em_emv.loans_contract_code,'') =COALESCE(sub_em.loans_contract_code,'') and em_emv.currency_code = sub_em.currency_code
+        and em_emv.id &gt;= sub_em.min_id and em_emv.id &lt;= sub_em.max_id
+        group by em_emv.contract_code ,em_emv.org_id ,em_emv.account_code ,em_emv.loans_contract_code,em_emv.currency_code)
+        ,res_all as(
+        select
+        <choose>
+            <when test="param.queryType==null">
+                res_account.currency_code, --币种
+                res_account.contract_code, --合同编码
+                res_account.org_id, --签约主体
+                res_account.account_code, --科目代码
+                res_account.bill_contract_code, --借款合同编号
+            </when>
+            <when test="param.queryType!=null and param.queryType.contains('assist'.toString())">
+                res_account.currency_code, --币种
+                res_account.contract_code, --合同编码
+                res_account.org_id, --签约主体
+                res_account.account_code, --科目代码
+                res_account.bill_contract_code, --借款合同编号
+            </when>
+            <when test="param.queryType!=null and param.queryType.contains('voucher'.toString())">
+                res_voucher.currency_code, --币种
+                res_voucher.contract_code, --合同编码
+                res_voucher.org_id, --签约主体
+                res_voucher.account_code, --科目代码
+                res_voucher.bill_contract_code, --借款合同编号
+            </when>
+            <when test="param.queryType!=null and param.queryType.contains('manual'.toString())">
+                res_manual.currency_code, --币种
+                res_manual.contract_code, --合同编码
+                res_manual.org_id, --签约主体
+                res_manual.account_code, --科目代码
+                res_manual.bill_contract_code, --借款合同编号
+            </when>
+        </choose>
+        COALESCE(res_account.month_begin_debit_balance,0) month_begin_debit_balance, -- 期初借方余额
+        COALESCE(res_account.month_begin_credit_balance,0) month_begin_credit_balance, -- 期初贷方余额
+        COALESCE(res_account.year_begin_debit_balance,0) year_begin_debit_balance, -- 年初借方余额
+        COALESCE(res_account.year_begin_credit_balance,0) year_begin_credit_balance, -- 年初贷方余额
+        COALESCE(res_account.month_debit_amount,0) + COALESCE(res_voucher.debit_amount,0) + COALESCE(res_manual.debit_amount,0) month_debit_amount, -- 期间借方放生额
+        COALESCE(res_account.month_credit_amount,0) + COALESCE(res_voucher.credit_amount,0) + COALESCE(res_manual.credit_amount,0) month_credit_amount, --期间贷方发生额
+        COALESCE(res_account.year_debit_amount,0) + COALESCE(res_voucher.debit_amount,0) + COALESCE(res_manual.debit_amount,0) year_debit_amount, -- 年借方发生额
+        COALESCE(res_account.year_credit_amount,0) + COALESCE(res_voucher.credit_amount,0) + COALESCE(res_manual.credit_amount,0) year_credit_amount, --年贷方发生额
+        COALESCE(res_account.month_end_debit_balance,0) + COALESCE(res_voucher.debit_amount,0) + COALESCE(res_manual.debit_amount,0) month_end_debit_balance, --期末借方余额
+        COALESCE(res_account.month_end_credit_balance,0) + COALESCE(res_voucher.credit_amount,0) + COALESCE(res_manual.credit_amount,0) month_end_credit_balance --期末贷方余额
+        from
+        res_account
+        <choose>
+            <when test="param.queryType==null">
+                LEFT JOIN res_voucher on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist'">
+                LEFT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher'">
+                RIGHT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'manual'">
+                LEFT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher'">
+                LEFT JOIN res_voucher on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+manual'">
+                LEFT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher+manual'">
+                RIGHT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher+manual'">
+                LEFT JOIN res_voucher on 1=1
+            </when>
+        </choose>
+
+        and res_account.contract_code = res_voucher.contract_code
+        and res_account.org_id = res_voucher.org_id
+        and res_account.account_code = res_voucher.account_code
+        and coalesce(res_account.bill_contract_code,'') = coalesce(res_voucher.bill_contract_code,'')
+        and res_account.currency_code = res_voucher.currency_code
+        <choose>
+            <when test="param.queryType==null">
+                LEFT JOIN res_manual on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist'">
+                LEFT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher'">
+                LEFT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'manual'">
+                RIGHT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher'">
+                LEFT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+manual'">
+                LEFT JOIN res_manual on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher+manual'">
+                LEFT JOIN res_manual on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher+manual'">
+                LEFT JOIN res_manual on 1=1
+            </when>
+        </choose>
+
+        <choose>
+        <when test="param.queryType!=null and param.queryType == 'voucher+manual'">
+            and res_voucher.contract_code = res_manual.contract_code
+            and res_voucher.org_id = res_manual.org_id
+            and res_voucher.account_code = res_manual.account_code
+            and coalesce(res_voucher.bill_contract_code,'') = coalesce(res_manual.bill_contract_code,'')
+            and res_voucher.currency_code = res_manual.currency_code
+        </when>
+        <otherwise>
+            and res_account.contract_code = res_manual.contract_code
+            and res_account.org_id = res_manual.org_id
+            and res_account.account_code = res_manual.account_code
+            and coalesce(res_account.bill_contract_code,'') = coalesce(res_manual.bill_contract_code,'')
+            and res_account.currency_code = res_manual.currency_code
+        </otherwise>
+        </choose>
+        ),
+        res as(
+            select
+            sub_ev.voucher_id, --凭证编号
+            ec.id contract_id, --合同表id，用于前端跳转合同详情
+            ea.account_name, --科目名称
+            ec.client_code, --客户编号
+            client.client_name , --客户名称
+            ec.lease_type, --借贷类型
+
+            res_all.currency_code, --币种
+            res_all.contract_code, --合同编码
+            res_all.org_id, --签约主体
+            res_all.account_code, --科目代码
+            res_all.bill_contract_code, --借款合同编号
+            res_all.year_begin_debit_balance, -- 年初借方余额
+            res_all.year_begin_credit_balance, -- 年初贷方余额
+            res_all.month_begin_debit_balance, -- 期初借方余额
+            res_all.month_begin_credit_balance, -- 期初贷方余额
+            res_all.month_debit_amount, -- 期间借方放生额
+            res_all.month_credit_amount, --期间贷方发生额
+            res_all.year_debit_amount, -- 年借方发生额
+            res_all.year_credit_amount, --年贷方发生额
+            res_all.month_end_debit_balance, --期末借方余额
+            res_all.month_end_credit_balance --期末贷方余额
+            from res_all
+            left join eg_contract ec on ec.org_id =res_all.org_id and ec.contract_code =res_all.contract_code
+            left join eg_client client on ec.client_code = client.client_code
+            left join sub_ev on sub_ev.contract_code = res_all.contract_code and sub_ev.org_id = res_all.org_id and sub_ev.account_code = res_all.account_code and COALESCE(sub_ev.bill_contract_code,'') =COALESCE(res_all.bill_contract_code,'') and sub_ev.currency = res_all.currency_code
+            left join (select distinct account_code, account_name from eg_account) ea on res_all.account_code = ea.account_code
+
+            where 1=1
+            <if test="param.clientName != null and param.clientName != ''">
+                and ec.client_name like concat('%', #{param.clientName}::text, '%')
+            </if>
+            <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+                and res_all.account_code &gt;= #{param.accountCodeStart}
+            </if>
+            <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+                and res_all.account_code &lt;= #{param.accountCodeEnd}
+            </if>
+            <if test="param.currencyCode != null and param.currencyCode != ''">
+                and res_all.currency_code = #{param.currencyCode}
+            </if>
+            <if test="param.billContractCode != null and param.billContractCode != ''">
+                and res_all.bill_contract_code = #{param.billContractCode}
+            </if>
+            <if test="param.accountName != null and param.accountName != ''">
+                and ea.account_name like concat('%', #{param.accountName}::text, '%')
+            </if>
+
+        )
+    </sql>
+
+    <select id="selectAssistBalance" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        <include refid="assistQuery"/>
+        select res.*,#{param.periodCodeStart} period_code_start,#{param.periodCodeEnd} period_code_end from res
+
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAssistBalanceSize" resultType="java.util.Map">
+        <include refid="assistQuery"/>
+        select count(1) total_size from res
+    </select>
+
+
+    <sql id="accountQuery">
+        --eg_account_assist_balance
+        with origin as(
+        select id,org_id ,account_code,currency_code
+        ,month_debit_amount,month_credit_amount,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance
+        ,eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_begin_debit_balance, eaab.month_begin_credit_balance
+        ,eaab.month_end_debit_balance, eaab.month_end_credit_balance
+        from eg_account_assist_balance eaab where 1=1
+        <if test="param.periodCodeStart != null and param.periodCodeStart != ''">
+            and eaab.period_code &gt;= #{param.periodCodeStart}
+        </if>
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and eaab.period_code &lt;= #{param.periodCodeEnd}
+        </if>
+        <if test="param.orgId != null and param.orgId != ''">
+            and eaab.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and eaab.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and eaab.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and eaab.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.currencyCode != null and param.currencyCode != ''">
+            and eaab.currency_code = #{param.currencyCode}
+        </if>
+        )
+        ,exceptFiltered as (
+        SELECT id ,org_id ,account_code,currency_code,
+        month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance,
+        year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance,
+        month_end_debit_balance, month_end_credit_balance
+        FROM (
+        SELECT id ,org_id ,account_code,currency_code
+        ,month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance
+        ,year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance
+        ,month_end_debit_balance,month_end_credit_balance,
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond1,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0 or month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond2,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY  org_id ,account_code,currency_code) AS cond3,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+            COUNT(*) FILTER (WHERE year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond4,
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0 or year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond5,
+        </if>
+        <if test="param.exceptList == null or param.exceptList.size()==0">
+            COUNT(*) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond0,
+        </if>
+        COUNT(*) OVER (PARTITION BY org_id ,account_code,currency_code) AS total_rows
+        FROM origin
+        ) subquery WHERE 1=1
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+            and cond1 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+            and cond2 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+            and cond3 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+            and cond4 = total_rows
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+            and cond5 = total_rows
+        </if>
+        <if test="param.exceptList == null or param.exceptList.size()==0">
+            and cond0 = total_rows
+        </if>
+        )
+        , sub_account as (
+        select org_id ,account_code,min(id) min_id,max(id) max_id,currency_code from exceptFiltered
+        group by org_id ,account_code ,currency_code
+        )
+        ,sumtab as(
+        select eaab.org_id ,eaab.account_code ,eaab.currency_code, sum(eaab.month_debit_amount) month_debit_amount, sum(eaab.month_credit_amount) month_credit_amount from origin eaab where 1=1
+--         join sub_account on
+--         eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and eaab.currency_code = sub_account.currency_code
+--         and eaab.id &gt;= sub_account.min_id and eaab.id &lt;= sub_account.max_id
+--         group by eaab.org_id ,eaab.account_code,eaab.currency_code
+        and exists (select 1 from sub_account where eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and eaab.currency_code = sub_account.currency_code
+        and eaab.id between sub_account.min_id and sub_account.max_id)
+        group by eaab.org_id ,eaab.account_code,eaab.currency_code
+        )
+        ,mintab as(
+        select eaab.org_id ,eaab.account_code, eaab.currency_code,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance, eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_begin_debit_balance, eaab.month_begin_credit_balance from origin eaab join sub_account on
+        eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and eaab.currency_code = sub_account.currency_code and eaab.id =sub_account.min_id )
+        ,maxtab as(
+        select eaab.org_id ,eaab.account_code, eaab.currency_code,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance, eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_end_debit_balance, eaab.month_end_credit_balance from origin eaab join sub_account on
+        eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and eaab.currency_code = sub_account.currency_code and eaab.id =sub_account.max_id )
+        ,res_account as (
+        select sumtab.org_id ,sumtab.account_code,sumtab.currency_code,mintab.month_begin_debit_balance, mintab.month_begin_credit_balance,
+        sumtab.month_debit_amount,sumtab.month_credit_amount,mintab.year_begin_debit_balance, mintab.year_begin_credit_balance,maxtab.year_debit_amount,maxtab.year_credit_amount,maxtab.month_end_debit_balance,maxtab.month_end_credit_balance
+        from sumtab join mintab on sumtab.org_id = mintab.org_id and sumtab.account_code = mintab.account_code and sumtab.currency_code = mintab.currency_code
+        join maxtab on sumtab.org_id = maxtab.org_id and sumtab.account_code = maxtab.account_code and sumtab.currency_code = maxtab.currency_code)
+        --eg_voucher
+        ,ev_eve as (
+        select ev.id voucher_id ,ev.org_id ,eve.account_code,eve.id,ev.currency,eve.debit_amount,eve.credit_amount from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+        where 1=1
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and ev.period_code =#{param.periodCodeEnd} and eve.period_code =#{param.periodCodeEnd}
+        </if>
+
+        <if test="param.orgId != null and param.orgId != ''">
+            and ev.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and ev.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and eve.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and eve.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.currencyCode != null and param.currencyCode != ''">
+            and eve.currency = #{param.currencyCode}
+        </if>
+        )
+        ,sub_ev as (
+        select string_agg(ev_eve.voucher_id::text, ',') voucher_id ,ev_eve.org_id ,ev_eve.account_code,ev_eve.currency,min(ev_eve.id) min_id,max(ev_eve.id) max_id from ev_eve
+        group by ev_eve.org_id ,ev_eve.account_code,ev_eve.currency
+        )
+        ,res_voucher as(
+        select ev_eve.org_id ,ev_eve.account_code,ev_eve.currency currency_code, sum(ev_eve.debit_amount) debit_amount, sum(ev_eve.credit_amount) credit_amount from ev_eve join sub_ev on
+        ev_eve.org_id = sub_ev.org_id and ev_eve.account_code = sub_ev.account_code and ev_eve.currency = sub_ev.currency
+        and ev_eve.id &gt;= sub_ev.min_id and ev_eve.id &lt;= sub_ev.max_id
+        group by ev_eve.org_id ,ev_eve.account_code,ev_eve.currency)
+        --eg_manual
+        ,em_emv as (
+        select em.org_id ,emv.account_code,em.currency_code,emv.id,emv.debit_amount,emv.credit_amount,em.period_code  from eg_manual em join eg_manual_voucher emv on em.id = emv.manual_id
+        where 1=1
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and em.period_code =#{param.periodCodeEnd} and emv.period_code =#{param.periodCodeEnd}
+        </if>
+        <if test="param.orgId != null and param.orgId != ''">
+            and em.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and em.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and emv.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and emv.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.currencyCode != null and param.currencyCode != ''">
+            and emv.currency_code = #{param.currencyCode}
+        </if>
+        )
+        ,sub_em as (
+        select em_emv.org_id ,em_emv.account_code,em_emv.currency_code,min(em_emv.id) min_id,max(em_emv.id) max_id from em_emv
+        group by em_emv.org_id ,em_emv.account_code,em_emv.currency_code
+        )
+        ,res_manual as(
+        select em_emv.org_id ,em_emv.account_code,em_emv.currency_code, sum(em_emv.debit_amount) debit_amount, sum(em_emv.credit_amount) credit_amount from em_emv join sub_em on
+        em_emv.org_id = sub_em.org_id and em_emv.account_code = sub_em.account_code and em_emv.currency_code = sub_em.currency_code
+        and em_emv.id &gt;= sub_em.min_id and em_emv.id &lt;= sub_em.max_id
+        group by em_emv.org_id ,em_emv.account_code,em_emv.currency_code)
+        ,res_all as(
+        select
+        <choose>
+            <when test="param.queryType==null">
+                res_account.currency_code, --币种
+                res_account.org_id, --签约主体
+                res_account.account_code, --科目代码
+            </when>
+            <when test="param.queryType!=null and param.queryType.contains('assist'.toString())">
+                res_account.currency_code, --币种
+                res_account.org_id, --签约主体
+                res_account.account_code, --科目代码
+            </when>
+            <when test="param.queryType!=null and param.queryType.contains('voucher'.toString())">
+                res_voucher.currency_code, --币种
+                res_voucher.org_id, --签约主体
+                res_voucher.account_code, --科目代码
+            </when>
+            <when test="param.queryType!=null and param.queryType.contains('manual'.toString())">
+                res_manual.currency_code, --币种
+                res_manual.org_id, --签约主体
+                res_manual.account_code, --科目代码
+            </when>
+        </choose>
+        COALESCE(res_account.month_begin_debit_balance,0) month_begin_debit_balance, -- 期初借方余额
+        COALESCE(res_account.month_begin_credit_balance,0) month_begin_credit_balance, -- 期初贷方余额
+        COALESCE(res_account.year_begin_debit_balance,0) year_begin_debit_balance, -- 年初借方余额
+        COALESCE(res_account.year_begin_credit_balance,0) year_begin_credit_balance, -- 年初贷方余额
+        COALESCE(res_account.month_debit_amount,0) + COALESCE(res_voucher.debit_amount,0) + COALESCE(res_manual.debit_amount,0) month_debit_amount, -- 期间借方放生额
+        COALESCE(res_account.month_credit_amount,0) + COALESCE(res_voucher.credit_amount,0) + COALESCE(res_manual.credit_amount,0) month_credit_amount, --期间贷方发生额
+        COALESCE(res_account.year_debit_amount,0) + COALESCE(res_voucher.debit_amount,0) + COALESCE(res_manual.debit_amount,0) year_debit_amount, -- 年借方发生额
+        COALESCE(res_account.year_credit_amount,0) + COALESCE(res_voucher.credit_amount,0) + COALESCE(res_manual.credit_amount,0) year_credit_amount, --年贷方发生额
+        COALESCE(res_account.month_end_debit_balance,0) + COALESCE(res_voucher.debit_amount,0) + COALESCE(res_manual.debit_amount,0) month_end_debit_balance, --期末借方余额
+        COALESCE(res_account.month_end_credit_balance,0) + COALESCE(res_voucher.credit_amount,0) + COALESCE(res_manual.credit_amount,0) month_end_credit_balance --期末贷方余额
+        from
+        res_account
+        <choose>
+            <when test="param.queryType==null">
+                LEFT JOIN res_voucher on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist'">
+                LEFT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher'">
+                RIGHT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'manual'">
+                LEFT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher'">
+                LEFT JOIN res_voucher on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+manual'">
+                LEFT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher+manual'">
+                RIGHT JOIN res_voucher on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher+manual'">
+                LEFT JOIN res_voucher on 1=1
+            </when>
+        </choose>
+
+        and res_account.org_id = res_voucher.org_id
+        and res_account.account_code = res_voucher.account_code
+        and res_account.currency_code = res_voucher.currency_code
+        <choose>
+            <when test="param.queryType==null">
+                LEFT JOIN res_manual on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist'">
+                LEFT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher'">
+                LEFT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'manual'">
+                RIGHT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher'">
+                LEFT JOIN res_manual on 1=2
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+manual'">
+                LEFT JOIN res_manual on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'voucher+manual'">
+                LEFT JOIN res_manual on 1=1
+            </when>
+            <when test="param.queryType!=null and param.queryType == 'assist+voucher+manual'">
+                LEFT JOIN res_manual on 1=1
+            </when>
+        </choose>
+
+        <choose>
+            <when test="param.queryType!=null and param.queryType == 'voucher+manual'">
+                and res_voucher.org_id = res_manual.org_id
+                and res_voucher.account_code = res_manual.account_code
+                and res_voucher.currency_code = res_manual.currency_code
+            </when>
+            <otherwise>
+                and res_account.org_id = res_manual.org_id
+                and res_account.account_code = res_manual.account_code
+                and res_account.currency_code = res_manual.currency_code
+            </otherwise>
+        </choose>
+        ),
+        res as(
+        select
+        sub_ev.voucher_id, --凭证编号
+        ea.account_name, --科目名称
+
+        res_all.currency_code, --币种
+        res_all.org_id, --签约主体
+        res_all.account_code, --科目代码
+        res_all.year_begin_debit_balance, -- 年初借方余额
+        res_all.year_begin_credit_balance, -- 年初贷方余额
+        res_all.month_begin_debit_balance, -- 期初借方余额
+        res_all.month_begin_credit_balance, -- 期初贷方余额
+        res_all.month_debit_amount, -- 期间借方放生额
+        res_all.month_credit_amount, --期间贷方发生额
+        res_all.year_debit_amount, -- 年借方发生额
+        res_all.year_credit_amount, --年贷方发生额
+        res_all.month_end_debit_balance, --期末借方余额
+        res_all.month_end_credit_balance --期末贷方余额
+        from res_all
+        left join sub_ev on sub_ev.org_id = res_all.org_id and sub_ev.account_code = res_all.account_code and sub_ev.currency = res_all.currency_code
+        left join (select distinct account_code, account_name from eg_account) ea on res_all.account_code = ea.account_code
+
+        where 1=1
+
+        <if test="param.accountName != null and param.accountName != ''">
+            and ea.account_name like concat('%', #{param.accountName}::text, '%')
+        </if>
+
+        )
+    </sql>
+
+    <select id="selectAccountBalance" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountBalanceSheetVO">
+        <include refid="accountQuery"/>
+        select res.*,#{param.periodCodeStart} period_code_start,#{param.periodCodeEnd} period_code_end from res
+
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAccountBalanceSize" resultType="java.util.Map">
+        <include refid="accountQuery"/>
+        select count(1) total_size from res
+    </select>
+
+    <sql id="assistPartQuery">
+        --eg_account_assist_balance
+        with origin as(
+        select id,org_id ,account_code,currency_code
+        ,month_debit_amount,month_credit_amount,eaab.year_begin_debit_balance,eaab.year_begin_credit_balance
+        ,eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_begin_debit_balance, eaab.month_begin_credit_balance
+        ,eaab.month_end_debit_balance, eaab.month_end_credit_balance,period_code
+        from eg_account_assist_balance eaab where 1=1
+<!--        <if test="param.periodCodeStart != null and param.periodCodeStart != ''">-->
+<!--            and eaab.period_code &gt;= #{param.periodCodeStart}-->
+<!--        </if>-->
+<!--        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">-->
+<!--            and eaab.period_code &lt;= #{param.periodCodeEnd}-->
+<!--        </if>-->
+        <choose>
+            <when test="param.assistPeriodCodeStart != null and param.assistPeriodCodeStart != ''">
+                and eaab.period_code &gt;= #{param.assistPeriodCodeStart}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="param.assistPeriodCodeEnd != null and param.assistPeriodCodeEnd != ''">
+                and eaab.period_code &lt;= #{param.assistPeriodCodeEnd}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and eaab.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and eaab.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and currency_code in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+        ,exceptFiltered as (
+        SELECT org_id ,account_code,currency_code,
+        sum(month_debit_amount) month_debit_amount,sum(month_credit_amount) month_credit_amount,sum(year_begin_debit_balance) year_begin_debit_balance,sum(year_begin_credit_balance) year_begin_credit_balance,
+        sum(year_debit_amount) year_debit_amount,sum(year_credit_amount) year_credit_amount,sum(month_begin_debit_balance) month_begin_debit_balance,sum(month_begin_credit_balance) month_begin_credit_balance,
+        sum(month_end_debit_balance) month_end_debit_balance, sum(month_end_credit_balance) month_end_credit_balance,period_code
+<!--        FROM (-->
+<!--        SELECT id ,org_id ,account_code,currency_code-->
+<!--        ,month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance-->
+<!--        ,year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance-->
+<!--        ,month_end_debit_balance,month_end_credit_balance,period_code,-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond1,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0 or month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond2,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY  org_id ,account_code,currency_code) AS cond3,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">-->
+<!--            <choose>-->
+<!--                <when test="param.periodYearStart != null and param.periodYearStart != 0">-->
+<!--                    COUNT(*) FILTER (WHERE (period_code &gt;= #{param.periodYearStart} and (year_debit_amount !=0 or year_credit_amount !=0)) or period_code &lt; #{param.periodYearStart} ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond4,-->
+<!--                </when>-->
+<!--                <otherwise>-->
+<!--                    COUNT(*) FILTER (WHERE year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond4,-->
+<!--                </otherwise>-->
+<!--            </choose>-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0 or year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond5,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList == null or param.exceptList.size()==0">-->
+<!--            COUNT(*) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond0,-->
+<!--        </if>-->
+<!--        COUNT(*) OVER (PARTITION BY org_id ,account_code,currency_code) AS total_rows-->
+        FROM origin
+<!--        ) subquery WHERE 1=1-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">-->
+<!--            and cond1 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">-->
+<!--            and cond2 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">-->
+<!--            and cond3 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">-->
+<!--            and cond4 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">-->
+<!--            and cond5 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList == null or param.exceptList.size()==0">-->
+<!--            and cond0 = total_rows-->
+<!--        </if>-->
+        group by org_id ,account_code ,currency_code,period_code
+        )
+        , sub_account as (
+        select org_id ,account_code,min(period_code) min_period_code,max(period_code) max_period_code,currency_code from exceptFiltered
+        group by org_id ,account_code ,currency_code
+        )
+        ,sumtab as(
+        select eaab.org_id ,eaab.account_code ,eaab.currency_code,
+--                sum(eaab.month_debit_amount) month_debit_amount, sum(eaab.month_credit_amount) month_credit_amount
+        0 as year_begin_debit_balance, 0 as year_begin_credit_balance,
+        0 as year_debit_amount, 0 as year_credit_amount,
+        sum(eaab.month_debit_amount) month_debit_amount, sum(eaab.month_credit_amount) month_credit_amount,
+        0 as month_begin_debit_balance, 0 as month_begin_credit_balance,
+        0 as month_end_debit_balance, 0 as month_end_credit_balance
+        from exceptFiltered eaab where 1=1
+        and exists (select 1 from sub_account where eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and COALESCE(eaab.currency_code,'') = COALESCE(sub_account.currency_code,'')
+--         and eaab.period_code between sub_account.min_period_code and sub_account.max_period_code
+        )
+        group by eaab.org_id ,eaab.account_code,eaab.currency_code
+        )
+        ,mintab as(
+        select eaab.org_id ,eaab.account_code, eaab.currency_code,
+--                eaab.year_begin_debit_balance,eaab.year_begin_credit_balance, eaab.year_debit_amount,eaab.year_credit_amount,eaab.month_begin_debit_balance, eaab.month_begin_credit_balance
+        0 as year_begin_debit_balance,0 as year_begin_credit_balance,
+        0 as year_debit_amount,0 as year_credit_amount,
+        eaab.month_begin_debit_balance, eaab.month_begin_credit_balance,
+        0 as month_debit_amount,0 as month_credit_amount,
+        0 as month_end_debit_balance, 0 as month_end_credit_balance
+        from exceptFiltered eaab join sub_account on
+        eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and COALESCE(eaab.currency_code,'') = COALESCE(sub_account.currency_code,'') and eaab.period_code =sub_account.min_period_code )
+        ,maxtab as(
+        select eaab.org_id ,eaab.account_code, eaab.currency_code,
+--                eaab.year_begin_debit_balance,eaab.year_begin_credit_balance,
+--                eaab.year_debit_amount,eaab.year_credit_amount,
+--                eaab.month_end_debit_balance, eaab.month_end_credit_balance
+        eaab.year_begin_debit_balance,eaab.year_begin_credit_balance,
+        eaab.year_debit_amount,eaab.year_credit_amount,
+        0 as month_begin_debit_balance, 0 as month_begin_credit_balance,
+        0 as month_debit_amount,0 as month_credit_amount,
+        eaab.month_end_debit_balance, eaab.month_end_credit_balance
+        from exceptFiltered eaab join sub_account on
+        eaab.org_id = sub_account.org_id and eaab.account_code = sub_account.account_code and COALESCE(eaab.currency_code,'') = COALESCE(sub_account.currency_code,'') and eaab.period_code =sub_account.max_period_code )
+        ,res_account_total as (
+            select tmp.org_id,tmp.account_code,tmp.currency_code,
+            sum(coalesce(tmp.year_begin_debit_balance,0)) year_begin_debit_balance,
+            sum(coalesce(tmp.year_begin_credit_balance,0)) year_begin_credit_balance,
+            sum(coalesce(tmp.year_debit_amount,0)) year_debit_amount,
+            sum(coalesce(tmp.year_credit_amount,0)) year_credit_amount,
+            sum(coalesce(tmp.month_begin_debit_balance,0)) month_begin_debit_balance,
+            sum(coalesce(tmp.month_begin_credit_balance,0)) month_begin_credit_balance,
+            sum(coalesce(tmp.month_debit_amount,0)) month_debit_amount,
+            sum(coalesce(tmp.month_credit_amount,0)) month_credit_amount,
+            sum(coalesce(tmp.month_end_debit_balance,0)) month_end_debit_balance,
+            sum(coalesce(tmp.month_end_credit_balance,0)) month_end_credit_balance from (
+            select org_id,account_code,currency_code,year_begin_debit_balance,year_begin_credit_balance,
+            year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance,
+            month_debit_amount,month_credit_amount,month_end_debit_balance,month_end_credit_balance from sumtab
+            union all
+            select org_id,account_code,currency_code,year_begin_debit_balance,year_begin_credit_balance,
+            year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance,
+            month_debit_amount,month_credit_amount,month_end_debit_balance,month_end_credit_balance from mintab
+            union all
+            select org_id,account_code,currency_code,year_begin_debit_balance,year_begin_credit_balance,
+            year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance,
+            month_debit_amount,month_credit_amount,month_end_debit_balance,month_end_credit_balance from maxtab
+            )tmp group by tmp.org_id,tmp.account_code,tmp.currency_code
+        )
+
+        ,res_account as (
+        select res_account_total.org_id ,res_account_total.account_code,res_account_total.currency_code,
+                case when account.debit_credit_type = 'DR' then COALESCE(res_account_total.month_begin_debit_balance,0) - COALESCE(res_account_total.month_begin_credit_balance,0)
+                else 0 end as month_begin_debit_balance,
+                case when account.debit_credit_type = 'CR' then COALESCE(res_account_total.month_begin_credit_balance,0) - COALESCE(res_account_total.month_begin_debit_balance,0)
+                else 0 end as month_begin_credit_balance,
+                --        COALESCE(mintab.month_begin_debit_balance,0) month_begin_debit_balance, COALESCE(mintab.month_begin_credit_balance,0) month_begin_credit_balance,
+                COALESCE(res_account_total.month_debit_amount,0) month_debit_amount,COALESCE(res_account_total.month_credit_amount,0) month_credit_amount,
+                case when account.debit_credit_type = 'DR' then COALESCE(res_account_total.year_begin_debit_balance,0) - COALESCE(res_account_total.year_begin_credit_balance,0)
+                else 0 end as year_begin_debit_balance,
+                case when account.debit_credit_type = 'CR' then COALESCE(res_account_total.year_begin_credit_balance,0) - COALESCE(res_account_total.year_begin_debit_balance,0)
+                else 0 end as year_begin_credit_balance,
+                --        COALESCE(maxtab.year_begin_debit_balance,0) year_begin_debit_balance, COALESCE(maxtab.year_begin_credit_balance,0) year_begin_credit_balance,
+                COALESCE(res_account_total.year_debit_amount,0) year_debit_amount,COALESCE(res_account_total.year_credit_amount,0) year_credit_amount,
+                case when account.debit_credit_type = 'DR' then COALESCE(res_account_total.month_end_debit_balance,0) - COALESCE(res_account_total.month_end_credit_balance,0)
+                else 0 end as month_end_debit_balance,
+                case when account.debit_credit_type = 'CR' then COALESCE(res_account_total.month_end_credit_balance,0) - COALESCE(res_account_total.month_end_debit_balance,0)
+                else 0 end as month_end_credit_balance
+                --        COALESCE(maxtab.month_end_debit_balance,0) month_end_debit_balance,COALESCE(maxtab.month_end_credit_balance,0) month_end_credit_balance
+
+--                COALESCE(mintab.month_begin_debit_balance,0) month_begin_debit_balance, COALESCE(mintab.month_begin_credit_balance,0) month_begin_credit_balance,
+--                COALESCE(sumtab.month_debit_amount,0) month_debit_amount,COALESCE(sumtab.month_credit_amount,0) month_credit_amount,
+--                COALESCE(maxtab.year_begin_debit_balance,0) year_begin_debit_balance, COALESCE(maxtab.year_begin_credit_balance,0) year_begin_credit_balance,
+--                COALESCE(maxtab.year_debit_amount,0) year_debit_amount,COALESCE(maxtab.year_credit_amount,0) year_credit_amount,
+--                COALESCE(maxtab.month_end_debit_balance,0) month_end_debit_balance,COALESCE(maxtab.month_end_credit_balance,0) month_end_credit_balance
+--         from sumtab join mintab on sumtab.org_id = mintab.org_id and sumtab.account_code = mintab.account_code and COALESCE(sumtab.currency_code,'') = COALESCE(mintab.currency_code,'')
+--         join maxtab on sumtab.org_id = maxtab.org_id and sumtab.account_code = maxtab.account_code and COALESCE(sumtab.currency_code,'') = COALESCE(maxtab.currency_code,'')
+        from res_account_total
+        join (select distinct account_code ,debit_credit_type from eg_account ea ) account on res_account_total.account_code = account.account_code
+        where 1=1
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+        and (COALESCE(res_account_total.month_debit_amount,0) !=0 or COALESCE(res_account_total.month_credit_amount,0) !=0)
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+        and (COALESCE(res_account_total.month_debit_amount,0) !=0 or COALESCE(res_account_total.month_credit_amount,0) !=0 or COALESCE(maxtab.month_end_debit_balance,0)!=0 or COALESCE(maxtab.month_end_credit_balance,0)!=0)
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+        and (COALESCE(res_account_total.month_end_debit_balance,0)!=0 or COALESCE(res_account_total.month_end_credit_balance,0)!=0)
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+        and (COALESCE(res_account_total.year_debit_amount,0) !=0 or COALESCE(res_account_total.year_credit_amount,0) !=0 )
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+        and (COALESCE(res_account_total.month_end_debit_balance,0)!=0 or COALESCE(res_account_total.month_end_credit_balance,0)!=0 or COALESCE(maxtab.year_debit_amount,0) !=0 or COALESCE(maxtab.year_credit_amount,0) !=0 )
+        </if>
+        )
+
+    </sql>
+    <select id="selectAssistPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountBalanceSheetVO">
+        <include refid="assistPartQuery"></include>
+        select * from res_account order by account_code
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export' and param.queryType.contains('assist')">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAssistPartSize" resultType="java.util.Map">
+        <include refid="assistPartQuery"/>
+        select count(1) total_size from res_account
+    </select>
+
+    <sql id="voucherPartQuery">
+        <include refid="voucherIdPartQuery"></include>
+        ,res_voucher as(
+        select ev_eve.org_id ,ev_eve.account_code,ev_eve.currency currency_code,
+            0 as month_begin_debit_balance,
+            0 as month_begin_credit_balance,
+            case when account.debit_credit_type = 'DR' then sum(ev_eve.debit_amount) - sum(ev_eve.credit_amount)
+            else 0 end as month_debit_amount,
+            case when account.debit_credit_type = 'CR' then sum(ev_eve.credit_amount) - sum(ev_eve.debit_amount)
+            else 0 end as month_credit_amount,
+            case when account.debit_credit_type = 'DR' then sum(ev_eve.debit_amount) - sum(ev_eve.credit_amount)
+            else 0 end as year_debit_amount,
+            case when account.debit_credit_type = 'CR' then sum(ev_eve.credit_amount) - sum(ev_eve.debit_amount)
+            else 0 end as year_credit_amount,
+            case when account.debit_credit_type = 'DR' then sum(ev_eve.debit_amount) - sum(ev_eve.credit_amount)
+            else 0 end as month_end_debit_balance,
+            case when account.debit_credit_type = 'CR' then sum(ev_eve.credit_amount) - sum(ev_eve.debit_amount)
+            else 0 end as month_end_credit_balance
+
+        --    sum(ev_eve.debit_amount) month_debit_amount, sum(ev_eve.credit_amount) month_credit_amount
+        from ev_eve join sub_ev on
+        ev_eve.org_id = sub_ev.org_id and ev_eve.account_code = sub_ev.account_code and ev_eve.currency = sub_ev.currency_code
+        and ev_eve.id &gt;= sub_ev.min_id and ev_eve.id &lt;= sub_ev.max_id
+        join (select distinct account_code ,debit_credit_type from eg_account ea ) account on ev_eve.account_code = account.account_code
+        group by ev_eve.org_id ,ev_eve.account_code,ev_eve.currency,account.debit_credit_type)
+    </sql>
+    <sql id="manualPartQuery">
+        , em_emv as (
+        select em.org_id ,emv.account_code,em.currency_code,emv.id,emv.debit_amount,emv.credit_amount,em.period_code  from eg_manual em join eg_manual_voucher emv on em.id = emv.manual_id
+        where 1=1
+<!--        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">-->
+<!--            and em.period_code =#{param.periodCodeEnd} and emv.period_code =#{param.periodCodeEnd}-->
+<!--        </if>-->
+
+        and em.period_code = emv.period_code
+        <choose>
+            <when test="param.otherPeriodCodeStart != null and param.otherPeriodCodeStart != ''">
+                and em.period_code &gt;= #{param.otherPeriodCodeStart} and emv.period_code &gt;= #{param.otherPeriodCodeStart}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+
+        <choose>
+            <when test="param.otherPeriodCodeEnd != null and param.otherPeriodCodeEnd != ''">
+                and em.period_code &lt;= #{param.otherPeriodCodeEnd} and emv.period_code &lt;= #{param.otherPeriodCodeEnd}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and em.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+          
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and emv.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and emv.currency_code in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+            and em.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and em.process_status = '1'
+        )
+        ,sub_em as (
+        select em_emv.org_id ,em_emv.account_code,em_emv.currency_code,min(em_emv.id) min_id,max(em_emv.id) max_id from em_emv
+        group by em_emv.org_id ,em_emv.account_code,em_emv.currency_code
+        )
+        ,res_manual as(
+        select em_emv.org_id ,em_emv.account_code,em_emv.currency_code,
+            0 as month_begin_debit_balance,
+            0 as month_begin_credit_balance,
+            case when account.debit_credit_type = 'DR' then sum(em_emv.debit_amount) - sum(em_emv.credit_amount)
+            else 0 end as month_debit_amount,
+            case when account.debit_credit_type = 'CR' then sum(em_emv.credit_amount) - sum(em_emv.debit_amount)
+            else 0 end as month_credit_amount,
+            case when account.debit_credit_type = 'DR' then sum(em_emv.debit_amount) - sum(em_emv.credit_amount)
+            else 0 end as year_debit_amount,
+            case when account.debit_credit_type = 'CR' then sum(em_emv.credit_amount) - sum(em_emv.debit_amount)
+            else 0 end as year_credit_amount,
+            case when account.debit_credit_type = 'DR' then sum(em_emv.debit_amount) - sum(em_emv.credit_amount)
+            else 0 end as month_end_debit_balance,
+            case when account.debit_credit_type = 'CR' then sum(em_emv.credit_amount) - sum(em_emv.debit_amount)
+            else 0 end as month_end_credit_balance
+        from em_emv join sub_em on
+        em_emv.org_id = sub_em.org_id and em_emv.account_code = sub_em.account_code and em_emv.currency_code = sub_em.currency_code
+        and em_emv.id &gt;= sub_em.min_id and em_emv.id &lt;= sub_em.max_id
+        join (select distinct account_code ,debit_credit_type from eg_account ea ) account on em_emv.account_code = account.account_code
+        group by em_emv.org_id ,em_emv.account_code,em_emv.currency_code, account.debit_credit_type)
+    </sql>
+
+    <select id="selectVoucherPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountBalanceSheetVO">
+        <include refid="voucherPartQuery"></include>
+        select * from res_voucher
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export' and (param.queryType == 'voucher' or param.queryType == 'voucher+manual')">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectVoucherPartSize" resultType="java.util.Map">
+        <include refid="voucherPartQuery"/>
+        select count(1) total_size from res_voucher
+    </select>
+
+    <select id="selectManualPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountBalanceSheetVO">
+        <include refid="manualPartQuery"></include>
+        select * from res_manual
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export' and param.queryType == 'manual'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectManualPartSize" resultType="java.util.Map">
+        <include refid="manualPartQuery"/>
+        select count(1) total_size from res_manual
+    </select>
+
+    <sql id="voucherIdPartQuery">
+        , ev_eve as (
+        select ev.id voucher_id ,ev.org_id ,eve.account_code,eve.id,ev.currency,eve.debit_amount,eve.credit_amount from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+        where 1=1
+<!--        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">-->
+<!--            and ev.period_code =#{param.periodCodeEnd} and eve.period_code =#{param.periodCodeEnd}-->
+<!--        </if>-->
+
+        and ev.period_code = eve.period_code
+        <choose>
+            <when test="param.otherPeriodCodeStart != null and param.otherPeriodCodeStart != ''">
+                and ev.period_code &gt;= #{param.otherPeriodCodeStart} and eve.period_code &gt;= #{param.otherPeriodCodeStart}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="param.otherPeriodCodeEnd != null and param.otherPeriodCodeEnd != ''">
+                and ev.period_code &lt;= #{param.otherPeriodCodeEnd} and eve.period_code &lt;= #{param.otherPeriodCodeEnd}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and ev.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and eve.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and ev.currency in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+            and ev.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        )
+        ,sub_ev as (
+        select string_agg(ev_eve.voucher_id::text, ',') voucher_id ,ev_eve.org_id ,ev_eve.account_code,ev_eve.currency currency_code,min(ev_eve.id) min_id,max(ev_eve.id) max_id from ev_eve
+        group by ev_eve.org_id ,ev_eve.account_code,ev_eve.currency
+        )
+    </sql>
+    <select id="selectVoucherIdPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountBalanceSheetVO">
+        <include refid="voucherIdPartQuery"></include>
+        select * from sub_ev
+    </select>
+
+
+
+
+
+    <sql id="accountAssistPartQuery">
+        --eg_account_assist_balance
+        with origin as(
+        select contract_code ,org_id ,account_code, bill_contract_code,currency_code,period_code
+        ,sum(coalesce(month_debit_amount,0)) month_debit_amount,sum(coalesce(month_credit_amount,0)) month_credit_amount,sum(coalesce(eaab.year_begin_debit_balance,0)) year_begin_debit_balance,sum(coalesce(eaab.year_begin_credit_balance,0)) year_begin_credit_balance
+        ,sum(coalesce(eaab.year_debit_amount,0)) year_debit_amount,sum(coalesce(eaab.year_credit_amount,0)) year_credit_amount,sum(coalesce(eaab.month_begin_debit_balance,0)) month_begin_debit_balance,sum(coalesce(eaab.month_begin_credit_balance,0)) month_begin_credit_balance
+        ,sum(coalesce(eaab.month_end_debit_balance,0)) month_end_debit_balance,sum(coalesce(eaab.month_end_credit_balance,0)) month_end_credit_balance
+        from eg_account_assist_balance eaab where 1=1
+        <choose>
+            <when test="param.assistPeriodCodeStart != null and param.assistPeriodCodeStart != ''">
+                and eaab.period_code &gt;= #{param.assistPeriodCodeStart}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="param.assistPeriodCodeEnd != null and param.assistPeriodCodeEnd != ''">
+                and eaab.period_code &lt;= #{param.assistPeriodCodeEnd}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+
+        <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+            and contract_code in
+            <foreach item="item" index="index" collection="param.contractCodes" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and eaab.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and currency_code in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size() != 0">
+            and bill_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by contract_code ,org_id ,account_code, bill_contract_code,currency_code,period_code
+        )
+<!--        ,exceptFiltered as (-->
+<!--        SELECT contract_code ,org_id ,account_code, bill_contract_code,currency_code,-->
+<!--        month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance,-->
+<!--        year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance,-->
+<!--        month_end_debit_balance, month_end_credit_balance,period_code-->
+<!--        FROM (-->
+<!--        SELECT contract_code ,org_id ,account_code, bill_contract_code,currency_code-->
+<!--        ,month_debit_amount,month_credit_amount,year_begin_debit_balance,year_begin_credit_balance-->
+<!--        ,year_debit_amount,year_credit_amount,month_begin_debit_balance,month_begin_credit_balance-->
+<!--        ,month_end_debit_balance,month_end_credit_balance,period_code,-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond1,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_debit_amount !=0 or month_credit_amount !=0 or month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond2,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond3,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">-->
+<!--            <choose>-->
+<!--                <when test="param.periodYearStart != null and param.periodYearStart != 0">-->
+<!--                    COUNT(*) FILTER (WHERE (period_code &gt;= #{param.periodYearStart} and (year_debit_amount !=0 or year_credit_amount !=0)) or period_code &lt; #{param.periodYearStart} ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond4,-->
+<!--                </when>-->
+<!--                <otherwise>-->
+<!--                    COUNT(*) FILTER (WHERE year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY org_id ,account_code,currency_code) AS cond4,-->
+<!--                </otherwise>-->
+<!--            </choose>-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">-->
+<!--            COUNT(*) FILTER (WHERE month_end_debit_balance!=0 or month_end_credit_balance!=0 or year_debit_amount !=0 or year_credit_amount !=0 ) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond5,-->
+<!--        </if>-->
+<!--        <if test="param.exceptList == null or param.exceptList.size()==0">-->
+<!--            COUNT(*) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS cond0,-->
+<!--        </if>-->
+<!--        COUNT(*) OVER (PARTITION BY contract_code ,org_id ,account_code, bill_contract_code,currency_code) AS total_rows-->
+<!--        FROM origin-->
+<!--        ) subquery WHERE 1=1-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">-->
+<!--            and cond1 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">-->
+<!--            and cond2 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">-->
+<!--            and cond3 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">-->
+<!--            and cond4 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">-->
+<!--            and cond5 = total_rows-->
+<!--        </if>-->
+<!--        <if test="param.exceptList == null or param.exceptList.size()==0">-->
+<!--            and cond0 = total_rows-->
+<!--        </if>-->
+<!--        )-->
+        , sub_account as (
+        select contract_code ,org_id ,account_code, bill_contract_code,min(period_code) min_period_code,max(period_code) max_period_code,currency_code from origin
+        group by contract_code ,org_id ,account_code ,bill_contract_code,currency_code
+        )
+        ,sumtab as(
+        select origin.contract_code ,origin.org_id ,origin.account_code , origin.bill_contract_code,origin.currency_code, sum(origin.month_debit_amount) month_debit_amount, sum(origin.month_credit_amount) month_credit_amount from origin
+        group by origin.contract_code ,origin.org_id ,origin.account_code ,origin.bill_contract_code,origin.currency_code
+        )
+        ,mintab as(
+        select origin.contract_code ,origin.org_id ,origin.account_code , origin.bill_contract_code, origin.currency_code,origin.year_begin_debit_balance,origin.year_begin_credit_balance, origin.year_debit_amount,origin.year_credit_amount,origin.month_begin_debit_balance, origin.month_begin_credit_balance from origin join sub_account on origin.contract_code = sub_account.contract_code
+        and origin.org_id = sub_account.org_id and origin.account_code = sub_account.account_code and COALESCE(origin.bill_contract_code,'') =COALESCE(sub_account.bill_contract_code,'') and origin.currency_code = sub_account.currency_code and origin.period_code =sub_account.min_period_code )
+        ,maxtab as(
+        select origin.contract_code ,origin.org_id ,origin.account_code , origin.bill_contract_code, origin.currency_code,origin.year_begin_debit_balance,origin.year_begin_credit_balance, origin.year_debit_amount,origin.year_credit_amount,origin.month_end_debit_balance, origin.month_end_credit_balance from origin join sub_account on origin.contract_code = sub_account.contract_code
+        and origin.org_id = sub_account.org_id and origin.account_code = sub_account.account_code and COALESCE(origin.bill_contract_code,'') =COALESCE(sub_account.bill_contract_code,'') and origin.currency_code = sub_account.currency_code and origin.period_code =sub_account.max_period_code)
+        ,res_account as (
+        select sumtab.contract_code ,sumtab.org_id ,sumtab.account_code ,sumtab.bill_contract_code,sumtab.currency_code,
+--                COALESCE(mintab.month_begin_debit_balance,0) month_begin_debit_balance, COALESCE(mintab.month_begin_credit_balance,0) month_begin_credit_balance,
+--                COALESCE(sumtab.month_debit_amount,0) month_debit_amount,COALESCE(sumtab.month_credit_amount,0) month_credit_amount,
+--                COALESCE(maxtab.year_begin_debit_balance,0) year_begin_debit_balance, COALESCE(maxtab.year_begin_credit_balance,0) year_begin_credit_balance,
+--                COALESCE(maxtab.year_debit_amount,0) year_debit_amount,COALESCE(maxtab.year_credit_amount,0) year_credit_amount,
+--                COALESCE(maxtab.month_end_debit_balance,0) month_end_debit_balance,COALESCE(maxtab.month_end_credit_balance,0) month_end_credit_balance
+        case when account.debit_credit_type = 'DR' then COALESCE(mintab.month_begin_debit_balance,0) - COALESCE(mintab.month_begin_credit_balance,0)
+        else 0 end as month_begin_debit_balance,
+        case when account.debit_credit_type = 'CR' then COALESCE(mintab.month_begin_credit_balance,0) - COALESCE(mintab.month_begin_debit_balance,0)
+        else 0 end as month_begin_credit_balance,
+        --COALESCE(mintab.month_begin_debit_balance,0) month_begin_debit_balance, COALESCE(mintab.month_begin_credit_balance,0) month_begin_credit_balance,
+        COALESCE(sumtab.month_debit_amount,0) month_debit_amount,COALESCE(sumtab.month_credit_amount,0) month_credit_amount,
+        case when account.debit_credit_type = 'DR' then COALESCE(maxtab.year_begin_debit_balance,0) - COALESCE(maxtab.year_begin_credit_balance,0)
+        else 0 end as year_begin_debit_balance,
+        case when account.debit_credit_type = 'CR' then COALESCE(maxtab.year_begin_credit_balance,0) - COALESCE(maxtab.year_begin_debit_balance,0)
+        else 0 end as year_begin_credit_balance,
+        --COALESCE(maxtab.year_begin_debit_balance,0) year_begin_debit_balance, COALESCE(maxtab.year_begin_credit_balance,0) year_begin_credit_balance,
+        COALESCE(maxtab.year_debit_amount,0) year_debit_amount,COALESCE(maxtab.year_credit_amount,0) year_credit_amount,
+        case when account.debit_credit_type = 'DR' then COALESCE(maxtab.month_end_debit_balance,0) - COALESCE(maxtab.month_end_credit_balance,0)
+        else 0 end as month_end_debit_balance,
+        case when account.debit_credit_type = 'CR' then COALESCE(maxtab.month_end_credit_balance,0) - COALESCE(maxtab.month_end_debit_balance,0)
+        else 0 end as month_end_credit_balance
+            --COALESCE(maxtab.month_end_debit_balance,0) month_end_debit_balance,COALESCE(maxtab.month_end_credit_balance,0) month_end_credit_balance
+
+        from sumtab join mintab on sumtab.contract_code = mintab.contract_code and sumtab.org_id = mintab.org_id and sumtab.account_code = mintab.account_code and COALESCE(sumtab.bill_contract_code,'') =COALESCE(mintab.bill_contract_code,'') and sumtab.currency_code = mintab.currency_code
+        join maxtab on sumtab.contract_code = maxtab.contract_code and sumtab.org_id = maxtab.org_id and sumtab.account_code = maxtab.account_code and COALESCE(sumtab.bill_contract_code,'') =COALESCE(maxtab.bill_contract_code,'') and sumtab.currency_code = maxtab.currency_code
+        join (select distinct account_code ,debit_credit_type from eg_account ea ) account on sumtab.account_code = account.account_code
+        where 1=1
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+            and (COALESCE(sumtab.month_debit_amount,0) !=0 or COALESCE(sumtab.month_credit_amount,0) !=0)
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+            and (COALESCE(sumtab.month_debit_amount,0) !=0 or COALESCE(sumtab.month_credit_amount,0) !=0 or COALESCE(maxtab.month_end_debit_balance,0)!=0 or COALESCE(maxtab.month_end_credit_balance,0)!=0)
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+            and (COALESCE(maxtab.month_end_debit_balance,0)!=0 or COALESCE(maxtab.month_end_credit_balance,0)!=0)
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+            and (COALESCE(maxtab.year_debit_amount,0) !=0 or COALESCE(maxtab.year_credit_amount,0) !=0 )
+        </if>
+        <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+            and (COALESCE(maxtab.month_end_debit_balance,0)!=0 or COALESCE(maxtab.month_end_credit_balance,0)!=0 or COALESCE(maxtab.year_debit_amount,0) !=0 or COALESCE(maxtab.year_credit_amount,0) !=0 )
+        </if>
+        )
+    </sql>
+
+    <sql id="accountVoucherPartQuery">
+        <include refid="accountVoucherIdPartQuery"></include>
+        ,res_voucher as(
+        select ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code , ev_eve.bill_contract_code,ev_eve.currency currency_code,
+--         sum(ev_eve.debit_amount) month_debit_amount, sum(ev_eve.credit_amount) month_credit_amount
+        0 as year_begin_debit_balance, 0 as year_begin_credit_balance,
+        case when account.debit_credit_type = 'DR' then sum(ev_eve.debit_amount) - sum(ev_eve.credit_amount)
+        else 0 end as year_debit_amount,
+        case when account.debit_credit_type = 'CR' then sum(ev_eve.credit_amount) - sum(ev_eve.debit_amount)
+        else 0 end as year_credit_amount,
+        0 as month_begin_debit_balance, 0 as month_begin_credit_balance,
+        case when account.debit_credit_type = 'DR' then sum(ev_eve.debit_amount) - sum(ev_eve.credit_amount)
+        else 0 end as month_debit_amount,
+        case when account.debit_credit_type = 'CR' then sum(ev_eve.credit_amount) - sum(ev_eve.debit_amount)
+        else 0 end as month_credit_amount,
+        case when account.debit_credit_type = 'DR' then sum(ev_eve.debit_amount) - sum(ev_eve.credit_amount)
+        else 0 end as month_end_debit_balance,
+        case when account.debit_credit_type = 'CR' then sum(ev_eve.credit_amount) - sum(ev_eve.debit_amount)
+        else 0 end as month_end_credit_balance
+        from ev_eve join sub_ev on ev_eve.contract_code = sub_ev.contract_code
+        and ev_eve.org_id = sub_ev.org_id and ev_eve.account_code = sub_ev.account_code and COALESCE(ev_eve.bill_contract_code,'') =COALESCE(sub_ev.bill_contract_code,'') and ev_eve.currency = sub_ev.currency_code
+        and ev_eve.id &gt;= sub_ev.min_id and ev_eve.id &lt;= sub_ev.max_id
+        join (select distinct account_code ,debit_credit_type from eg_account ea ) account on ev_eve.account_code = account.account_code
+        group by ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code ,ev_eve.bill_contract_code,ev_eve.currency,account.debit_credit_type)
+    </sql>
+
+    <sql id="accountManualPartQuery">
+        --eg_manual
+        , em_emv as (
+        select emv.contract_code ,em.org_id ,emv.account_code, emv.loans_contract_code,em.currency_code,emv.id,emv.debit_amount,emv.credit_amount,em.period_code  from eg_manual em join eg_manual_voucher emv on em.id = emv.manual_id
+        where 1=1
+<!--        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">-->
+<!--            and em.period_code =#{param.periodCodeEnd} and emv.period_code =#{param.periodCodeEnd}-->
+<!--        </if>-->
+        and em.period_code = emv.period_code
+
+        <choose>
+            <when test="param.otherPeriodCodeStart != null and param.otherPeriodCodeStart != ''">
+                and em.period_code &gt;= #{param.otherPeriodCodeStart} and emv.period_code &gt;= #{param.otherPeriodCodeStart}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="param.otherPeriodCodeEnd != null and param.otherPeriodCodeEnd != ''">
+                and em.period_code &lt;= #{param.otherPeriodCodeEnd} and emv.period_code &lt;= #{param.otherPeriodCodeEnd}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+
+        <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+            and emv.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodes" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and em.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and emv.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and em.currency_code in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size() != 0">
+            and emv.loans_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+            and em.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and em.process_status = '1'
+        )
+        ,sub_em as (
+        select em_emv.contract_code ,em_emv.org_id ,em_emv.account_code, em_emv.loans_contract_code,em_emv.currency_code,min(em_emv.id) min_id,max(em_emv.id) max_id from em_emv
+        group by em_emv.contract_code ,em_emv.org_id ,em_emv.account_code ,em_emv.loans_contract_code,em_emv.currency_code
+        )
+        ,res_manual as(
+        select em_emv.contract_code ,em_emv.org_id ,em_emv.account_code , em_emv.loans_contract_code bill_contract_code,em_emv.currency_code,
+--                sum(em_emv.debit_amount) month_debit_amount, sum(em_emv.credit_amount) month_credit_amount
+        0 as year_begin_debit_balance, 0 as year_begin_credit_balance,
+        case when account.debit_credit_type = 'DR' then sum(em_emv.debit_amount) - sum(em_emv.credit_amount)
+        else 0 end as year_debit_amount,
+        case when account.debit_credit_type = 'CR' then sum(em_emv.credit_amount) - sum(em_emv.debit_amount)
+        else 0 end as year_credit_amount,
+        0 as month_begin_debit_balance, 0 as month_begin_credit_balance,
+        case when account.debit_credit_type = 'DR' then sum(em_emv.debit_amount) - sum(em_emv.credit_amount)
+        else 0 end as month_debit_amount,
+        case when account.debit_credit_type = 'CR' then sum(em_emv.credit_amount) - sum(em_emv.debit_amount)
+        else 0 end as month_credit_amount,
+        case when account.debit_credit_type = 'DR' then sum(em_emv.debit_amount) - sum(em_emv.credit_amount)
+        else 0 end as month_end_debit_balance,
+        case when account.debit_credit_type = 'CR' then sum(em_emv.credit_amount) - sum(em_emv.debit_amount)
+        else 0 end as month_end_credit_balance
+        from em_emv join sub_em on em_emv.contract_code = sub_em.contract_code
+        and em_emv.org_id = sub_em.org_id and em_emv.account_code = sub_em.account_code and COALESCE(em_emv.loans_contract_code,'') =COALESCE(sub_em.loans_contract_code,'') and em_emv.currency_code = sub_em.currency_code
+        and em_emv.id &gt;= sub_em.min_id and em_emv.id &lt;= sub_em.max_id
+        join (select distinct account_code ,debit_credit_type from eg_account ea ) account on em_emv.account_code = account.account_code
+        group by em_emv.contract_code ,em_emv.org_id ,em_emv.account_code ,em_emv.loans_contract_code,em_emv.currency_code,account.debit_credit_type)
+    </sql>
+
+    <sql id="accountVoucherIdPartQuery">
+        --eg_voucher
+        , ev_eve as (
+        select ev.id voucher_id,ev.contract_code ,ev.org_id ,eve.account_code, eve.bill_contract_code,eve.id,ev.currency,eve.debit_amount,eve.credit_amount from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+        where 1=1
+<!--        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">-->
+<!--            and ev.period_code =#{param.periodCodeEnd} and eve.period_code =#{param.periodCodeEnd}-->
+<!--        </if>-->
+        and ev.period_code = eve.period_code
+
+        <choose>
+            <when test="param.otherPeriodCodeStart != null and param.otherPeriodCodeStart != ''">
+                and ev.period_code &gt;= #{param.otherPeriodCodeStart} and eve.period_code &gt;= #{param.otherPeriodCodeStart}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="param.otherPeriodCodeEnd != null and param.otherPeriodCodeEnd != ''">
+                and ev.period_code &lt;= #{param.otherPeriodCodeEnd} and eve.period_code &lt;= #{param.otherPeriodCodeEnd}
+            </when>
+            <otherwise>
+                and 1=2
+            </otherwise>
+        </choose>
+
+        <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+            and ev.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodes" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and ev.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and eve.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and ev.currency in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size() != 0">
+            and eve.bill_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+            and ev.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+        ,sub_ev as (
+        select string_agg(ev_eve.voucher_id::text, ',') voucher_id,ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code, ev_eve.bill_contract_code,ev_eve.currency currency_code,min(ev_eve.id) min_id,max(ev_eve.id) max_id from ev_eve
+        group by ev_eve.contract_code ,ev_eve.org_id ,ev_eve.account_code ,ev_eve.bill_contract_code,ev_eve.currency
+        )
+    </sql>
+
+    <select id="selectAccountAssistPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        <include refid="accountAssistPartQuery"></include>
+        select * from res_account order by account_code
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export' and param.queryType.contains('assist')">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAccountVoucherPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        <include refid="accountVoucherPartQuery"></include>
+        select * from res_voucher
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export' and (param.queryType == 'voucher' or param.queryType == 'voucher+manual')">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAccountManualPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        <include refid="accountManualPartQuery"></include>
+        select * from res_manual
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export' and param.queryType == 'manual'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAccountAssistPartSize" resultType="java.util.Map">
+        <include refid="accountAssistPartQuery"/>
+        select count(1) total_size from res_account
+    </select>
+
+    <select id="selectAccountVoucherPartSize" resultType="java.util.Map">
+        <include refid="accountVoucherPartQuery"/>
+        select count(1) total_size from res_voucher
+    </select>
+
+    <select id="selectAccountManualPartSize" resultType="java.util.Map">
+        <include refid="accountManualPartQuery"/>
+        select count(1) total_size from res_manual
+    </select>
+
+    <select id="selectAccountVoucherIdPart" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        <include refid="accountVoucherIdPartQuery"></include>
+        select * from sub_ev
+    </select>
+
+    <select id="selectListByParams"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        select
+        t.*,
+        ec.financial_contract_status,
+        ec.contract_status,
+        ec.client_name
+        from
+        eg_account_assist_balance t
+        inner join eg_contract_month ec on
+        t.org_id = ec.org_id
+        and t.contract_code = ec.contract_code
+        and ec.del_flag = '0'
+        where
+        1 = 1
+        and t.del_flag = '0'
+        <if test="param.accountCode!=null and param.accountCode!=''">
+            and t.account_code = #{param.accountCode}
+        </if>
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <sql id="accountAllPart">
+        ,res_all as (
+        select coalesce(res_account.org_id,'') org_id,
+        coalesce(res_account.account_code,'') account_code,
+        coalesce(res_account.currency_code,'') currency_code,
+        coalesce(res_account.month_begin_debit_balance,0) month_begin_debit_balance,
+        coalesce(res_account.month_begin_credit_balance,0) month_begin_credit_balance,
+        coalesce(res_account.month_debit_amount,0) month_debit_amount,
+        coalesce(res_account.month_credit_amount,0) month_credit_amount,
+        coalesce(res_account.year_debit_amount,0) year_debit_amount,
+        coalesce(res_account.year_credit_amount,0) year_credit_amount,
+        coalesce(res_account.month_end_debit_balance,0) month_end_debit_balance,
+        coalesce(res_account.month_end_credit_balance,0) month_end_credit_balance from res_account
+        union all
+        select coalesce(res_voucher.org_id,'') org_id,
+        coalesce(res_voucher.account_code,'') account_code,
+        coalesce(res_voucher.currency_code,'') currency_code,
+        coalesce(res_voucher.month_begin_debit_balance,0) month_begin_debit_balance,
+        coalesce(res_voucher.month_begin_credit_balance,0) month_begin_credit_balance,
+        coalesce(res_voucher.month_debit_amount,0) month_debit_amount,
+        coalesce(res_voucher.month_credit_amount,0) month_credit_amount,
+        coalesce(res_voucher.year_debit_amount,0) year_debit_amount,
+        coalesce(res_voucher.year_credit_amount,0) year_credit_amount,
+        coalesce(res_voucher.month_end_debit_balance,0) month_end_debit_balance,
+        coalesce(res_voucher.month_end_credit_balance,0) month_end_credit_balance from res_voucher
+        union all
+        select coalesce(res_manual.org_id,'') org_id,
+        coalesce(res_manual.account_code,'') account_code,
+        coalesce(res_manual.currency_code,'') currency_code,
+        coalesce(res_manual.month_begin_debit_balance,0) month_begin_debit_balance,
+        coalesce(res_manual.month_begin_credit_balance,0) month_begin_credit_balance,
+        coalesce(res_manual.month_debit_amount,0) month_debit_amount,
+        coalesce(res_manual.month_credit_amount,0) month_credit_amount,
+        coalesce(res_manual.year_debit_amount,0) year_debit_amount,
+        coalesce(res_manual.year_credit_amount,0) year_credit_amount,
+        coalesce(res_manual.month_end_debit_balance,0) month_end_debit_balance,
+        coalesce(res_manual.month_end_credit_balance,0) month_end_credit_balance from res_manual)
+        ,res_cal as (
+        select res_all.org_id,res_all.account_code,res_all.currency_code,
+        sum(res_all.month_begin_debit_balance) month_begin_debit_balance,
+        sum(res_all.month_begin_credit_balance) month_begin_credit_balance,
+        sum(res_all.month_debit_amount) month_debit_amount,
+        sum(res_all.month_credit_amount) month_credit_amount,
+        sum(res_all.year_debit_amount) year_debit_amount,
+        sum(res_all.year_credit_amount) year_credit_amount,
+        sum(res_all.month_end_debit_balance) month_end_debit_balance,
+        sum(res_all.month_end_credit_balance) month_end_credit_balance
+        from res_all group by res_all.org_id, res_all.account_code, res_all.currency_code
+        )
+    </sql>
+    <sql id="accountVoucherAllPart">
+        , ev_eve_all as (
+        select ev.id voucher_id ,ev.org_id ,eve.account_code,eve.id,ev.currency,eve.debit_amount,eve.credit_amount from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+        where 1=1
+        <!--        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">-->
+        <!--            and ev.period_code =#{param.periodCodeEnd} and eve.period_code =#{param.periodCodeEnd}-->
+        <!--        </if>-->
+
+        and ev.period_code = eve.period_code
+        <if test="param.periodCodeStart != null and param.periodCodeStart != ''">
+            and ev.period_code &gt;= #{param.periodCodeStart} and eve.period_code &gt;= #{param.periodCodeStart}
+        </if>
+        <if test="param.periodCodeEnd != null and param.periodCodeEnd != ''">
+            and ev.period_code &lt;= #{param.periodCodeEnd} and eve.period_code &lt;= #{param.periodCodeEnd}
+        </if>
+
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and ev.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        and exists (select 1 from eg_account ea where ea.del_flag = '0' and eve.account_code= ea.account_code
+        <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+            and ea.account_code &gt;= #{param.accountCodeStart}
+        </if>
+        <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+            and ea.account_code &lt;= #{param.accountCodeEnd}
+        </if>
+        <if test="param.accountNameList != null and param.accountNameList.size() != 0">
+            and ea.account_name in
+            <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+
+        <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+            and ev.currency in
+            <foreach item="item" index="index" collection="param.currencyCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+            and ev.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        )
+        ,sub_ev_all as (
+        select string_agg(ev_eve_all.voucher_id::text, ',') voucher_id ,ev_eve_all.org_id ,ev_eve_all.account_code,ev_eve_all.currency currency_code from ev_eve_all
+        group by ev_eve_all.org_id ,ev_eve_all.account_code,ev_eve_all.currency
+        )
+    </sql>
+
+    <!--
+      MySQL-compatible ledger used by the two balance reports.  The legacy query
+      mixed PostgreSQL casts/string_agg and SQL comments inside a CTE, which is
+      rejected by Druid before it reaches MySQL.  A ledger row is one posted or
+      entered voucher line; report balances are calculated from those rows.
+    -->
+    <sql id="mysqlBalanceLedger">
+        ledger as (
+            select v.period_code,
+                   v.org_id,
+                   coalesce(nullif(v.currency, ''), 'RMB') currency_code,
+                   e.account_code,
+                   e.account_name,
+                   nullif(e.contract_code, '') contract_code,
+                   e.contract_name,
+                   e.client_code,
+                   e.client_name,
+                   nullif(e.bill_contract_code, '') bill_contract_code,
+                   coalesce(e.debit_amount, 0) debit_amount,
+                   coalesce(e.credit_amount, 0) credit_amount
+            from eg_voucher v
+            join eg_voucher_entry e
+              on e.voucher_id = v.id and e.period_code = v.period_code
+            where coalesce(v.del_flag, '0') = '0'
+              and coalesce(e.del_flag, '0') = '0'
+              and e.account_code is not null and e.account_code != ''
+              and v.period_code &lt;= #{param.periodCodeEnd}
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+              and v.org_id in
+              <foreach item="item" collection="param.orgIdList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+              and v.currency in
+              <foreach item="item" collection="param.currencyCodeList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+              and e.account_code &gt;= #{param.accountCodeStart}
+            </if>
+            <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+              and e.account_code &lt;= #{param.accountCodeEnd}
+            </if>
+            <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+              and v.voucher_status in
+              <foreach item="item" collection="param.processStatusList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+              and e.contract_code in
+              <foreach item="item" collection="param.contractCodes" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.billContractCodeList != null and param.billContractCodeList.size() != 0">
+              and e.bill_contract_code in
+              <foreach item="item" collection="param.billContractCodeList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+
+            union all
+
+            select m.period_code,
+                   m.org_id,
+                   coalesce(nullif(m.currency_code, ''), 'RMB') currency_code,
+                   mv.account_code,
+                   mv.account_name,
+                   nullif(mv.contract_code, '') contract_code,
+                   mv.contract_name,
+                   mv.client_code,
+                   mv.client_name,
+                   nullif(mv.loans_contract_code, '') bill_contract_code,
+                   coalesce(mv.debit_amount, 0) debit_amount,
+                   coalesce(mv.credit_amount, 0) credit_amount
+            from eg_manual m
+            join eg_manual_voucher mv on mv.manual_id = m.id
+            where coalesce(m.del_flag, '0') = '0'
+              and coalesce(mv.del_flag, '0') = '0'
+              and mv.account_code is not null and mv.account_code != ''
+              and m.period_code &lt;= #{param.periodCodeEnd}
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+              and m.org_id in
+              <foreach item="item" collection="param.orgIdList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.currencyCodeList != null and param.currencyCodeList.size() != 0">
+              and m.currency_code in
+              <foreach item="item" collection="param.currencyCodeList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.accountCodeStart != null and param.accountCodeStart != ''">
+              and mv.account_code &gt;= #{param.accountCodeStart}
+            </if>
+            <if test="param.accountCodeEnd != null and param.accountCodeEnd != ''">
+              and mv.account_code &lt;= #{param.accountCodeEnd}
+            </if>
+            <if test="param.processStatusList != null and param.processStatusList.size() != 0">
+              and m.process_status in
+              <foreach item="item" collection="param.processStatusList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.contractCodes != null and param.contractCodes.size() != 0">
+              and mv.contract_code in
+              <foreach item="item" collection="param.contractCodes" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+            <if test="param.billContractCodeList != null and param.billContractCodeList.size() != 0">
+              and mv.loans_contract_code in
+              <foreach item="item" collection="param.billContractCodeList" open="(" separator="," close=")">#{item}</foreach>
+            </if>
+        )
+    </sql>
+
+    <sql id="mysqlAccountBalanceResult">
+        , account_metrics as (
+            select org_id, currency_code, account_code, max(account_name) account_name,
+                   sum(case when period_code &lt; #{param.periodYearStart} then debit_amount - credit_amount else 0 end) year_begin_net,
+                   sum(case when period_code &lt; #{param.periodCodeStart} then debit_amount - credit_amount else 0 end) month_begin_net,
+                   sum(case when period_code between #{param.periodCodeStart} and #{param.periodCodeEnd} then debit_amount else 0 end) month_debit_amount,
+                   sum(case when period_code between #{param.periodCodeStart} and #{param.periodCodeEnd} then credit_amount else 0 end) month_credit_amount,
+                   sum(case when period_code between #{param.periodYearStart} and #{param.periodCodeEnd} then debit_amount else 0 end) year_debit_amount,
+                   sum(case when period_code between #{param.periodYearStart} and #{param.periodCodeEnd} then credit_amount else 0 end) year_credit_amount,
+                   sum(debit_amount - credit_amount) month_end_net
+            from ledger
+            group by org_id, currency_code, account_code
+        ), res_cal as (
+            select org_id, currency_code, account_code, account_name,
+                   greatest(year_begin_net, 0) year_begin_debit_balance,
+                   greatest(-year_begin_net, 0) year_begin_credit_balance,
+                   greatest(month_begin_net, 0) month_begin_debit_balance,
+                   greatest(-month_begin_net, 0) month_begin_credit_balance,
+                   month_debit_amount, month_credit_amount,
+                   year_debit_amount, year_credit_amount,
+                   greatest(month_end_net, 0) month_end_debit_balance,
+                   greatest(-month_end_net, 0) month_end_credit_balance
+            from account_metrics
+            where 1 = 1
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+              and (month_debit_amount != 0 or month_credit_amount != 0)
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+              and (month_debit_amount != 0 or month_credit_amount != 0 or month_end_net != 0)
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+              and month_end_net != 0
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+              and (year_debit_amount != 0 or year_credit_amount != 0)
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+              and (month_end_net != 0 or year_debit_amount != 0 or year_credit_amount != 0)
+            </if>
+        )
+    </sql>
+
+    <select id="selectAccountAll" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountBalanceSheetVO">
+        with <include refid="mysqlBalanceLedger"/><include refid="mysqlAccountBalanceResult"/>
+        select * from res_cal order by account_code, org_id, currency_code
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAccountAllSize" resultType="java.util.Map">
+        with <include refid="mysqlBalanceLedger"/><include refid="mysqlAccountBalanceResult"/>
+        select count(1) total_size from res_cal
+    </select>
+
+    <sql id="assistAllPart">
+        ,res_all as (
+        select contract_code, org_id, account_code, bill_contract_code, currency_code,
+        year_begin_debit_balance, year_begin_credit_balance,
+        year_debit_amount, year_credit_amount,
+        month_begin_debit_balance, month_begin_credit_balance,
+        month_debit_amount, month_credit_amount,
+        month_end_debit_balance, month_end_credit_balance
+        from res_account
+        union all
+        select contract_code, org_id, account_code, bill_contract_code, currency_code,
+        year_begin_debit_balance, year_begin_credit_balance,
+        year_debit_amount, year_credit_amount,
+        month_begin_debit_balance, month_begin_credit_balance,
+        month_debit_amount, month_credit_amount,
+        month_end_debit_balance, month_end_credit_balance
+        from res_voucher
+        union all
+        select contract_code, org_id, account_code, bill_contract_code, currency_code,
+        year_begin_debit_balance, year_begin_credit_balance,
+        year_debit_amount, year_credit_amount,
+        month_begin_debit_balance, month_begin_credit_balance,
+        month_debit_amount, month_credit_amount,
+        month_end_debit_balance, month_end_credit_balance
+        from res_manual
+        )
+        ,res_cal as (
+        select contract_code, org_id, account_code, bill_contract_code, currency_code,
+        sum(coalesce(year_begin_debit_balance,0)) year_begin_debit_balance, sum(coalesce(year_begin_credit_balance,0)) year_begin_credit_balance,
+        sum(coalesce(year_debit_amount,0)) year_debit_amount, sum(coalesce(year_credit_amount,0)) year_credit_amount,
+        sum(coalesce(month_begin_debit_balance,0)) month_begin_debit_balance, sum(coalesce(month_begin_credit_balance,0)) month_begin_credit_balance,
+        sum(coalesce(month_debit_amount,0)) month_debit_amount, sum(coalesce(month_credit_amount,0)) month_credit_amount,
+        sum(coalesce(month_end_debit_balance,0)) month_end_debit_balance, sum(coalesce(month_end_credit_balance,0)) month_end_credit_balance
+        from res_all group by contract_code, org_id, account_code, bill_contract_code, currency_code
+
+        )
+    </sql>
+
+    <sql id="mysqlAssistBalanceResult">
+        , assist_metrics as (
+            select org_id, currency_code, account_code,
+                   max(account_name) account_name,
+                   coalesce(contract_code, '') contract_code,
+                   max(contract_name) contract_name,
+                   max(client_code) client_code,
+                   max(client_name) client_name,
+                   coalesce(bill_contract_code, '') bill_contract_code,
+                   sum(case when period_code &lt; #{param.periodYearStart} then debit_amount - credit_amount else 0 end) year_begin_net,
+                   sum(case when period_code &lt; #{param.periodCodeStart} then debit_amount - credit_amount else 0 end) month_begin_net,
+                   sum(case when period_code between #{param.periodCodeStart} and #{param.periodCodeEnd} then debit_amount else 0 end) month_debit_amount,
+                   sum(case when period_code between #{param.periodCodeStart} and #{param.periodCodeEnd} then credit_amount else 0 end) month_credit_amount,
+                   sum(case when period_code between #{param.periodYearStart} and #{param.periodCodeEnd} then debit_amount else 0 end) year_debit_amount,
+                   sum(case when period_code between #{param.periodYearStart} and #{param.periodCodeEnd} then credit_amount else 0 end) year_credit_amount,
+                   sum(debit_amount - credit_amount) month_end_net
+            from ledger
+            where contract_code is not null or bill_contract_code is not null
+            group by org_id, currency_code, account_code, coalesce(contract_code, ''), coalesce(bill_contract_code, '')
+        ), res_cal as (
+            select org_id, currency_code, account_code, account_name,
+                   contract_code, contract_name, client_code, client_name, bill_contract_code,
+                   greatest(year_begin_net, 0) year_begin_debit_balance,
+                   greatest(-year_begin_net, 0) year_begin_credit_balance,
+                   greatest(month_begin_net, 0) month_begin_debit_balance,
+                   greatest(-month_begin_net, 0) month_begin_credit_balance,
+                   month_debit_amount, month_credit_amount,
+                   year_debit_amount, year_credit_amount,
+                   greatest(month_end_net, 0) month_end_debit_balance,
+                   greatest(-month_end_net, 0) month_end_credit_balance
+            from assist_metrics
+            where 1 = 1
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;1&quot;)">
+              and (month_debit_amount != 0 or month_credit_amount != 0)
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;2&quot;)">
+              and (month_debit_amount != 0 or month_credit_amount != 0 or month_end_net != 0)
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;3&quot;)">
+              and month_end_net != 0
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;4&quot;)">
+              and (year_debit_amount != 0 or year_credit_amount != 0)
+            </if>
+            <if test="param.exceptList != null and param.exceptList.contains(&quot;5&quot;)">
+              and (month_end_net != 0 or year_debit_amount != 0 or year_credit_amount != 0)
+            </if>
+        )
+    </sql>
+
+    <select id="selectAssistAll" resultType="com.utfinancing.financehub.engine.finance.model.vo.AccountAssistBalanceVO">
+        with <include refid="mysqlBalanceLedger"/><include refid="mysqlAssistBalanceResult"/>
+        select * from res_cal order by account_code, org_id, contract_code, currency_code
+        <if test="param.searchType != null and param.searchType != '' and param.searchType != 'export'">
+            limit #{param.limit} offset #{param.offset}
+        </if>
+    </select>
+
+    <select id="selectAssistAllSize" resultType="java.util.Map">
+        with <include refid="mysqlBalanceLedger"/><include refid="mysqlAssistBalanceResult"/>
+        select count(1) total_size from res_cal
+    </select>
+</mapper>
+

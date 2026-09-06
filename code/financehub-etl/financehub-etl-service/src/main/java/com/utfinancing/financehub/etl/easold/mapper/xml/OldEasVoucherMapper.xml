@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.easold.mapper.OldEasVoucherMapper">
+
+    <select id="queryEas1Voucher" parameterType="com.utfinancing.financehub.etl.easold.model.dto.QueryEas1VoucherInputDTO" resultType="com.utfinancing.financehub.etl.easold.model.dto.EasVoucherDTO">
+
+            SELECT
+                gv.fid fid,
+                toc.FNUMBER "companyNumber",
+                gv.FNUMBER "voucherNumber",
+                substr(tbp.FNUMBER,1,4) "periodYear",
+                substr(tbp.FNUMBER,5,2) "periodNumber",
+                gv.FBOOKEDDATE "bookedDate",
+                gv.FBIZDATE "bizDate",
+                gv.FSOURCETYPE "sourceType",
+                tbv.FNAME_L2 "voucherType",
+                gv.FDESCRIPTION "description",
+                ge.FDESCRIPTION "voucherAbstract",
+                gv.FATTACHMENTS "attaches",
+                gv.FISCHECK "isCheck",
+                tpu.FNUMBER "creator",
+                tpu1.FNUMBER "auditor",
+                tpu2.FNUMBER "poster",
+                tpu3.FNUMBER "cashier",
+                '' "importKey",
+                gv.FSOURCEBILLID "sourceBillId",
+                gv.FSOURCESYS "sourceSysNo",
+                '' "sourceSysBillUrl" ,
+                ge.FSEQ "entrySeq",
+                toc.FNUMBER "profitCenterNumber",
+                gac.FNUMBER "accountNumber",
+                tbc.FNUMBER "currencyNumber" ,
+                ge.FENTRYDC "entryDC",
+                tbm1.FNAME_L2 "measurement",
+                ge.FISCUSSENT "cussent",
+                ge.FLOCALEXCHANGERATE "localRate",
+                COALESCE(GAV.FORIGINALAMOUNT ,GE.FORIGINALAMOUNT) "originalAmount",
+                NULLIF(DECODE(GE.FENTRYDC, '1', COALESCE(GAV.FLOCALAMOUNT ,GE.FLOCALAMOUNT), '0'), 0) "debitAmount",
+                NULLIF(DECODE(GE.FENTRYDC, '0', COALESCE(GAV.FLOCALAMOUNT ,GE.FLOCALAMOUNT), '0'), 0) "creditAmount",
+                ge.FQUANTITY "qty",
+                ge.FPRICE "price",
+                GAV.FSEQ "asstSeq",
+                GAV.FDESCRIPTION "assistAbstract",
+                GAV.FBIZDATE "assistBizDate",
+                GAV.FENDDATE "assistEndDate",
+                TBS.FNUMBER "settlementType",
+                GAV.FSETTLEMENTCODE "settlementNumber",
+                GAV.FBIZNUMBER "bizNumber",
+                GAV.FTICKETNUMBER "ticketNumber",
+                GAV.FINVOICENUMBER "invoiceNumber",
+                '物料' "asstActType1", --00006
+                tbm.fnumber "asstActNumber1",
+                tbm.fname_L2 "asstActName1",
+                '客户' "asstActType2", --00001
+                tbc1.fnumber "asstActNumber2",
+                tbc1.fname_L2 "asstActName2",
+                '银行账户' "asstActType3", --00003
+                tba.fnumber "asstActNumber3",
+                tba.fname_L2 "asstActName3",
+                '金融机构' "asstActType4", --00010
+                tbb.fnumber "asstActNumber4",
+                tbb.fname_L2 "asstActName4",
+                '成本中心' "asstActType6", --00009
+                tocc.fnumber "asstActNumber6",
+                tocc.fname_L2 "asstActName6",
+                '职员' "asstActType7", --00005
+                tbp1.fnumber "asstActNumber7",
+                tbp1.fname_L2 "asstActName7",
+                '费用类型' "asstActType8", --001
+                tbg1.fnumber "asstActNumber8",
+                tbg1.fname_L2 "asstActName8",
+                '借据号' "asstActType9", --002
+                tbg2.fnumber "asstActNumber9",
+                tbg2.fname_L2 "asstActName9",
+                '借款合同编号' "asstActType10", --003
+                tbg3.fnumber "asstActNumber10",
+                tbg3.fname_L2 "asstActName10",
+                '合同编号' "asstActType11", --004
+                tbg4.fnumber "asstActNumber11",
+                tbg4.fname_L2 "asstActName11",
+                '衍生合约编号' "asstActType12", --005
+                tbg5.fnumber "asstActNumber12",
+                tbg5.fname_L2 "asstActName12",
+                '项目类型' "asstActType13", --006
+                tbg6.fnumber "asstActNumber13",
+                tbg6.fname_L2 "asstActName13",
+                '批次号' "asstActType14", --007
+                tbg7.fnumber "asstActNumber14",
+                tbg7.fname_L2 "asstActName14"
+            FROM HXORACLE.T_GL_VOUCHER GV
+            INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =gv.FCOMPANYID
+            INNER JOIN HXORACLE.T_BD_PERIOD TBP ON TBP.FID =gv.FPERIODID
+            INNER JOIN HXORACLE.T_GL_VOUCHERENTRY GE ON GV.FID = GE.FBILLID
+            INNER JOIN HXORACLE.T_BD_CURRENCY tbc ON GE.FCURRENCYID =tbc.FID
+            INNER JOIN HXORACLE.T_BD_ACCOUNTVIEW GAC ON GE.FACCOUNTID =GAC.FID
+            INNER JOIN hxoracle.T_BD_VOUCHERTYPES tbv ON gv.FVOUCHERTYPEID =tbv.FID
+            LEFT JOIN HXORACLE.T_PM_USER tpu ON gv.FCREATORID =tpu.FID
+            LEFT JOIN HXORACLE.T_PM_USER tpu1 ON gv.FAUDITORID =tpu1.FID
+            LEFT JOIN HXORACLE.T_PM_USER tpu2 ON gv.FPOSTERID =tpu2.FID
+            LEFT JOIN HXORACLE.T_PM_USER tpu3 ON gv.FCASHIERID =tpu3.FID
+            LEFT OUTER JOIN HXORACLE.T_GL_VOUCHERASSISTRECORD GAV ON GE.FID =GAV.FENTRYID
+            LEFT OUTER JOIN HXORACLE.T_BD_ASSISTANTHG HG ON HG.FID =GAV.FASSGRPID
+            LEFT OUTER JOIN HXORACLE.T_BD_SETTLEMENTTYPE tbs ON GAV.FSETTLEMENTTYPEID =TBS.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON HG.FMATERIALID =TBM.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON HG.FCUSTOMERID =TBC1.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTBANKS tba ON HG.FBANKACCOUNTID =TBA.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_Bank tbb ON HG.FREGIONID =tbb.FID
+            LEFT OUTER JOIN HXORACLE.T_ORG_COSTCENTER tocc ON HG.FCOSTORGID =tocc.FID
+            LEFT OUTER JOIN HXORACLE.t_bd_person tbp1 ON HG.FPERSONID =tbp1.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg1 ON HG.FGENERALASSACTTYPE1ID =tbg1.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg2 ON HG.FGENERALASSACTTYPE2ID =tbg2.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg3 ON HG.FGENERALASSACTTYPE3ID =tbg3.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg4 ON HG.FGENERALASSACTTYPE4ID =tbg4.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg5 ON HG.FGENERALASSACTTYPE5ID =tbg5.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg6 ON HG.FGENERALASSACTTYPE6ID =tbg6.FID
+            LEFT OUTER JOIN HXORACLE.T_BD_GENERALASSTACTTYPE tbg7 ON HG.FGENERALASSACTTYPE7ID =tbg7.FID
+            LEFT OUTER JOIN hxoracle.T_BD_MEASUREUNIT tbm1 ON GE.FMEASUREUNITID =tbm1.FID
+            WHERE gv.FBIZSTATUS =5
+            AND tbp.FNUMBER  = #{params.fnumber}
+            <if test="params.isUseFid != null and params.isUseFid != ''">
+                AND GV.FID IN (SELECT voucherid  FROM HXORACLE.EAS_VOUCHERID_NOT_SYNC)
+            </if>
+           <!-- AND gv.FNUMBER in ('000158')-->
+            <!--AND gv.fid in ('JiMAAAj28iwmUuAe')-->
+            <!--AND toc.FNUMBER IN ('01-C0001', '80001', '30001', '02-C0001')-->
+            <!-- 数据量： 752586 94521  123658   13217-->
+        <!-- 数据量：699381 77473 107324  10765-->
+            <if test="params.orgIdList != null and params.orgIdList.size > 0">
+                AND toc.FNUMBER IN
+                <foreach item="item" index="index" collection="params.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <!--AND toc.FNUMBER = '02-C0001'-->
+            <!--AND GV.FID ='JiMAAAjrEAwmUuAe'-->
+            <!--<if test="param.period != null and param.period != ''">
+                AND tbp.FNUMBER = #{param.period}
+            </if>
+            <if test="param.fnumber != null and param.fnumber != ''">
+                AND tbm.fnumber = #{param.fnumber}
+            </if>
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                AND toc.FNUMBER IN
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>-->
+            ORDER BY gv.FNUMBER,toc.FNUMBER, tbp.FNUMBER, tbv.FNAME_L2, ge.FSEQ, GAV.FSEQ
+
+    </select>
+</mapper>
+

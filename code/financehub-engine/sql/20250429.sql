@@ -1,0 +1,2 @@
+ALTER TABLE financialdb3.eg_non_confirm_collection_account_checking ALTER COLUMN business_ebank_number TYPE text USING business_ebank_number::text;
+ALTER TABLE financialdb3.eg_non_confirm_collection_account_checking ALTER COLUMN ebank_serial_number TYPE text USING ebank_serial_number::text;

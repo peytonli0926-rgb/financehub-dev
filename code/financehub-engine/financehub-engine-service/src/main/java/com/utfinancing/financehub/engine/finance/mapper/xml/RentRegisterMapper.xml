@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RentRegisterMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RentRegisterEntity">
+        <id column="id" property="id"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="asset_number" property="assetNumber"/>
+        <result column="transfer_out_date" property="transferOutDate"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="client_name" property="clientName"/>
+        <result column="lease_date_start" property="leaseDateStart"/>
+        <result column="lease_date_end" property="leaseDateEnd"/>
+        <result column="rent_total" property="rentTotal"/>
+        <result column="rent_bond" property="rentBond"/>
+        <result column="process_status" property="processStatus"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, contract_code, asset_number, transfer_out_date, client_code, client_name, lease_date_start, lease_date_end,
+        rent_total, rent_bond, process_status, process_instance_id, del_flag, create_by, create_time, update_by,
+        update_time
+    </sql>
+    <select id="selectByMapper"
+            resultType="com.utfinancing.financehub.engine.finance.entity.RentRegisterEntity">
+        select *
+        from eg_rent_register err
+        where err.del_flag ='0'
+        <if test="queryDTO.contractCode!=null and queryDTO.contractCode!=''">
+            and err.contract_code like concat('%', #{queryDTO.contractCode}::text, '%')
+        </if>
+        <if test="queryDTO.clientName!=null and queryDTO.clientName!=''">
+            and err.client_name like concat('%', #{queryDTO.clientName}::text, '%')
+        </if>
+        <if test="queryDTO.assetNumber!=null and queryDTO.assetNumber!=''">
+            and err.asset_number like concat('%', #{queryDTO.assetNumber}::text, '%')
+        </if>
+        <if test="queryDTO.processStatusList != null and queryDTO.processStatusList.size > 0">
+            and err.process_status in
+            <foreach item="item" index="index" collection="queryDTO.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.idList != null and queryDTO.idList.size > 0">
+            and err.id in
+            <foreach item="item" index="index" collection="queryDTO.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.id != null ">
+            and err.id = #{queryDTO.id}
+        </if>
+        <if test="queryDTO.isLatestVersion != null and  queryDTO.isLatestVersion == '1'.toString">
+            and not exists (
+            select 1
+            from eg_rent_register err2
+            where err2.contract_code=err.contract_code
+            and err2.version_num>err.version_num
+            )
+        </if>
+        order by err.id desc
+    </select>
+</mapper>
+

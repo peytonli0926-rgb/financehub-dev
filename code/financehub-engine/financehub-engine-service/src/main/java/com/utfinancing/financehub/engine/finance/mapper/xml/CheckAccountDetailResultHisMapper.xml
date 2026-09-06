@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.CheckAccountDetailResultHisMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.CheckAccountDetailResultHisEntity">
+                    <id column="id" property="id" />
+                    <result column="record_id" property="recordId" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="account_remain_balance" property="accountRemainBalance" />
+                    <result column="detail_remain_balance" property="detailRemainBalance" />
+                    <result column="diff_flag" property="diffFlag" />
+                    <result column="diff_balance" property="diffBalance" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, record_id, period_code, currency_type, org_id, account_code, contract_code, client_code, account_remain_balance, detail_remain_balance, diff_flag, diff_balance, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+        <insert id="saveResultToHis">
+            insert into eg_check_account_detail_result_his(record_id, period_code, currency_type,
+                                                           org_id, account_code, contract_code, client_code,
+                                                           account_remain_balance, detail_remain_balance, diff_flag,
+                                                           diff_balance, del_flag, create_by, create_time, update_by, update_time)
+            select record_id, period_code, currency_type,
+                   org_id, account_code, contract_code, client_code,
+                   account_remain_balance, detail_remain_balance, diff_flag,
+                   diff_balance, del_flag, create_by, create_time, update_by, update_time from eg_check_account_detail_result
+        </insert>
+
+        <delete id="clearHisTableData">
+            delete from eg_check_account_detail_result_his where period_code = #{periodCode}
+        </delete>
+
+        <insert id="queryAndSaveCheckResultDtoByParam">
+            insert into eg_check_account_detail_result_his(record_id, period_code, currency_type,
+               org_id, account_code, contract_code, client_code,
+               account_remain_balance, detail_remain_balance, diff_flag,
+               diff_balance, del_flag, create_by, create_time, update_by, update_time)
+
+            select ${param.recordId} as record_id, tab_all.period_code, tab_all.currency_type,tab_all.org_id,tab_all.account_code ,
+            tab_all.contract_code ,tab_all.client_code ,tab_all.account_remain_balance, tab_all.detail_remain_balance,
+            case when tab_all.account_remain_balance = tab_all.detail_remain_balance then '0' else '1' end diff_flag,
+            tab_all.account_remain_balance-tab_all.detail_remain_balance as diff_balance, ${param.delFlag}, ${param.createBy}, now(), ${param.updateBy}, now()
+            from (
+            <foreach collection="list" item="item" index="index" separator="union all">
+                select eaab.period_code,eaab.currency_code currency_type,eaab.org_id,eaab.account_code ,
+                eaab.contract_code ,eaab.client_code ,eaab.month_end_debit_balance account_remain_balance,ecb.${item.queryField} detail_remain_balance
+                from eg_account_assist_balance eaab join eg_check_account_detail_contract_balance ecb
+                on eaab.period_code = ecb.period_code
+                and eaab.org_id  = ecb.org_id
+                and eaab.contract_code = ecb.contract_code
+                and eaab.client_code = ecb.client_code
+                where eaab.period_code = #{param.periodCode}
+                and eaab.account_code = #{item.accountCode}
+                and eaab.del_flag = '0'
+                and ecb.del_flag = '0'
+            </foreach>
+            ) tab_all
+        </insert>
+        <delete id="clearContractTmpTableData">
+            truncate table eg_check_account_detail_contract_balance
+        </delete>
+
+        <sql id="Tmp_Column_List">
+            id, voucher_id, interface_data_id, system_code, business_code, business_date, voucher_date, scene_code, contract_code, client_code, client_type, org_id, create_by, create_time, update_by, update_time, del_flag, receivable_rent_balance, receivable_rent_amount, receivable_downpayment_balance, receivable_downpayment_amount, receivable_residual_value_balance, receivable_residual_value_amount, receivable_commission_balance, receivable_commission_amount, receivable_rebate_balance, receivable_rebate_amount, receivable_insurance_balance, receivable_insurance_amount, receivable_otherincome_balance, receivable_otherincome_amount, receivable_outtax_balance, receivable_outtax_amount, receivable_outputtax_base_balance, receivable_outputtax_base_amount, receivable_unconfirm_receipt_balance, receivable_unconfirm_receipt_amount, receivable_service_balance, receivable_service_amount, receivable_service_outtax_balance, receivable_service_outtax_amount, unrealized_revenue_balance, unrealized_revenue_amount, lease_revenue_balance, lease_revenue_amount, service_revenue_balance, service_revenue_amount, insurance_differ_balance, insurance_differ_amount, dinterest_revenue_balance, dinterest_revenue_amount, terminate_balance, terminate_amount, other_revenue_balance, other_revenue_amount, damages_revenue_balance, damages_revenue_amount, margin_interest_balance, margin_interest_amount, payable_device_estimate_balance, payable_device_estimate_amount, payable_device_balance, payable_device_amount, payable_other_cost_estimate_balance, payable_other_cost_estimate_amount, payable_other_cost_balance, payable_other_cost_amount, payable_agency_estimate_balance, payable_agency_estimate_amount, payable_agency_balance, payable_agency_amount, payable_vehicle_estimate_balance, payable_vehicle_estimate_amount, payable_vehicle_balance, payable_vehicle_amount, payable_band_cost_estimate_balance, payable_band_cost_estimate_amount, payable_band_cost_balance, payable_band_cost_amount, payable_pledge_estimate_balance, payable_pledge_estimate_amount, payable_pledge_balance, payable_pledge_amount, payable_unpledge_estimate_balance, payable_unpledge_estimate_amount, payable_unpledge_balance, payable_unpledge_amount, lessee_margin_balance, lessee_margin_amount, supplier_margin_balance, supplier_margin_amount, payable_insurance_estimate_balance, payable_insurance_estimate_amount, payable_insurance_balance, payable_insurance_amount, intax_balance, intax_amount, outtax_balance, outtax_amount, litigation_expenses_balance, litigation_expenses_amount, depreciation_reserves_balance, depreciation_reserves_amount, depreciation_loss_balance, depreciation_loss_amount, receive_cost_balance, receive_cost_amount, off_income_balance, off_income_amount, defer_income_balance, defer_income_amount, payable_account_balance, payable_account_amount, payable_margin_balance, payable_margin_amount, payable_margin_year_balance, payable_margin_year_amount, margin_ointerest_balance, margin_ointerest_amount, receive_sum_balance, receive_sum_amount, receive_sum_outtax_balance, receive_sum_outtax_amount, receive_unrealized_revenue_balance, receive_unrealized_revenue_amount, payable_lessee_margin_year_balance, payable_lessee_margin_year_amount, payable_supplier_margin_year_balance, payable_supplier_margin_year_amount, receivable_litigation_expenses_balance, receivable_litigation_expenses_amount, payable_other_estimate_balance, payable_other_estimate_amount, payable_discount_cost_balance, payable_discount_cost_amount, payable_procedure_cost_balance, payable_procedure_cost_amount, provisional_receipts_balance, provisional_receipts_amount, equipment_depreciation_reserves_balance, equipment_depreciation_reserves_amount, equipment_depreciation_loss_balance, equipment_depreciation_loss_amount, asset_dispose_gain_balance, asset_dispose_gain_amount, asset_dispose_loss_balance, asset_dispose_loss_amount, receivable_other_balance, receivable_other_amount, receivable_collection_transfer_balance, receivable_collection_transfer_amount, receivable_related_party_balance, receivable_related_party_amount, collection_transfer_balance, collection_transfer_amount, collect_payment_other_balance, collect_payment_other_amount, receivable_interest_balance, receivable_interest_amount, receivable_litigation_margin_balance, receivable_litigation_margin_amount, property_cost_balance, property_cost_amount, property_depreciation_reserves_balance, property_depreciation_reserves_amount, machine_cost_balance, machine_cost_amount, machine_depreciation_reserves_balance, machine_depreciation_reserves_amount, other_cost_balance, other_cost_amount, other_depreciation_reserves_balance, other_depreciation_reserves_amount, receivable_factoring_principal_balance, receivable_factoring_principal_amount, receivable_factoring_interest_balance, receivable_factoring_interest_amount, payable_discount_cost_outtax_balance, payable_discount_cost_outtax_amount, receivable_rent_investment_property_balance, receivable_rent_investment_property_amount, receivable_outtax_investment_property_balance, receivable_outtax_investment_property_amount, depreciation_reserves_trade_balance, depreciation_reserves_trade_amount, depreciation_reserves_service_balance, depreciation_reserves_service_amount, depreciation_reserves_other_receivable_balance, depreciation_reserves_other_receivable_amount, depreciation_reserves_temp_balance, depreciation_reserves_temp_amount, depreciation_reserves_other_margin_balance, depreciation_reserves_other_margin_amount, depreciation_reserves_investment_property_balance, depreciation_reserves_investment_property_amount, depreciation_reserves_deposit_balance, depreciation_reserves_deposit_amount, depreciation_reserves_litigation_balance, depreciation_reserves_litigation_amount, depreciation_reserves_litigation_margin_balance, depreciation_reserves_litigation_margin_amount, depreciation_reserves_other_balance, depreciation_reserves_other_amount, depreciation_reserves_individual_balance, depreciation_reserves_individual_amount, depreciation_reserves_bill_balance, depreciation_reserves_bill_amount, depreciation_reserves_gov_balance, depreciation_reserves_gov_amount, depreciation_reserves_other_long_receibles_balance, depreciation_reserves_other_long_receibles_amount, depreciation_reserves_long_related_balance, depreciation_reserves_long_related_amount, depreciation_reserves_interest_balance, depreciation_reserves_interest_amount, receivable_principal_balance, receivable_principal_amount, receivable_interest_adjustment_balance, receivable_interest_adjustment_amount, receivable_principal_nonfinancial_balance, receivable_principal_nonfinancial_amount, receivable_commission_nonfinancial_balance, receivable_commission_nonfinancial_amount, receivable_interest_adjustment_nonfinancial_balance, receivable_interest_adjustment_nonfinancial_amount, depreciation_reserves_bank_balance, depreciation_reserves_bank_amount, depreciation_reserves_buying_back_balance, depreciation_reserves_buying_back_amount, depreciation_reserves_term_deposit_interest_balance, depreciation_reserves_term_deposit_interest_amount, depreciation_reserves_borrowings_interest_balance, depreciation_reserves_borrowings_interest_amount, depreciation_reserves_buying_back_interest_balance, depreciation_reserves_buying_back_interest_amount, depreciation_reserves_financial_product_interest_balance, depreciation_reserves_financial_product_interest_amount, depreciation_reserves_structured_deposit_interest_balance, depreciation_reserves_structured_deposit_interest_amount, depreciation_reserves_fvpl_interest_other_balance, depreciation_reserves_fvpl_interest_other_amount, depreciation_reserves_bond_fvoci_interest_balance, depreciation_reserves_bond_fvoci_interest_amount, depreciation_reserves_fvoci_interest_other_balance, depreciation_reserves_fvoci_interest_other_amount, depreciation_reserves_bond_ac_interest_balance, depreciation_reserves_bond_ac_interest_amount, depreciation_reserves_ac_interest_other_balance, depreciation_reserves_ac_interest_other_amount, depreciation_reserves_bond_ac_balance, depreciation_reserves_bond_ac_amount, depreciation_reserves_turst_ac_balance, depreciation_reserves_turst_ac_amount, depreciation_reserves_other_financial_ac_balance, depreciation_reserves_other_financial_ac_amount, depreciation_reserves_other_asset_ac_balance, depreciation_reserves_other_asset_ac_amount, depreciation_reserves_bond_fvoci_balance, depreciation_reserves_bond_fvoci_amount, depreciation_reserves_other_financial_fvoci_balance, depreciation_reserves_other_financial_fvoci_amount, depreciation_reserves_subsidiary_balance, depreciation_reserves_subsidiary_amount, depreciation_reserves_jv_balance, depreciation_reserves_jv_amount, depreciation_reserves_associate_balance, depreciation_reserves_associate_amount, receivable_virtual_balance, receivable_virtual_amount, unrealized_revenue_other_balance, unrealized_revenue_other_amount, payable_factoring_balance, payable_factoring_amount, payable_entrust_balance, payable_entrust_amount, collect_claims_balance, collect_claims_amount, payable_other_balance, payable_other_amount, prereceived_rent_balance, prereceived_rent_amount, payable_related_party_balance, payable_related_party_amount, other_payable_spv_balance, other_payable_spv_amount, other_payable_trust_balance, other_payable_trust_amount, other_payable_claim_asset_balance, other_payable_claim_asset_amount, other_payable_rent_balance, other_payable_rent_amount, other_payable_residual_balance, other_payable_residual_amount, other_payable_other_balance, other_payable_other_amount, other_payable_claim_balance, other_payable_claim_amount, other_payable_claim_other_balance, other_payable_claim_other_amount, other_payable_collect_balance, other_payable_collect_amount, supplier_pool_balance, supplier_pool_amount, agent_margin_balance, agent_margin_amount, other_margin_balance, other_margin_amount, rent_margin_balance, rent_margin_amount, other_long_margin_balance, other_long_margin_amount, other_business_income_balance, other_business_income_amount, other_income_service_balance, other_income_service_amount, interest_other_long_payables_balance, interest_other_long_payables_amount, interest_other_financial_ac_balance, interest_other_financial_ac_amount, lease_revenue6_balance, lease_revenue6_amount, lease_revenue3_balance, lease_revenue3_amount, other_income_lease_transfer_balance, other_income_lease_transfer_amount, rent_investment_property_balance, rent_investment_property_amount, other_income_factoring_transfer_balance, other_income_factoring_transfer_amount, asset_dispose_gain_foreclosed_balance, asset_dispose_gain_foreclosed_amount, asset_dispose_loss_foreclosed_balance, asset_dispose_loss_foreclosed_amount, other_cost_lease_transfer_balance, other_cost_lease_transfer_amount, other_cost_factoring_transfer_balance, other_cost_factoring_transfer_amount, assessment_fee_balance, assessment_fee_amount, attorney_fee_balance, attorney_fee_amount, intermediary_fee_other_balance, intermediary_fee_other_amount, consultation_fee_balance, consultation_fee_amount, notary_fee_balance, notary_fee_amount, lease_asset_recovery_fee_balance, lease_asset_recovery_fee_amount, depreciation_loss_trade_balance, depreciation_loss_trade_amount, depreciation_loss_service_balance, depreciation_loss_service_amount, depreciation_loss_other_receivables_balance, depreciation_loss_other_receivables_amount, depreciation_loss_temp_balance, depreciation_loss_temp_amount, depreciation_loss_other_margin_balance, depreciation_loss_other_margin_amount, depreciation_loss_rent_investment_property_balance, depreciation_loss_rent_investment_property_amount, depreciation_loss_deposit_balance, depreciation_loss_deposit_amount, depreciation_loss_litigation_balance, depreciation_loss_litigation_amount, depreciation_loss_litigation_margin_balance, depreciation_loss_litigation_margin_amount, depreciation_loss_other_receivable_balance, depreciation_loss_other_receivable_amount, depreciation_loss_reverse_balance, depreciation_loss_reverse_amount, depreciation_loss_equity_investment_balance, depreciation_loss_equity_investment_amount, depreciation_loss_interest_balance, depreciation_loss_interest_amount, depreciation_loss_bill_balance, depreciation_loss_bill_amount, depreciation_loss_collateral_balance, depreciation_loss_collateral_amount, depreciation_loss_financial_balance, depreciation_loss_financial_amount, depreciation_loss_buying_back_balance, depreciation_loss_buying_back_amount, depreciation_loss_bond_ac_balance, depreciation_loss_bond_ac_amount, depreciation_loss_financial_fvoci_balance, depreciation_loss_financial_fvoci_amount, depreciation_loss_bank_balance, depreciation_loss_bank_amount, depreciation_loss_trust_ac_balance, depreciation_loss_trust_ac_amount, depreciation_loss_other_asset_ac_balance, depreciation_loss_other_asset_ac_amount, depreciation_loss_other_financial_ac_balance, depreciation_loss_other_financial_ac_amount, depreciation_loss_gov_balance, depreciation_loss_gov_amount, depreciation_loss_other_long_receivables_balance, depreciation_loss_other_long_receivables_amount, depreciation_loss_other_long_related_balance, depreciation_loss_other_long_related_amount, depreciation_loss_borrowings_interest_balance, depreciation_loss_borrowings_interest_amount, depreciation_loss_investment_property_balance, depreciation_loss_investment_property_amount, depreciation_loss_other_balance, depreciation_loss_other_amount, publication_fee_balance, publication_fee_amount, receive_sum_debt_restructure_balance, receive_sum_debt_restructure_amount, unrealized_revenue_debt_restructure_balance, unrealized_revenue_debt_restructure_amount, receivable_outtax_debt_restructure_balance, receivable_outtax_debt_restructure_amount, unrealized_revenue_other_debt_restructure_balance, unrealized_revenue_other_debt_restructure_amount, collect_payment_balance, collect_payment_amount, receivable_default_interest_balance, receivable_default_interest_amount, receivable_terminate_balance, receivable_terminate_amount, litigation_virtual_balance, litigation_virtual_amount, period_code, eas_voucher_id, bill_contract_code, receivable_other_revenue_balance, receivable_other_revenue_amount, receivable_damages_revenue_balance, receivable_damages_revenue_amount, continue_involving_assets_balance, continue_involving_assets_amount, payable_margin_entrusted_loans_balance, payable_margin_entrusted_loans_amount, continue_involving_debts_balance, continue_involving_debts_amount, debt_restructuring_income_balance, debt_restructuring_income_amount, lease_transfer_income_balance, lease_transfer_income_amount, other_business_cost_balance, other_business_cost_amount, financial_institution_fee_balance, financial_institution_fee_amount, payable_bill_balance, payable_bill_amount, receivable_bill_balance, receivable_bill_amount, bank_deposits_balance, bank_deposits_amount
+        </sql>
+        <insert id="insertContractTmpTableData">
+            insert into eg_check_account_detail_contract_balance (<include refid="Tmp_Column_List"></include>)
+            select <include refid="Tmp_Column_List"></include>
+            from eg_contract_balance ecb  where ecb.period_code = #{periodCode} and ecb.del_flag = '0'
+            and exists (select 1 from (select max(tmp.id) id, tmp.client_code ,tmp.contract_code ,tmp.business_code
+            from (select * from eg_contract_balance order by client_code ,contract_code ,business_code) tmp
+
+            where tmp.period_code = #{periodCode}
+                and tmp.del_flag = '0'
+            group by tmp.client_code ,tmp.contract_code ,tmp.business_code) ecb_max where ecb.id = ecb_max.id)
+        </insert>
+
+        <select id="queryCheckResultDto" resultMap="BaseResultMap">
+            select ${param.recordId} as record_id, tab_all.period_code, tab_all.currency_type,tab_all.org_id,tab_all.account_code ,
+            tab_all.contract_code ,tab_all.client_code ,
+            case when account.debit_credit_type = 'DR' then COALESCE(tab_all.month_end_debit_balance,0) - COALESCE(tab_all.month_end_credit_balance,0)
+                 when account.debit_credit_type = 'CR' then COALESCE(tab_all.month_end_credit_balance,0) - COALESCE(tab_all.month_end_debit_balance,0)
+            else 0 end account_remain_balance,
+            tab_all.detail_remain_balance,
+            case when COALESCE(case when account.debit_credit_type = 'DR' then COALESCE(tab_all.month_end_debit_balance,0) - COALESCE(tab_all.month_end_credit_balance,0)
+            when account.debit_credit_type = 'CR' then COALESCE(tab_all.month_end_credit_balance,0) - COALESCE(tab_all.month_end_debit_balance,0)
+            else 0 end,0) = COALESCE(tab_all.detail_remain_balance,0) then '0' else '1' end diff_flag,
+            COALESCE(case when account.debit_credit_type = 'DR' then COALESCE(tab_all.month_end_debit_balance,0) - COALESCE(tab_all.month_end_credit_balance,0)
+            when account.debit_credit_type = 'CR' then COALESCE(tab_all.month_end_credit_balance,0) - COALESCE(tab_all.month_end_debit_balance,0)
+            else 0 end,0)-COALESCE(tab_all.detail_remain_balance,0) as diff_balance, ${param.delFlag}, ${param.createBy}, now(), ${param.updateBy}, now()
+            from (
+            <foreach collection="list" item="item" index="index" separator="union all">
+                select eaab.period_code,eaab.currency_code currency_type,eaab.org_id,eaab.account_code ,
+                eaab.contract_code ,eaab.client_code ,eaab.month_end_debit_balance , eaab.month_end_credit_balance,ecb.${item.queryField} detail_remain_balance
+                from eg_account_assist_balance eaab join eg_check_account_detail_contract_balance ecb
+                on eaab.period_code = ecb.period_code
+                and eaab.org_id  = ecb.org_id
+                and eaab.contract_code = ecb.contract_code
+                and eaab.client_code = ecb.client_code
+                where eaab.period_code = #{param.periodCode}
+                and eaab.account_code = #{item.accountCode}
+                and eaab.del_flag = '0'
+                and ecb.del_flag = '0'
+            </foreach>
+            ) tab_all join (select distinct ea.account_code ,ea.debit_credit_type  from eg_account ea) account on tab_all.account_code = account.account_code
+        </select>
+</mapper>
+

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.DwCmGerkhxxDMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.dw.entity.DwCmGerkhxxDEntity">
+        <id column="vc_kehbh" property="vcKehbh"/>
+        <result column="vc_hetbh" property="vcHetbh"/>
+        <result column="vc_germc" property="vcGermc"/>
+        <result column="vc_yingwmc" property="vcYingwmc"/>
+        <result column="vc_kehlb" property="vcKehlb"/>
+        <result column="vc_zhengjlx" property="vcZhengjlx"/>
+        <result column="vc_zhengjhm" property="vcZhengjhm"/>
+        <result column="vc_jingnjw" property="vcJingnjw"/>
+        <result column="vc_xingb" property="vcXingb"/>
+        <result column="vc_shouj" property="vcShouj"/>
+        <result column="vc_zhuzdh" property="vcZhuzdh"/>
+        <result column="vc_chuanz" property="vcChuanz"/>
+        <result column="vc_email" property="vcEmail"/>
+        <result column="vc_wangz" property="vcWangz"/>
+        <result column="vc_youb" property="vcYoub"/>
+        <result column="dt_chusny" property="dtChusny"/>
+        <result column="vc_jig" property="vcJig"/>
+        <result column="vc_tongxdz" property="vcTongxdz"/>
+        <result column="vc_bangdz" property="vcBangdz"/>
+        <result column="vc_hujdz" property="vcHujdz"/>
+        <result column="vc_jiatzz" property="vcJiatzz"/>
+        <result column="vc_juzzk" property="vcJuzzk"/>
+        <result column="vc_guoj" property="vcGuoj"/>
+        <result column="vc_shengf" property="vcShengf"/>
+        <result column="vc_chengs" property="vcChengs"/>
+        <result column="vc_qux" property="vcQux"/>
+        <result column="dec_niansr" property="decNiansr"/>
+        <result column="vc_gergk" property="vcGergk"/>
+        <result column="vc_qudkhbh" property="vcQudkhbh"/>
+        <result column="vc_qudkhmc" property="vcQudkhmc"/>
+        <result column="vc_qudlyfl" property="vcQudlyfl"/>
+        <result column="vc_daoreaszt" property="vcDaoreaszt"/>
+        <result column="vc_daoreasbz" property="vcDaoreasbz"/>
+        <result column="vc_xingg" property="vcXingg"/>
+        <result column="vc_biyxx" property="vcBiyxx"/>
+        <result column="vc_zhuany" property="vcZhuany"/>
+        <result column="vc_xuel" property="vcXuel"/>
+        <result column="vc_xuew" property="vcXuew"/>
+        <result column="vc_aih" property="vcAih"/>
+        <result column="vc_xuekly" property="vcXuekly"/>
+        <result column="vc_xueszw" property="vcXueszw"/>
+        <result column="vc_shehzw" property="vcShehzw"/>
+        <result column="vc_guanlfg" property="vcGuanlfg"/>
+        <result column="vc_xinxly" property="vcXinxly"/>
+        <result column="vc_duihxtd" property="vcDuihxtd"/>
+        <result column="vc_zhidbs" property="vcZhidbs"/>
+        <result column="vc_jinjly" property="vcJinjly"/>
+        <result column="vc_pcbq" property="vcPcbq"/>
+        <result column="vc_youxbs" property="vcYouxbs"/>
+        <result column="vc_zhic" property="vcZhic"/>
+        <result column="dt_chuangjsj" property="dtChuangjsj"/>
+        <result column="vc_weiygl" property="vcWeiygl"/>
+        <result column="vc_shifwykh" property="vcShifwykh"/>
+        <result column="ch_shiffwzxwqy" property="chShiffwzxwqy"/>
+        <result column="ch_shiffwkjxqy" property="chShiffwkjxqy"/>
+        <result column="ch_shiffwsn" property="chShiffwsn"/>
+        <result column="ch_shiffwshbdkh" property="chShiffwshbdkh"/>
+        <result column="pt" property="pt"/>
+        <result column="vc_yewxtid" property="vcYewxtid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        vc_kehbh, vc_hetbh, vc_germc, vc_yingwmc, vc_kehlb, vc_zhengjlx, vc_zhengjhm, vc_jingnjw, vc_xingb, vc_shouj,
+        vc_zhuzdh, vc_chuanz, vc_email, vc_wangz, vc_youb, dt_chusny, vc_jig, vc_tongxdz, vc_bangdz, vc_hujdz,
+        vc_jiatzz, vc_juzzk, vc_guoj, vc_shengf, vc_chengs, vc_qux, dec_niansr, vc_gergk, vc_qudkhbh, vc_qudkhmc,
+        vc_qudlyfl, vc_daoreaszt, vc_daoreasbz, vc_xingg, vc_biyxx, vc_zhuany, vc_xuel, vc_xuew, vc_aih, vc_xuekly,
+        vc_xueszw, vc_shehzw, vc_guanlfg, vc_xinxly, vc_duihxtd, vc_zhidbs, vc_jinjly, vc_pcbq, vc_youxbs, vc_zhic,
+        dt_chuangjsj, vc_weiygl, vc_shifwykh, ch_shiffwzxwqy, ch_shiffwkjxqy, ch_shiffwsn, ch_shiffwshbdkh, pt,
+        vc_yewxtid
+    </sql>
+</mapper>
+

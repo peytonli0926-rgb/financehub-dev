@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractStatusRecordTempMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractStatusRecordTempEntity">
+                    <id column="contract_code" property="contractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="financial_contract_status_update_time" property="financialContractStatusUpdateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            contract_code, org_id, financial_contract_status, financial_contract_status_update_time
+        </sql>
+</mapper>
+

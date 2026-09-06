@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.InvoiceClaimMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.InvoiceClaimEntity">
+            <id column="id" property="id"/>
+            <result column="document_num" property="documentNum"/>
+            <result column="enterprise_num" property="enterpriseNum"/>
+            <result column="seller_tax_code" property="sellerTaxCode"/>
+            <result column="invoice_point_code" property="invoicePointCode"/>
+            <result column="invoice_type" property="invoiceType"/>
+            <result column="payer" property="payer"/>
+            <result column="client_industry" property="clientIndustry"/>
+            <result column="document_date" property="documentDate"/>
+            <result column="contract_status" property="contractStatus"/>
+            <result column="tax_amount" property="taxAmount"/>
+            <result column="tax_rate" property="taxRate"/>
+            <result column="no_tax_amount" property="noTaxAmount"/>
+            <result column="tax_value" property="taxValue"/>
+            <result column="is_first_invoice" property="isFirstInvoice"/>
+            <result column="is_rent_pay_full" property="isRentPayFull"/>
+            <result column="is_hold_invoice" property="isHoldInvoice"/>
+            <result column="purchaser_tax_code" property="purchaserTaxCode"/>
+            <result column="purchaser_name" property="purchaserName"/>
+            <result column="purchaser_dress" property="purchaserDress"/>
+            <result column="purchaser_tel" property="purchaserTel"/>
+            <result column="purchaser_bank_name" property="purchaserBankName"/>
+            <result column="purchaser_bank_num" property="purchaserBankNum"/>
+            <result column="plan_repay_date" property="planRepayDate"/>
+            <result column="period_num" property="periodNum"/>
+            <result column="product_code" property="productCode"/>
+            <result column="product_name" property="productName"/>
+            <result column="unit" property="unit"/>
+            <result column="quantity" property="quantity"/>
+            <result column="create_by" property="createBy"/>
+            <result column="create_time" property="createTime"/>
+            <result column="update_by" property="updateBy"/>
+            <result column="update_time" property="updateTime"/>
+            <result column="del_flag" property="delFlag"/>
+            <result column="contract_code" property="contractCode"/>
+            <result column="source_from" property="sourceFrom"/>
+            <result column="account_name" property="accountName"/>
+            <result column="is_auto_generation" property="isAutoGeneration"/>
+            <result column="main_category" property="mainCategory"/>
+            <result column="voucher_id" property="voucherId"/>
+            <result column="mapping_category" property="mappingCategory"/>
+            <result column="system_invoice_id" property="systemInvoiceId"/>
+            <result column="seller_name" property="sellerName"/>
+            <result column="business_source" property="businessSource"/>
+            <result column="comments" property="comments"/>
+            <result column="back_tax_amount" property="backTaxAmount"/>
+            <result column="back_tax_value" property="backTaxValue"/>
+            <result column="invoice_number" property="invoiceNumber"/>
+            <result column="error_message" property="errorMessage"/>
+            <result column="org_id" property="orgId"/>
+            <result column="process_status" property="processStatus"/>
+            <result column="manual_id" property="manualId"/>
+        </resultMap>
+    <!--  通用查询结果列  -->
+    <sql id="Base_Column_List"> id, document_num, enterprise_num, seller_tax_code, invoice_point_code, invoice_type, payer, client_industry, document_date, contract_status, tax_amount, tax_rate, no_tax_amount, tax_value, is_first_invoice, is_rent_pay_full, is_hold_invoice, purchaser_tax_code, purchaser_name, purchaser_dress, purchaser_tel, purchaser_bank_name, purchaser_bank_num, plan_repay_date, period_num, product_code, product_name, unit, quantity, create_by, create_time, update_by, update_time, del_flag, contract_code, source_from, account_name, is_auto_generation, main_category, voucher_id, mapping_category, system_invoice_id, seller_name, business_source, comments, back_tax_amount, back_tax_value, invoice_number, error_message, org_id, process_status, manual_id </sql>
+
+    <select id="selectContractInvoiceClaimByPage"
+            resultType="com.utfinancing.financehub.etl.financial.model.vo.ContractInvoiceClaimVO">
+        select
+        eic.document_num,
+        eic.enterprise_num,
+        eic.seller_tax_code,
+        eic.invoice_point_code,
+        eic.payer,
+        eic.client_industry,
+        eic.document_date,
+        eic.contract_status,
+        eic.tax_amount,
+        eic.tax_rate,
+        eic.no_tax_amount,
+        eic.tax_value,
+        eic.is_first_invoice,
+        eic.is_rent_pay_full,
+        eic.is_hold_invoice,
+        eic.is_rent_pay_full,
+        eic.is_hold_invoice,
+        eic.purchaser_tax_code,
+        eic.purchaser_name,
+        eic.purchaser_dress,
+        eic.purchaser_tel,
+        eic.purchaser_bank_name,
+        eic.purchaser_bank_num,
+        case when eic.product_name = '罚息'
+        then erp.actual_repayment_date  when eic.product_name = '租金'
+        then erp.actual_repayment_date else eic.plan_repay_date end as plan_repay_date,
+        case when eic.product_name = '租金' then eic.period_num else '' end as period_num,
+        eic.product_code,
+        eic.product_name,
+        eic.unit,
+        eic.quantity,
+        eic.contract_code,
+        eic.seller_name,
+        eic.comments,
+        ec.contract_name,
+        ec.lease_type,
+        ec.org_id,
+        ec.client_name,
+        erp.plan_date,
+        case when eic.product_name = '租金' then erp.principal_amount else null end as principal_amount,
+        case when eic.product_name = '租金' then erp.interest_amount else null end as interest_amount,
+        ec.invoice_type,
+        (coalesce(erp.principal_amount) + coalesce(erp.interest_amount)) as rentReceivableAmount,
+        ec.system_code,
+        etr.tax_rate as backTaxRate
+        from
+        eg_invoice_claim eic
+        left join eg_repayment_plan erp on
+        eic.contract_code = erp.contract_code and eic.period_num = cast(coalesce(erp.periods,0) as char) and erp.del_flag ='0'
+        left join eg_contract ec on
+        eic.contract_code = ec.contract_code and ec.del_flag ='0'
+        inner join eg_tax_rate etr on ec.lease_type = etr.lease_type and etr.del_flag ='0' and etr.enable_flag ='1' and etr.fund_type='tax_general'
+        where
+        1 = 1 and eic.del_flag ='0'
+          <if test="param.contractCode != '' and param.contractCode != null">
+              and eic.contract_code = #{param.contractCode}::text
+          </if>
+        <if test="param.orgId != '' and param.orgId != null">
+            and ec.org_id = #{param.orgId}::text
+        </if>
+        union
+        select
+        '',
+        '',
+        '',
+        '',
+        easd.real_invoice_org_object ,
+        '',
+        null,
+        '',
+        easd.real_accrual_amount,
+        easd.real_accrual_rate ::text,
+        0,
+        easd.real_accrual_tax_amount ,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        easd.billing_date ,
+        easd.period_num ,
+        '',
+        easd.accrual_name ,
+        '',
+        '',
+        easd.contract_code ,
+        easd.real_invoice_org_id ,
+        '',
+        easd.contract_name ,
+        easd.business_code  ,
+        easd.invoice_org_id,
+        easd.invoice_org_object,
+        easd.receivable_date ,
+        easd.receivable_principal ,
+        easd.receivable_intrest ,
+        easd.pre_invoice_type ,
+        easd.receivable_other ,
+        '',
+        easd.accrual_rate
+        from eg_accrual_situation_data easd
+        where 1=1
+        <if test="param.contractCode != '' and param.contractCode != null">
+            and easd.contract_code = #{param.contractCode}::text
+        </if>
+        <if test="param.orgId != '' and param.orgId != null">
+            and easd.invoice_org_id = #{param.orgId}::text
+        </if>
+    </select>
+    <select id="selectContractInvoiceClaimByCondition"
+            resultType="com.utfinancing.financehub.etl.financial.model.vo.ContractInvoiceClaimVO">
+        select
+        eic.document_num,
+        eic.enterprise_num,
+        eic.seller_tax_code,
+        eic.invoice_point_code,
+        eic.payer,
+        eic.client_industry,
+        eic.document_date,
+        eic.contract_status,
+        eic.tax_amount,
+        eic.tax_rate,
+        eic.no_tax_amount,
+        eic.tax_value,
+        eic.is_first_invoice,
+        eic.is_rent_pay_full,
+        eic.is_hold_invoice,
+        eic.is_rent_pay_full,
+        eic.is_hold_invoice,
+        eic.purchaser_tax_code,
+        eic.purchaser_name,
+        eic.purchaser_dress,
+        eic.purchaser_tel,
+        eic.purchaser_bank_name,
+        eic.purchaser_bank_num,
+        case when eic.product_name = '罚息'
+        then erp.actual_repayment_date  when eic.product_name = '租金'
+        then erp.actual_repayment_date else eic.plan_repay_date end as plan_repay_date,
+        case when eic.product_name = '租金' then eic.period_num else '' end as period_num,
+        eic.product_code,
+        eic.product_name,
+        eic.unit,
+        eic.quantity,
+        eic.contract_code,
+        eic.seller_name,
+        eic.comments,
+        ec.contract_name,
+        ec.lease_type,
+        ec.org_id,
+        ec.client_name,
+        erp.plan_date,
+        case when eic.product_name = '租金' then erp.principal_amount else null end as principal_amount,
+        case when eic.product_name = '租金' then erp.interest_amount else null end as interest_amount,
+        ec.invoice_type,
+        (coalesce(erp.principal_amount) + coalesce(erp.interest_amount)) as rentReceivableAmount,
+        ec.system_code,
+        etr.tax_rate as backTaxRate
+        from
+        eg_invoice_claim eic
+        left join eg_repayment_plan erp on
+        eic.contract_code = erp.contract_code and eic.period_num = cast(coalesce(erp.periods,0) as char) and erp.del_flag ='0'
+        left join eg_contract ec on
+        eic.contract_code = ec.contract_code and ec.del_flag ='0'
+        inner join eg_tax_rate etr on ec.lease_type = etr.lease_type and etr.del_flag ='0' and etr.enable_flag ='1' and etr.fund_type='tax_general'
+        where
+        1 = 1 and eic.del_flag ='0'
+        <if test="param.contractCode != '' and param.contractCode != null">
+            and eic.contract_code = #{param.contractCode}::text
+        </if>
+        <if test="param.orgId != '' and param.orgId != null">
+            and ec.org_id = #{param.orgId}::text
+        </if>
+    </select>
+</mapper>
+

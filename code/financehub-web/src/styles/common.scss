@@ -1,0 +1,240 @@
+@import './variable.scss';
+@mixin scrollbar {
+  max-height: 88vh;
+  margin-bottom: 0.5vh;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(144, 147, 153, 0.3);
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    // background-color: rgba(144, 147, 153, 0.3);
+  }
+}
+
+@mixin base-scrollbar {
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 7px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-track:hover {
+    // background-color: #f8fafc;
+  }
+}
+
+.icon-hover {
+  cursor: pointer;
+  &:hover {
+    background-color: $base-hover-color;
+  }
+}
+
+.i-icon:focus-visible {
+  border: none !important;
+  outline: none !important;
+}
+
+html {
+  body {
+    @include base-scrollbar;
+    position: relative;
+    box-sizing: border-box;
+    height: 100vh;
+    padding: 0;
+    overflow: hidden;
+  }
+  div {
+    @include base-scrollbar;
+  }
+}
+.page-container {
+  min-height: calc(100vh - 188px) !important;
+  padding: 0 10px !important;
+  margin-bottom: 10px !important;
+  background-color: transparent !important;
+  // border-radius: 10px;
+}
+.footer-copyright {
+  padding: 10px 0 !important;
+  // border-top: 0 !important;
+  border-top: 1px dashed #dcdfe6;
+}
+.app-main-container .app-main-height.no-header {
+  // min-height: calc(100vh - 260px)!important;
+}
+
+// 自定义公共样式
+.u-relative,
+.u-rela {
+  position: relative;
+}
+
+.u-absolute,
+.u-abso {
+  position: absolute;
+}
+
+.u-flex {
+  display: flex;
+}
+
+.u-flex-wrap {
+  flex-wrap: wrap;
+}
+
+.u-flex-nowrap {
+  flex-wrap: nowrap;
+}
+
+.u-col-center {
+  align-items: center;
+}
+
+.u-col-top {
+  align-items: flex-start;
+}
+
+.u-col-bottom {
+  align-items: flex-end;
+}
+
+.u-row-center {
+  justify-content: center;
+}
+
+.u-row-left {
+  justify-content: flex-start;
+}
+
+.u-row-right {
+  justify-content: flex-end;
+}
+
+.u-row-between {
+  justify-content: space-between;
+}
+
+.u-row-around {
+  justify-content: space-around;
+}
+
+.u-text-left {
+  text-align: left;
+}
+
+.u-text-center {
+  text-align: center;
+}
+
+.u-cursor-p {
+  cursor: pointer;
+}
+
+.u-text-right {
+  text-align: right;
+}
+.u-text-bold {
+  font-weight: bold;
+}
+.color-999999 {
+  color: #999999;
+}
+.u-color-primary {
+  color: var(--el-color-primary);
+}
+.color-white {
+  color: white;
+}
+.color-F8E9CD {
+  color: #f8e9cd;
+}
+.u-flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+// 定义flex等分
+@for $i from 0 through 12 {
+  .u-flex-#{$i} {
+    flex: $i;
+  }
+}
+
+// 定义字体(px)单位，大于或等于20的都为px单位字体
+@for $i from 12 through 100 {
+  .u-font-#{$i} {
+    font-size: $i + px;
+  }
+}
+
+@for $i from 0 through 100 {
+  .u-round-#{$i} {
+    border-radius: $i + px;
+  }
+}
+
+// 定义内外边距，历遍1-80
+@for $i from 0 through 100 {
+  // 只要双数和能被5除尽的数
+  @if $i % 2 == 0 or $i % 5 == 0 {
+    // 得出：u-margin-30或者u-m-30
+    .u-margin-#{$i},
+    .u-m-#{$i} {
+      margin: $i + px !important;
+    }
+
+    // 得出：u-padding-30或者u-p-30
+    .u-padding-#{$i},
+    .u-p-#{$i} {
+      padding: $i + px !important;
+    }
+
+    @each $short, $long in l left, t top, r right, b bottom {
+      // 缩写版，结果如： u-m-l-30
+      // 定义外边距
+      .u-m-#{$short}-#{$i} {
+        margin-#{$long}: $i + px !important;
+      }
+
+      // 定义内边距
+      .u-p-#{$short}-#{$i} {
+        padding-#{$long}: $i + px !important;
+      }
+
+      // 完整版，结果如：u-margin-left-30
+      // 定义外边距
+      .u-margin-#{$long}-#{$i} {
+        margin-#{$long}: $i + px !important;
+      }
+
+      // 定义内边距
+      .u-padding-#{$long}-#{$i} {
+        padding-#{$long}: $i + px !important;
+      }
+    }
+  }
+}

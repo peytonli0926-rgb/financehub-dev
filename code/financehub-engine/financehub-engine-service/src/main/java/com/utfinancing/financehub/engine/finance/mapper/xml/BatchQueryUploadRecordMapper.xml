@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.BatchQueryUploadRecordMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.BatchQueryUploadRecordEntity">
+                    <id column="id" property="id" />
+                    <result column="upload_by" property="uploadBy" />
+                    <result column="upload_time" property="uploadTime" />
+                    <result column="contract_code_list" property="contractCodeList" />
+                    <result column="account_code_list" property="accountCodeList" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, upload_by, upload_time, contract_code_list, account_code_list, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+
+
+        <sql id="contractBalanceInfo">
+            with contract as (
+            select contract_code, client_code, client_name, org_id, tax_rate, financial_contract_status, contract_status
+            from eg_contract ec where 1=1
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                and ec.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and ec.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            )
+            , contract_balance as (
+            select
+            contract_code,
+            org_id,
+            <if test="param.fundTypeList != null and param.fundTypeList.size > 0">
+                <foreach item="item" index="index" collection="param.fundTypeList" separator="," >
+                    sum(${item}) ${item}
+                </foreach>
+            </if>
+
+            ,  sum(unrealized_revenue_balance) unrealized_revenue_balance_sum
+
+            from
+            eg_contract_balance ecb
+            where 1=1
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                and ecb.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and ecb.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            and ecb.id in(
+            select
+            tmp.id
+            from
+            eg_contract_balance tmp
+            where 1=1
+            <if test="param.periodCode!=null and param.periodCode!=''">
+                and tmp.period_code &lt;= #{param.periodCode}
+            </if>
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                and tmp.org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and tmp.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            and tmp.voucher_id in (
+            select
+            max(id)
+            from
+            eg_contract_balance
+            where 1=1
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                and org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.queryDate!=null and param.queryDate!=''">
+                and voucher_date &lt;= #{param.queryDate}
+            </if>
+
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            group by
+            org_id,
+            contract_code
+            ))
+            group by
+            org_id,
+            contract_code
+            )
+            , res as (
+            select contract.*,
+                0 as ta_amount, 0 as non_invoiced_profit, 0 as non_received_principal, 0 as non_received_profit,
+            <if test="param.fundTypeList != null and param.fundTypeList.size > 0">
+                <foreach item="item" index="index" collection="param.fundTypeList" separator="," >
+                    contract_balance.${item}
+                </foreach>
+            </if>
+            , coalesce(esfd.accumulated_accrued_amount,0) unrealized_revenue_balance_no_service_fee
+            , coalesce(contract_balance.unrealized_revenue_balance_sum,0) - coalesce(esfd.accumulated_accrued_amount,0) unrealized_revenue_balance_service_fee
+
+            from contract left join contract_balance
+            on contract.contract_code = contract_balance.contract_code
+            and contract.org_id = contract_balance.org_id
+            left join eg_service_fee_details esfd
+            on contract.contract_code = esfd.contract_code
+            and contract.org_id = esfd.org_id
+            )
+        </sql>
+        <select id="selectBatchQueryContractBalanceInfo" resultType="java.util.Map">
+            <include refid="contractBalanceInfo"></include>
+            select * from res
+            <if test="param.queryType != null and param.queryType != '' and param.queryType != 'export'">
+                limit #{param.limit} offset #{param.offset}
+            </if>
+        </select>
+
+        <select id="selectBatchQueryContractBalanceInfoSize" resultType="java.util.Map">
+            <include refid="contractBalanceInfo"></include>
+            select count(1) total_size from res
+        </select>
+
+
+
+
+        <select id="selectBatchQueryAssistBalanceInfo">
+            select org_id , contract_code , account_code ,
+                   sum(month_debit_amount) month_debit_amount, sum(month_credit_amount) month_credit_amount,
+                   sum(month_end_debit_balance) month_end_debit_balance, sum(month_end_credit_balance) month_end_credit_balance
+            from eg_account_assist_balance eaab where 1=1
+            <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                and org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="param.currencyCode!=null and param.currencyCode!=''">
+                and currency_code = #{param.currencyCode}
+            </if>
+            <if test="param.periodCode!=null and param.periodCode!=''">
+                and period_code = #{param.periodCode}
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+                and account_code in
+                <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            group by org_id , contract_code , account_code
+        </select>
+
+    <select id="selectBatchQueryUploadList" resultType="java.util.Map">
+        with contract as (
+        select
+        ec.contract_code,
+        ec.client_code,
+        ec.client_name,
+        ec.org_id,
+        ec.tax_rate,
+        ec.financial_contract_status,
+        ec.contract_status
+        from eg_contract ec where 1=1 and ec.contract_code_m is null
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and ec.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and ec.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        )
+        , contract_balance as (
+        select
+        ecb.contract_code,
+        ecb.org_id,
+        <if test="param.fundTypeList != null and param.fundTypeList.size > 0">
+            <foreach item="item" index="index" collection="param.fundTypeList" separator="," >
+                sum(${item}) ${item}
+            </foreach>
+        </if>
+        , sum(unrealized_revenue_balance) unrealized_revenue_balance_sum
+        from
+        eg_contract_balance ecb
+        where 1=1
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and ecb.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and ecb.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and ecb.id in(
+        select
+        max(tmp.id)
+        from
+        eg_contract_balance tmp
+        where 1=1
+        <if test="param.periodCode!=null and param.periodCode!=''">
+            and tmp.period_code &lt;= #{param.periodCode}
+        </if>
+        <if test="param.queryDate!=null and param.queryDate!=''">
+            and TO_CHAR(tmp.voucher_date,'YYYY-MM-DD') &lt;= #{param.queryDate}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and tmp.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and tmp.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        tmp.org_id,
+        tmp.contract_code,
+        tmp.client_code,
+        tmp.bill_contract_code
+        )
+        group by
+        ecb.contract_code,
+        ecb.org_id
+        )
+        , res as (
+        select
+        coalesce(contract.contract_code, '') contract_code,
+        coalesce(contract.client_code, '') client_code,
+        coalesce(contract.client_name, '') client_name,
+        coalesce(contract.org_id, '') org_id,
+        coalesce(contract.tax_rate, null) tax_rate,
+        coalesce(contract.financial_contract_status, '') financial_contract_status,
+        coalesce(contract.contract_status, '') contract_status,
+        coalesce((
+        select
+        sum(coalesce(t.ta_amount, 0))
+        from
+        eg_contract_ta_amount t
+        where
+        t.contract_code = contract.contract_code
+        and t.transaction_date &lt;= #{param.queryDate}), 0) as ta_amount,
+        coalesce((
+        select
+        sum(coalesce(t1.actual_repayment_interes_amount, 0))
+        from
+        eg_repayment_plan_exceldata t1
+        where
+        t1.plan_date &lt;= #{param.queryDate}
+        and t1.contract_code = contract.contract_code)-(
+        select
+        sum(coalesce(t2.tax_amount, 0))
+        from
+        eg_invoice_claim t2
+        where
+        t2.document_date &lt;= #{param.queryDate}
+        and t2.contract_code = contract.contract_code), 0) as non_invoiced_profit,
+        coalesce((
+        select
+        sum(coalesce(t.principal_amount, 0))
+        from
+        eg_repayment_plan t
+        where
+        t.contract_code = contract.contract_code
+        and t.plan_date &lt;= #{param.queryDate}) - (
+        select
+        sum(coalesce(t1.actual_repayment_principal_amount, 0))
+        from
+        eg_repayment_plan_exceldata t1
+        where
+        t1.plan_date &lt;= #{param.queryDate}
+        and t1.contract_code = contract.contract_code), 0) as non_received_principal,
+        coalesce((
+        select
+        sum(coalesce(t.interest_amount, 0))
+        from
+        eg_repayment_plan t
+        where
+        t.contract_code = contract.contract_code
+        and t.plan_date &lt;= #{param.queryDate}) - (
+        select
+        sum(coalesce(t1.actual_repayment_interes_amount, 0))
+        from
+        eg_repayment_plan_exceldata t1
+        where
+        t1.plan_date &lt;= #{param.queryDate}
+        and t1.contract_code = contract.contract_code), 0) as non_received_profit,
+        <if test="param.fundTypeList != null and param.fundTypeList.size > 0">
+            <foreach item="item" index="index" collection="param.fundTypeList" separator="," >
+                contract_balance.${item}
+            </foreach>
+        </if>
+        , coalesce(esfd.accumulated_accrued_amount,0) unrealized_revenue_balance_no_service_fee
+        , coalesce(contract_balance.unrealized_revenue_balance_sum,0) - coalesce(esfd.accumulated_accrued_amount,0) unrealized_revenue_balance_service_fee
+        from contract left join contract_balance
+        on contract.contract_code = contract_balance.contract_code
+        and contract.org_id = contract_balance.org_id
+        left join eg_service_fee_details esfd
+        on contract.contract_code = esfd.contract_code
+        and contract.org_id = esfd.org_id
+        )
+        select * from res order by res.contract_code,res.client_code
+    </select>
+</mapper>
+

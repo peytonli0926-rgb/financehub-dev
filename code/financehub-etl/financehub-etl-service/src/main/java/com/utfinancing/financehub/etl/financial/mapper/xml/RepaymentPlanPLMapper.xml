@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.RepaymentPlanPLMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.RepaymentPlanPLEntity">
+        <id column="id" property="id" />
+        <result column="client_code" property="clientCode" />
+        <result column="client_name" property="clientName" />
+        <result column="contract_code" property="contractCode" />
+        <result column="contract_name" property="contractName" />
+        <result column="plan_date" property="planDate" />
+        <result column="rent_amount" property="rentAmount" />
+        <result column="principal_amount" property="principalAmount" />
+        <result column="interest_amount" property="interestAmount" />
+        <result column="principal_tax" property="principalTax" />
+        <result column="interest_tax" property="interestTax" />
+        <result column="outflow_amount" property="outflowAmount" />
+        <result column="planned_interest" property="plannedInterest" />
+        <result column="planned_principal" property="plannedPrincipal" />
+        <result column="cash_flow" property="cashFlow" />
+        <result column="opening_amortized_cost" property="openingAmortizedCost" />
+        <result column="ending_amortized_cost" property="endingAmortizedCost" />
+        <result column="actual_daily_rate" property="actualDailyRate" />
+        <result column="rental_income" property="rentalIncome" />
+        <result column="service_fee_amortization_rate" property="serviceFeeAmortizationRate" />
+        <result column="service_fee_amortization_income" property="serviceFeeAmortizationIncome" />
+        <result column="xirr_rate" property="xirrRate" />
+        <result column="actual_repayment_date" property="actualRepaymentDate" />
+        <result column="actual_repayment_principal_balance" property="actualRepaymentPrincipalBalance" />
+        <result column="actual_repayment_principal_amount" property="actualRepaymentPrincipalAmount" />
+        <result column="actual_repayment_interes_balance" property="actualRepaymentInteresBalance" />
+        <result column="actual_repayment_interes_amount" property="actualRepaymentInteresAmount" />
+        <result column="recapture_status" property="recaptureStatus" />
+        <result column="overdue_earnings" property="overdueEarnings" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+        <result column="message_id" property="messageId" />
+        <result column="system_code" property="systemCode" />
+        <result column="periods" property="periods" />
+        <result column="org_id" property="orgId" />
+        <result column="accrued" property="accrued" />
+        <result column="income_provision_method" property="incomeProvisionMethod" />
+        <result column="amortized" property="amortized" />
+        <result column="source_irr_rate" property="sourceIrrRate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, client_code, client_name, contract_code, contract_name, plan_date, rent_amount, principal_amount, interest_amount,
+        principal_tax, interest_tax, outflow_amount, planned_interest, planned_principal, cash_flow, opening_amortized_cost,
+        ending_amortized_cost, actual_daily_rate, rental_income, service_fee_amortization_rate, service_fee_amortization_income,
+        xirr_rate, actual_repayment_date, actual_repayment_principal_balance, actual_repayment_principal_amount, actual_repayment_interes_balance,
+        actual_repayment_interes_amount, recapture_status, overdue_earnings, create_by, create_time, update_by, update_time, del_flag, message_id, system_code,
+        periods, org_id, accrued, income_provision_method, amortized, comment, source_irr_rate
+    </sql>
+
+    <delete id="delRepaymentPlan" parameterType="java.util.List">
+        delete from eg_repayment_plan_pl
+        <trim prefix="where" prefixOverrides="and">
+            <if test="contractCodeList != null and contractCodeList.size > 0">
+                and contract_code in
+                <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </trim>
+    </delete>
+</mapper>

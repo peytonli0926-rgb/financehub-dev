@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.DwsBzHetjyjgxxDMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.dw.entity.DwsBzHetjyjgxxDEntity">
+                    <id column="vc_hetbh" property="vcHetbh" />
+                    <result column="vc_kehbh" property="vcKehbh" />
+                    <result column="nu_zulqx" property="nuZulqx" />
+                    <result column="nu_huanzfs" property="nuHuanzfs" />
+                    <result column="nu_huanzcs" property="nuHuanzcs" />
+                    <result column="dec_zulnll" property="decZulnll" />
+                    <result column="vc_lilfdlx" property="vcLilfdlx" />
+                    <result column="dec_kehpmll" property="decKehpmll" />
+                    <result column="vc_qicqmzf" property="vcQicqmzf" />
+                    <result column="vc_jiesfs" property="vcJiesfs" />
+                    <result column="nu_meiycfr" property="nuMeiycfr" />
+                    <result column="dec_shebjg" property="decShebjg" />
+                    <result column="dec_zujgsbj" property="decZujgsbj" />
+                    <result column="dec_jingrze" property="decJingrze" />
+                    <result column="dec_zulxse" property="decZulxse" />
+                    <result column="dec_zulhtzje" property="decZulhtzje" />
+                    <result column="dec_qizszlxse" property="decQizszlxse" />
+                    <result column="dec_qizsxtirr" property="decQizsxtirr" />
+                    <result column="dec_qizssjirr" property="decQizssjirr" />
+                    <result column="dec_xitirr" property="decXitirr" />
+                    <result column="dec_shijirr" property="decShijirr" />
+                    <result column="dec_xitirr_nottax" property="decXitirrNottax" />
+                    <result column="dec_shijirr_nottax" property="decShijirrNottax" />
+                    <result column="dec_gp" property="decGp" />
+                    <result column="dec_gp_nottax" property="decGpNottax" />
+                    <result column="vc_baozjsfdk" property="vcBaozjsfdk" />
+                    <result column="dec_zijcb" property="decZijcb" />
+                    <result column="dt_chuangjsj" property="dtChuangjsj" />
+                    <result column="dec_lichs" property="decLichs" />
+                    <result column="vc_baoxfzffs" property="vcBaoxfzffs" />
+                    <result column="dec_faxll" property="decFaxll" />
+                    <result column="vc_faxjsfs" property="vcFaxjsfs" />
+                    <result column="dec_changstx" property="decChangstx" />
+                    <result column="dec_qizszlnll" property="decQizszlnll" />
+                    <result column="dec_baolfsr" property="decBaolfsr" />
+                    <result column="pt" property="pt" />
+                    <result column="vc_yewxtid" property="vcYewxtid" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            vc_hetbh, vc_kehbh, nu_zulqx, nu_huanzfs, nu_huanzcs, dec_zulnll, vc_lilfdlx, dec_kehpmll, vc_qicqmzf, vc_jiesfs, nu_meiycfr, dec_shebjg, dec_zujgsbj, dec_jingrze, dec_zulxse, dec_zulhtzje, dec_qizszlxse, dec_qizsxtirr, dec_qizssjirr, dec_xitirr, dec_shijirr, dec_xitirr_nottax, dec_shijirr_nottax, dec_gp, dec_gp_nottax, vc_baozjsfdk, dec_zijcb, dt_chuangjsj, dec_lichs, vc_baoxfzffs, dec_faxll, vc_faxjsfs, dec_changstx, dec_qizszlnll, dec_baolfsr, pt, vc_yewxtid
+        </sql>
+
+        <select id="selectQicqmzfByContractCode" parameterType="java.util.List" resultMap="BaseResultMap">
+            select d.vc_hetbh , dict.vc_mingc vc_qicqmzf,
+                d.vc_kehbh, d.nu_zulqx, dict2.vc_mingc nu_huanzfs, d.nu_huanzcs, d.dec_zulnll, d.vc_lilfdlx, d.dec_kehpmll,
+                d.vc_jiesfs, d.nu_meiycfr, d.dec_shebjg, d.dec_zujgsbj, d.dec_jingrze, d.dec_zulxse, d.dec_zulhtzje, d.dec_qizszlxse,
+                d.dec_qizsxtirr, d.dec_qizssjirr, d.dec_xitirr, d.dec_shijirr, d.dec_xitirr_nottax, d.dec_shijirr_nottax, d.dec_gp, d.dec_gp_nottax,
+                d.vc_baozjsfdk, d.dec_zijcb, d.dt_chuangjsj, d.dec_lichs, d.vc_baoxfzffs, d.dec_faxll, d.vc_faxjsfs, d.dec_changstx, d.dec_qizszlnll,
+                d.dec_baolfsr, d.pt, d.vc_yewxtid
+            from dws_bz_hetjyjgxx_d d
+            left join dw_dict_data dict on d.vc_qicqmzf = dict.vc_zhi and dict.vc_fujdid ='qicqmzf'
+            left join dw_dict_data dict2 on d.nu_huanzfs = dict2.vc_zhi and dict2.vc_fujdid ='huanzfs'
+            where
+                d.vc_hetbh in
+                <foreach collection="contractCodeList" index="key" item="contractCode" open="(" separator="," close=")">
+                    #{contractCode}
+                </foreach>
+        </select>
+</mapper>
+

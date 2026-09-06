@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TBdPeriodMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TBdPeriodEntity">
+        <id column="FID" property="fid"/>
+        <result column="FPERIODYEAR" property="fperiodyear"/>
+        <result column="FPERIODQUARTER" property="fperiodquarter"/>
+        <result column="FPERIODNUMBER" property="fperiodnumber"/>
+        <result column="FBEGINDATE" property="fbegindate"/>
+        <result column="FENDDATE" property="fenddate"/>
+        <result column="FISADJUSTPERIOD" property="fisadjustperiod"/>
+        <result column="FTYPEID" property="ftypeid"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FNUMBER" property="fnumber"/>
+        <result column="FDESCRIPTION_L1" property="fdescriptionL1"/>
+        <result column="FDESCRIPTION_L2" property="fdescriptionL2"/>
+        <result column="FDESCRIPTION_L3" property="fdescriptionL3"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FPERIODYEAR, FPERIODQUARTER, FPERIODNUMBER, FBEGINDATE, FENDDATE, FISADJUSTPERIOD, FTYPEID, FCREATORID,
+        FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME, FCONTROLUNITID, FNUMBER, FDESCRIPTION_L1, FDESCRIPTION_L2,
+        FDESCRIPTION_L3
+    </sql>
+</mapper>
+

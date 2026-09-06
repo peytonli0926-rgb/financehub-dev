@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TBdAccountbanksMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TBdAccountbanksEntity">
+        <id column="FID" property="fid"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FNAME_L1" property="fnameL1"/>
+        <result column="FNAME_L2" property="fnameL2"/>
+        <result column="FNAME_L3" property="fnameL3"/>
+        <result column="FNUMBER" property="fnumber"/>
+        <result column="FDESCRIPTION_L1" property="fdescriptionL1"/>
+        <result column="FDESCRIPTION_L2" property="fdescriptionL2"/>
+        <result column="FDESCRIPTION_L3" property="fdescriptionL3"/>
+        <result column="FSIMPLENAME" property="fsimplename"/>
+        <result column="FBANKACCOUNTNUMBER" property="fbankaccountnumber"/>
+        <result column="FCOMPANYID" property="fcompanyid"/>
+        <result column="FISCLOSED" property="fisclosed"/>
+        <result column="FOPENDATE" property="fopendate"/>
+        <result column="FCLOSEDATE" property="fclosedate"/>
+        <result column="FINITMAN" property="finitman"/>
+        <result column="FBANK" property="fbank"/>
+        <result column="FPHONENUMBER" property="fphonenumber"/>
+        <result column="FACCOUNTID" property="faccountid"/>
+        <result column="FISSETBANKINTERFACE" property="fissetbankinterface"/>
+        <result column="FBANKINTERFACETYPE" property="fbankinterfacetype"/>
+        <result column="FOPENAREAID" property="fopenareaid"/>
+        <result column="FISUSEGROUPPAYMENT" property="fisusegrouppayment"/>
+        <result column="FPROPERTYID" property="fpropertyid"/>
+        <result column="FINNERACCTID" property="finneracctid"/>
+        <result column="FCTRLSTRATEGYID" property="fctrlstrategyid"/>
+        <result column="FCLASSIFICATIOID" property="fclassificatioid"/>
+        <result column="FISBYCURRENCY" property="fisbycurrency"/>
+        <result column="FCURRENCYID" property="fcurrencyid"/>
+        <result column="FMAXPAYAMOUNT" property="fmaxpayamount"/>
+        <result column="FISONLYREAD" property="fisonlyread"/>
+        <result column="FISMOTHERACCOUNT" property="fismotheraccount"/>
+        <result column="FACCOUNTTYPE" property="faccounttype"/>
+        <result column="FNOTOUTPAY" property="fnotoutpay"/>
+        <result column="FSUBACCOUNTID" property="fsubaccountid"/>
+        <result column="FISCASH" property="fiscash"/>
+        <result column="FISBANK" property="fisbank"/>
+        <result column="FRELEMOTHERACCTID" property="frelemotheracctid"/>
+        <result column="FACCTNAME" property="facctname"/>
+        <result column="FISDCPAY" property="fisdcpay"/>
+        <result column="FISRECKONING" property="fisreckoning"/>
+        <result column="FSIMPLECODE" property="fsimplecode"/>
+        <result column="FAGENCYCOMPANYID" property="fagencycompanyid"/>
+        <result column="FISDEFAULTRECK" property="fisdefaultreck"/>
+        <result column="FBANKVERSION" property="fbankversion"/>
+        <result column="FBANKCERT" property="fbankcert"/>
+        <result column="FAPPLYBILLID" property="fapplybillid"/>
+        <result column="FREFERENCE" property="freference"/>
+        <result column="FISVIRTUALACCT" property="fisvirtualacct"/>
+        <result column="FCOUNTRYID" property="fcountryid"/>
+        <result column="FBANKINTERFACE" property="fbankinterface"/>
+        <result column="FBANKINTERFACEID" property="fbankinterfaceid"/>
+        <result column="FSYNCSTATUS" property="fsyncstatus"/>
+        <result column="FSYNCSTATUSMSG" property="fsyncstatusmsg"/>
+        <result column="FISFOREDRAFONLY" property="fisforedrafonly"/>
+        <result column="FSHAREACCTID" property="fshareacctid"/>
+        <result column="FSHARETYPE" property="fsharetype"/>
+        <result column="FISDEFAULTPAYMENT" property="fisdefaultpayment"/>
+        <result column="FISERECEIPT" property="fisereceipt"/>
+        <result column="FACCOUNTBANKTYPE" property="faccountbanktype"/>
+        <result column="FACCTMANAGEAMOUNT" property="facctmanageamount"/>
+        <result column="CFFABANKCOUNTRY" property="cffabankcountry"/>
+        <result column="CFFABANKSWIFTCODE" property="cffabankswiftcode"/>
+        <result column="CFFABANKOPENPLACE" property="cffabankopenplace"/>
+        <result column="CFFABANKREASON" property="cffabankreason"/>
+        <result column="CFFABANKNETSILVER" property="cffabanknetsilver"/>
+        <result column="CFFABANKCANBESOLD" property="cffabankcanbesold"/>
+        <result column="FISDYNAMICNOTICE" property="fisdynamicnotice"/>
+        <result column="FISSINGLEBALINTERFACE" property="fissinglebalinterface"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FCREATORID, FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME, FCONTROLUNITID, FNAME_L1, FNAME_L2, FNAME_L3,
+        FNUMBER, FDESCRIPTION_L1, FDESCRIPTION_L2, FDESCRIPTION_L3, FSIMPLENAME, FBANKACCOUNTNUMBER, FCOMPANYID,
+        FISCLOSED, FOPENDATE, FCLOSEDATE, FINITMAN, FBANK, FPHONENUMBER, FACCOUNTID, FISSETBANKINTERFACE,
+        FBANKINTERFACETYPE, FOPENAREAID, FISUSEGROUPPAYMENT, FPROPERTYID, FINNERACCTID, FCTRLSTRATEGYID,
+        FCLASSIFICATIOID, FISBYCURRENCY, FCURRENCYID, FMAXPAYAMOUNT, FISONLYREAD, FISMOTHERACCOUNT, FACCOUNTTYPE,
+        FNOTOUTPAY, FSUBACCOUNTID, FISCASH, FISBANK, FRELEMOTHERACCTID, FACCTNAME, FISDCPAY, FISRECKONING, FSIMPLECODE,
+        FAGENCYCOMPANYID, FISDEFAULTRECK, FBANKVERSION, FBANKCERT, FAPPLYBILLID, FREFERENCE, FISVIRTUALACCT, FCOUNTRYID,
+        FBANKINTERFACE, FBANKINTERFACEID, FSYNCSTATUS, FSYNCSTATUSMSG, FISFOREDRAFONLY, FSHAREACCTID, FSHARETYPE,
+        FISDEFAULTPAYMENT, FISERECEIPT, FACCOUNTBANKTYPE, FACCTMANAGEAMOUNT, CFFABANKCOUNTRY, CFFABANKSWIFTCODE,
+        CFFABANKOPENPLACE, CFFABANKREASON, CFFABANKNETSILVER, CFFABANKCANBESOLD, FISDYNAMICNOTICE, FISSINGLEBALINTERFACE
+    </sql>
+
+    <select id="selectAllAccountBank" resultType="com.utfinancing.financehub.etl.financial.model.dto.BankAccountDTO">
+        SELECT
+        t.FID AS eas_id,
+        t.FNUMBER AS bank_account_code,
+        t.FNAME_L2 AS bank_account_name,
+        t.FBANKACCOUNTNUMBER AS bank_account_number,
+        t.FISCLOSED AS close_flag,
+        t.FCLOSEDATE AS close_date,
+        org.FNUMBER AS org_id,
+        b.FNAME_L2 AS bank_name ,
+        acc.FNAME_L2 AS account_name,
+        acc.FNUMBER AS account_code,
+        cu.FISOCODE AS currency_code
+        FROM HXORACLE.T_BD_ACCOUNTBANKS t
+        JOIN HXORACLE.T_ORG_COMPANY org ON t.FCOMPANYID = org.FID
+        LEFT JOIN HXORACLE.T_BD_BANK b ON t.FBANK = b.FID
+        LEFT JOIN HXORACLE.T_BD_ACCOUNTVIEW acc ON t.FACCOUNTID = acc.FID
+        LEFT JOIN HXORACLE.T_BD_CURRENCY cu ON t.FCURRENCYID = cu.FID
+        WHERE 1=1 AND t.FISCLOSED='0'
+    </select>
+
+
+</mapper>
+

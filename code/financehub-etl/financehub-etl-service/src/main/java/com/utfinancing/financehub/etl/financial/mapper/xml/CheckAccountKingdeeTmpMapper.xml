@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.CheckAccountKingdeeTmpMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.CheckAccountKingdeeTmpEntity">
+                    <id column="id" property="id" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="fbegin_balance_for" property="fbeginBalanceFor" />
+                    <result column="fend_balance_for" property="fendBalanceFor" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, period_code, currency_type, org_id, account_code, fbegin_balance_for, fend_balance_for
+        </sql>
+
+        <delete id="clearTableData">
+            truncate table eg_check_account_kingdee_tmp
+        </delete>
+</mapper>
+

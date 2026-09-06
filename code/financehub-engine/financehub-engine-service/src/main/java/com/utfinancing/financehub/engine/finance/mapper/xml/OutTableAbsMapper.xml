@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.OutTableAbsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.OutTableAbsEntity">
+                    <id column="id" property="id" />
+                    <result column="loan_contract_code" property="loanContractCode" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="period" property="periods" />
+                    <result column="administrator" property="administrator" />
+                    <result column="close_date" property="closeDate" />
+                    <result column="release_date" property="releaseDate" />
+                    <result column="transfer_price" property="transferPrice" />
+                    <result column="contract_num" property="contractNum" />
+                    <result column="calculation_period" property="calculationPeriod" />
+                    <result column="transfer_period" property="transferPeriod" />
+                    <result column="cash_period" property="cashPeriod" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="approve_error_info" property="approveErrorInfo" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="period_code" property="periodCode"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, loan_contract_code, business_date, account_date, periods, administrator, close_date, release_date, transfer_price, contract_num, calculation_period, transfer_period, cash_period, process_instance_id, process_status, is_generate_voucher, approve_error_info, del_flag, create_by, create_time, update_by, update_time, period_code
+        </sql>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.OutTableContractDetailVO">
+        select
+            eotcd.*,
+            eota.periods,
+            eota.process_status,
+            eota.loan_contract_code,
+            eota.periods,
+            eota.business_date
+        from
+            eg_out_table_contract_detail eotcd
+                inner join eg_out_table_abs eota on
+                eotcd.out_table_abs_id = eota.id
+        where
+            1 = 1
+          and eotcd.del_flag = '0'
+          and eota.del_flag = '0'
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and eotcd.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and eota.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.loanContractCode!=null and param.loanContractCode!=''">
+            and eota.loan_contract_code = #{param.loanContractCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and eotcd.org_id = #{param.orgId}
+        </if>
+        <if test="param.periods!=null and param.periods!=''">
+            and eota.periods = #{param.periods}
+        </if>
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and eotcd.contract_code = #{param.contractCode}
+        </if>
+    </select>
+    <select id="selectRentPlanPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.OutTableRentPlanVO">
+        select
+        ota.loan_contract_code,
+        eotcd.contract_code,
+        ota.periods,
+        erp.plan_date,
+        sum(erp.principal_amount) as principal_amount,
+        sum(erp.interest_amount) as interest_amount,
+        sum(erp.actual_repayment_principal_amount) as actual_repayment_principal_amount,
+        sum(erp.actual_repayment_interes_amount) as actual_repayment_interes_amount
+        from
+        eg_out_table_abs ota
+        inner join eg_out_table_contract_detail eotcd
+        on
+        ota.id = eotcd.out_table_abs_id
+        left join eg_repayment_plan erp on
+        eotcd.contract_code = erp.contract_code
+        where
+        1 = 1
+        and ota.process_status in ('3', '4')
+        and eotcd.del_flag = '0'
+        and ota.del_flag = '0'
+        and erp.del_flag ='0'
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+           and eotcd.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.loanContractCodeList != null and param.loanContractCodeList.size > 0">
+            and ota.loan_contract_code in
+            <foreach item="item" index="index" collection="param.loanContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.periodsList != null and param.periodsList.size > 0">
+           and ota.periods in
+            <foreach item="item" index="index" collection="param.periodsList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startAccountDate!=null">
+            and to_char(erp.plan_date,'yyyy-MM-dd') >= to_char(to_date(#{param.startAccountDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endAccountDate!=null">
+            and to_char(erp.plan_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.endAccountDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        group by
+        ota.loan_contract_code,
+        eotcd.contract_code,
+        ota.periods,
+        erp.plan_date
+    </select>
+    <select id="selectRentPlanList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.OutTableRentPlanVO">
+        select
+        ota.loan_contract_code,
+        eotcd.contract_code,
+        ota.periods,
+        erp.plan_date,
+        sum(erp.principal_amount) as principal_amount,
+        sum(erp.interest_amount) as interest_amount,
+        sum(erp.actual_repayment_principal_amount) as actual_repayment_principal_amount,
+        sum(erp.actual_repayment_interes_amount) as actual_repayment_interes_amount
+        from
+        eg_out_table_abs ota
+        inner join eg_out_table_contract_detail eotcd
+        on
+        ota.id = eotcd.out_table_abs_id
+        left join eg_repayment_plan erp on
+        eotcd.contract_code = erp.contract_code
+        where
+        1 = 1
+        and ota.process_status in ('3', '4')
+        and eotcd.del_flag = '0'
+        and ota.del_flag = '0'
+        and erp.del_flag ='0'
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and eotcd.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.loanContractCodeList != null and param.loanContractCodeList.size > 0">
+            and ota.loan_contract_code in
+            <foreach item="item" index="index" collection="param.loanContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.periodsList != null and param.periodsList.size > 0">
+           and ota.periods in
+            <foreach item="item" index="index" collection="param.periodsList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startAccountDate!=null">
+            and to_char(erp.plan_date,'yyyy-MM-dd') >= to_char(to_date(#{param.startAccountDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endAccountDate!=null">
+            and to_char(erp.plan_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.endAccountDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        group by
+        ota.loan_contract_code,
+        eotcd.contract_code,
+        ota.periods,
+        erp.plan_date
+    </select>
+</mapper>
+

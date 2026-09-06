@@ -1,0 +1,1309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.ReportFinanceDataMapper">
+
+    <insert id="syncPeriodContractBalanceData">
+        insert
+        into
+            eg_contract_balance_month
+        select
+            *
+        from
+            eg_contract_balance
+        where
+            period_code = #{periodCode}
+          and id in (
+            select
+                max(id)
+            from
+                eg_contract_balance
+            where
+                period_code = #{periodCode}
+            group by
+                business_code,
+                contract_code,
+                client_code,
+                bill_contract_code)
+    </insert>
+
+    <update id="removeContractReportFlag">
+        update eg_contract set report_flag = null
+    </update>
+
+    <update id="fillContractReportFlagOne">
+        with sub as (
+            select
+                ec.id,
+                ec.org_id,
+                ec.contract_code ,
+--	ecbl.system_code ,
+                ec.contract_status ,
+                ec.financial_contract_status,
+                ec.lease_date_start ,
+                ec.lease_date_end ,
+                ec.lease_type ,
+                ecbl.receivable_rent_balance,
+                ecbl.receivable_downpayment_balance,
+                ecbl.receivable_residual_value_balance,
+                ecbl.receivable_commission_balance,
+                ecbl.receivable_insurance_balance,
+                ecbl.receivable_otherincome_balance,
+                ecbl.receivable_rebate_balance,
+                ecbl.receivable_outtax_balance,
+                ecbl.receivable_outputtax_base_balance,
+                ecbl.unrealized_revenue_balance,
+                income_contract.rental_income_after_total,
+                ecbl.lease_revenue_balance,
+                ecbl.depreciation_reserves_balance,
+                ecbl.lessee_margin_balance,
+                contract_ta.ta_amount,
+                income_contract.overdue_earnings
+            from
+                (
+                    select
+                        *
+                    from
+                        eg_contract
+                    where
+                        org_id in ('01-C0001','02-C0001','30001','80001')
+--		and contract_code = 'KFL18024208'
+--		and id in (1752911710522023938,1752572378858758145,1749759651345862659,1753264431150243841,1753262546116780033)
+                ) ec
+                    left outer join (select contract_code,org_id, sum(receivable_rent_balance) receivable_rent_balance,
+                                sum(receivable_downpayment_balance) receivable_downpayment_balance,
+                                sum(receivable_residual_value_balance) receivable_residual_value_balance,
+                                sum(receivable_commission_balance) receivable_commission_balance,
+                                sum(receivable_insurance_balance) receivable_insurance_balance,
+                                sum(receivable_otherincome_balance) receivable_otherincome_balance,
+                                sum(receivable_rebate_balance) receivable_rebate_balance,
+                                sum(receivable_outtax_balance) receivable_outtax_balance,
+                                sum(receivable_outputtax_base_balance) receivable_outputtax_base_balance,
+                                sum(unrealized_revenue_balance) unrealized_revenue_balance,
+                                sum(lease_revenue_balance) lease_revenue_balance,
+                                sum(depreciation_reserves_balance) depreciation_reserves_balance,
+                                sum(lessee_margin_balance) lessee_margin_balance
+                         from eg_contract_balance_latest where org_id in ('01-C0001','02-C0001','30001','80001')
+                         group by contract_code,org_id) ecbl
+                        on ec.contract_code = ecbl.contract_code
+                            and ec.org_id = ecbl.org_id
+                    left outer join
+                (
+                    select
+                        elid.contract_code,
+                        elid.org_id ,
+                        elid.rental_income_after_total,
+                        elid.overdue_earnings
+                    from
+                        eg_lease_income_details elid
+	                where to_char(elid.business_date, 'YYYYMM') = #{periodCode}::text
+                ) income_contract on
+                            income_contract.contract_code = ec.contract_code
+                        and ec.org_id = income_contract.org_id
+                    left outer join
+                (
+                    select
+                        ect.org_id,
+                        ect.contract_code ,
+                        sum(ect.ta_amount) ta_amount
+                    from
+                        eg_contract_ta_amount ect
+                    where
+                        ect.del_flag = '0'
+                    group by
+                        ect.org_id,
+                        ect.contract_code) contract_ta on
+                            contract_ta.contract_code = ec.contract_code
+                        and ec.org_id = contract_ta.org_id
+            )
+           ,res as (
+            select
+                *
+            from
+                sub t
+            where
+                not exists
+                    (
+                        select
+                            1
+                        from
+                            sub tmp
+                        where
+                        tmp.contract_status in ('结清', '提前结清', '处置结清', '买断结清', '内部结清', '合同撤销', '合同结束')
+                          and tmp.receivable_rent_balance = 0
+                          and tmp.receivable_downpayment_balance = 0
+                          and tmp.receivable_residual_value_balance = 0
+                          and tmp.receivable_commission_balance = 0
+                          and tmp.receivable_insurance_balance = 0
+                          and tmp.receivable_otherincome_balance = 0
+                          and tmp.receivable_rebate_balance = 0
+                          and tmp.receivable_outtax_balance = 0
+                          and tmp.receivable_outputtax_base_balance = 0
+                          and tmp.unrealized_revenue_balance = 0
+                          and coalesce(tmp.rental_income_after_total,0) = 0
+                          and tmp.lease_revenue_balance = 0
+                          and tmp.depreciation_reserves_balance = 0
+                          and tmp.lessee_margin_balance = 0
+                          and coalesce(tmp.ta_amount,0) = 0
+                          and coalesce(tmp.overdue_earnings,0) = 0
+                          and t.id = tmp.id
+                    )
+        )
+        update eg_contract ec set report_flag = 1 where exists(
+
+            select
+                1
+            from
+                res where ec.id = res.id
+        )
+    </update>
+
+    <update id="fillContractReportFlagRest">
+        update eg_contract ec set report_flag = 0 where report_flag is null
+    </update>
+
+    <insert id="syncAssistantBalance">
+        INSERT INTO financialdb."CT_BD_ASSISTANTGH"
+        ("VC_NIANYR", "ID", "ACCOUNTNUM", "ACCOUNTNAME", "COMPANY", "CURRENCYSTD", "ACCOUNTTYPE", "ACCOUNTDETAILNUM", "ACCOUNTDETAIL", "CURRENCY", "FILTERDATE", "MONDEBITSTAMONEY", "MONDEBITORIMONEY", "MONCREDITSTAMONEY", "MONCREDITORIMONEY", "STABALANCE", "ORIBALANCE", "DC", "MONDEBITRMBMONEY", "MONCREDITRMBMONEY", "RMBBALANCE", "CREATETIME")
+
+    select
+        #{queryDate},
+        max(EAAB.ID),
+        EAAB.account_code ,eaab.account_name,eoc.org_name ,
+        eaab.currency_code ,  --取金蝶账套的本位币币种
+        '合同',           --核算项目类型
+        eaab.contract_code ,   --核算项目明细编码
+        ec.contract_name,    --核算项目明细
+        eaab.currency_code ,  --原币币别
+        #{queryDate},  --过滤日期
+        sum(coalesce(ev_eve.debit_amount,0)*eeer.exchange_rate ),--截止查询日本月累计借方发生额本位币，取汇率，*   （原币至本位币的汇率）
+        sum(coalesce(ev_eve.debit_amount,0)),--截止查询日本月累计借方发生额原币
+        sum(coalesce(ev_eve.credit_amount,0)*eeer.exchange_rate),--截止查询日本月累计贷方发生额本位币，取汇率，*    （原币至本位币的汇率）
+        sum(coalesce(ev_eve.credit_amount,0)), --截止查询日本月累计贷方发生额原币
+        case when eaa.account_category='1'
+                 then sum((coalesce(eaab.month_end_credit_balance,0)+coalesce(ev_eve.credit_amount,0))*eeer.exchange_rate)
+             else
+                 sum((coalesce(eaab.month_end_debit_balance,0)+coalesce(ev_eve.debit_amount,0))*eeer.exchange_rate)    --（原币至本位币的汇率）
+            end,      --截止查询日余额本位币
+        case when eaa.account_category='1'
+                 then sum(coalesce(eaab.month_end_credit_balance,0)+coalesce(ev_eve.credit_amount,0))
+             else
+                 sum(coalesce(eaab.month_end_debit_balance,0)+coalesce(ev_eve.debit_amount,0))
+            end,      --截止查询日余额原币
+        case when eaa.account_category='1'
+                 then '贷'
+             else
+                 '借'
+            end,      --截止查询日余额方向，
+        sum(coalesce(ev_eve.debit_amount,0)*eeer.exchange_rate),--截止查询日本月累计借方发生额RMB，取汇率，*      （原币到人民币的汇率）
+        sum(coalesce(ev_eve.credit_amount,0)*eeer.exchange_rate),--截止查询日本月累计贷方发生额RMB ，取汇率，*      （原币到人民币的汇率）
+        case when eaa.account_category='1'
+                 then sum((coalesce(eaab.month_end_credit_balance,0)+coalesce(ev_eve.credit_amount,0))*eeer.exchange_rate)       --（原币到人民币的汇率）
+             else
+                 sum((coalesce(eaab.month_end_debit_balance,0)+coalesce(ev_eve.debit_amount,0))*eeer.exchange_rate)         --（原币到人民币的汇率）
+            end,      --截止查询日余额人民币
+        #{queryDate}--截止查询日余额RMB
+    from eg_account_assist_balance eaab
+             left join (
+        select
+            ev.org_id,
+            eve.contract_code,
+            eve.account_code,
+            ev.currency,
+            sum(eve.debit_amount) debit_amount,
+            sum(eve.credit_amount) credit_amount
+        from
+            eg_voucher ev
+                join eg_voucher_entry eve on
+                        ev.id = eve.voucher_id
+                    and ev.period_code = to_char(to_date(#{queryDate}, 'YYYY-MM-DD'),'YYYYMM')::Integer
+                    and eve.period_code = to_char(to_date(#{queryDate}, 'YYYY-MM-DD'),'YYYYMM')::Integer
+                    and ev.voucher_status = '3'
+        group by
+            ev.org_id,
+            eve.contract_code,
+            eve.account_code,
+            eve.account_name,
+            ev.currency
+    )ev_eve on eaab.org_id = ev_eve.org_id and eaab.contract_code = ev_eve.contract_code and eaab.account_code = ev_eve.account_code and eaab.currency_code = ev_eve.currency
+             join eg_currency curr on eaab.currency_code = curr.currency_code
+             join eg_eas_exchange_rate eeer on eeer.source_eas_code = curr.eas_code and eeer.execute_date = #{queryDate} and eeer.target_eas_code = 'BB01'
+             join eg_org_company eoc on eaab.org_id=eoc.org_id
+             join eg_contract ec on eaab.contract_code =ec.contract_code
+             join (select distinct ea.account_code ,ea.account_category  from eg_account ea) eaa on eaa.account_code=eaab.account_code
+    where 1=1
+--and eaab.org_id=eoc.org_id
+--and eaab.contract_code =ec.contract_code
+--and eaa.account_code=eaab.account_code
+      and eaab.period_code = to_char(to_date(#{queryDate}, 'YYYY-MM-DD') - interval '1 month', 'yyyyMM')::integer      ---TO_CHAR(CURRENT_DATE,'YYYYMM')
+          and eaab.account_code in ('1231.04.02',
+                                    '1231.03.04',
+                                    '1231.04.01',
+                                    '1231.03.01',
+                                    '1532.02',
+                                    '1532.01',
+                                    '1122.06',
+                                    '1122.07',
+                                    '1221.04',
+                                    '1221.07',
+                                    '1122.03',
+                                    '1122.03.01',
+                                    '1122.03.02',
+                                    '1122.03.03',
+                                    '1122.03.04',
+                                    '1531.01.01',
+                                    '1531.01.02',
+                                    '1531.01.03',
+                                    '1531.01.04',
+                                    '1531.01.05',
+                                    '1531.01.06',
+                                    '1531.01.08',
+                                    '1531.01.09',
+                                    '1531.01.10',
+                                    '2701.01',
+                                    '2701.02',
+                                    '2701.07'
+            )
+    group by EAAB.account_code ,eaab.account_name,eoc.org_name ,
+        eaab.currency_code ,eaab.contract_code,ec.contract_name,eaa.account_category
+    </insert>
+
+    <insert id="syncDetailBalance">
+        INSERT INTO financialdb."CT_FI_TWOMONVOUCHER"
+        ("VC_NIANYR", "ID", "ACCOUNTNUM", "ACCOUNTNAME", "COMPANY", "CURRENCYSTD", "CURRENCY", "TORMBEXT", "BOOKEDDATE", "ACCOUNTTYPE", "ACCOUNTDETAILNUM", "ACCOUNTDETAIL", "ENTRYSEQ", "ASSISTSEQ", "DEBITAMOUNTSTD", "CREDITAMOUNTSTD", "DEBITAMOUNTRMB", "CREDITAMOUNTRMB", "CREATETIME", "FILTERDATE")
+
+--with a as (
+
+        select
+            #{queryDate},   --年月日
+            ev.id,        --id
+            eve.account_code ,  --科目代码
+            eaa.account_name ,  --科目名称
+            eoc.org_name ,   --公司
+            eeer.source_eas_code ,   --本位币，根据机构从金蝶下获取,写个参数表
+            ev.currency,
+            eeer.exchange_rate ,--本位币转人民币汇率
+            ev.voucher_date ,  --记账日期
+            '合同' ,--核算项目类型
+            eve.contract_code, --核算项目明细编码
+            eve.contract_name, --核算项目明细
+            '1',   --凭证分录行号
+            '1',   --凭证辅助帐行号
+            eve.debit_amount ,    --借方本位币发生金额
+            eve.credit_amount ,   --贷方本位币发生金额
+            eve.debit_amount *eeer.exchange_rate ,    --借方发生金额RMB   *汇率
+            eve.credit_amount *eeer.exchange_rate ,    --贷方发生金额RMB    *汇率
+            #{queryDate},  --固化时间
+            #{queryDate}  --筛选日期
+        from eg_voucher ev
+                 join eg_voucher_entry eve on ev.id = eve.voucher_id
+                 join eg_currency curr on ev.currency = curr.currency_code
+                 join eg_eas_exchange_rate eeer on curr.eas_code = eeer.source_eas_code
+                 join eg_org_company eoc on ev.org_id=eoc.org_id
+                 join eg_contract ec on eve.contract_code =ec.contract_code
+                 join (select distinct ea.account_code ,ea.account_name  from eg_account ea) eaa on eaa.account_code=eve.account_code
+        where ev.voucher_date &gt;= to_date(#{queryDate}, 'YYYY-MM-DD') - interval '2 month'    --add_months(CURRENT_DATE,-2)
+            and eeer.execute_date = #{queryDate} and eeer.target_eas_code = 'BB01'
+            and eve.account_code in
+              ('1231.04.02',
+               '1231.03.04',
+               '1231.04.01',
+               '1231.03.01',
+               '1532.02',
+               '1532.01',
+               '1122.06',
+               '1122.07',
+               '1221.04',
+               '1221.07',
+               '1122.03',
+               '1122.03.01',
+               '1122.03.02',
+               '1122.03.03',
+               '1122.03.04',
+               '1531.01.01',
+               '1531.01.02',
+               '1531.01.03',
+               '1531.01.04',
+               '1531.01.05',
+               '1531.01.06',
+               '1531.01.08',
+               '1531.01.09',
+               '1531.01.10',
+               '2701.01',
+               '2701.02',
+               '2701.07'
+                  )
+--)select count(1) from a;
+    </insert>
+
+
+    <delete id="deleteIdTemp">
+        truncate table id_temp;
+    </delete>
+
+    <insert id="fillIdTemp">
+        insert into id_temp
+
+        select
+            max(id) id
+        from
+            eg_contract_balance
+        where period_code &lt;= #{param.periodCode}
+        <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        contract_code,
+        client_code,
+        org_id,
+        bill_contract_code
+    </insert>
+
+    <insert id="syncContractBalanceMonthData">
+        insert into eg_contract_balance_month
+        (
+            id,
+            voucher_id,
+            interface_data_id,
+            system_code,
+            business_code,
+            business_date,
+            voucher_date,
+            scene_code,
+            contract_code,
+            client_code,
+            client_type,
+            org_id,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            del_flag,
+            receivable_rent_balance,
+            receivable_rent_amount,
+            receivable_downpayment_balance,
+            receivable_downpayment_amount,
+            receivable_residual_value_balance,
+            receivable_residual_value_amount,
+            receivable_commission_balance,
+            receivable_commission_amount,
+            receivable_rebate_balance,
+            receivable_rebate_amount,
+            receivable_insurance_balance,
+            receivable_insurance_amount,
+            receivable_otherincome_balance,
+            receivable_otherincome_amount,
+            receivable_outtax_balance,
+            receivable_outtax_amount,
+            receivable_outputtax_base_balance,
+            receivable_outputtax_base_amount,
+            receivable_unconfirm_receipt_balance,
+            receivable_unconfirm_receipt_amount,
+            receivable_service_balance,
+            receivable_service_amount,
+            receivable_service_outtax_balance,
+            receivable_service_outtax_amount,
+            unrealized_revenue_balance,
+            unrealized_revenue_amount,
+            lease_revenue_balance,
+            lease_revenue_amount,
+            service_revenue_balance,
+            service_revenue_amount,
+            insurance_differ_balance,
+            insurance_differ_amount,
+            dinterest_revenue_balance,
+            dinterest_revenue_amount,
+            terminate_balance,
+            terminate_amount,
+            other_revenue_balance,
+            other_revenue_amount,
+            damages_revenue_balance,
+            damages_revenue_amount,
+            margin_interest_balance,
+            margin_interest_amount,
+            payable_device_estimate_balance,
+            payable_device_estimate_amount,
+            payable_device_balance,
+            payable_device_amount,
+            payable_other_cost_estimate_balance,
+            payable_other_cost_estimate_amount,
+            payable_other_cost_balance,
+            payable_other_cost_amount,
+            payable_agency_estimate_balance,
+            payable_agency_estimate_amount,
+            payable_agency_balance,
+            payable_agency_amount,
+            payable_vehicle_estimate_balance,
+            payable_vehicle_estimate_amount,
+            payable_vehicle_balance,
+            payable_vehicle_amount,
+            payable_band_cost_estimate_balance,
+            payable_band_cost_estimate_amount,
+            payable_band_cost_balance,
+            payable_band_cost_amount,
+            payable_pledge_estimate_balance,
+            payable_pledge_estimate_amount,
+            payable_pledge_balance,
+            payable_pledge_amount,
+            payable_unpledge_estimate_balance,
+            payable_unpledge_estimate_amount,
+            payable_unpledge_balance,
+            payable_unpledge_amount,
+            lessee_margin_balance,
+            lessee_margin_amount,
+            supplier_margin_balance,
+            supplier_margin_amount,
+            payable_insurance_estimate_balance,
+            payable_insurance_estimate_amount,
+            payable_insurance_balance,
+            payable_insurance_amount,
+            intax_balance,
+            intax_amount,
+            outtax_balance,
+            outtax_amount,
+            litigation_expenses_balance,
+            litigation_expenses_amount,
+            depreciation_reserves_balance,
+            depreciation_reserves_amount,
+            depreciation_loss_balance,
+            depreciation_loss_amount,
+            receive_cost_balance,
+            receive_cost_amount,
+            off_income_balance,
+            off_income_amount,
+            defer_income_balance,
+            defer_income_amount,
+            payable_account_balance,
+            payable_account_amount,
+            payable_margin_balance,
+            payable_margin_amount,
+            payable_margin_year_balance,
+            payable_margin_year_amount,
+            margin_ointerest_balance,
+            margin_ointerest_amount,
+            receive_sum_balance,
+            receive_sum_amount,
+            receive_sum_outtax_balance,
+            receive_sum_outtax_amount,
+            receive_unrealized_revenue_balance,
+            receive_unrealized_revenue_amount,
+            payable_lessee_margin_year_balance,
+            payable_lessee_margin_year_amount,
+            payable_supplier_margin_year_balance,
+            payable_supplier_margin_year_amount,
+            receivable_litigation_expenses_balance,
+            receivable_litigation_expenses_amount,
+            payable_other_estimate_balance,
+            payable_other_estimate_amount,
+            payable_discount_cost_balance,
+            payable_discount_cost_amount,
+            payable_procedure_cost_balance,
+            payable_procedure_cost_amount,
+            provisional_receipts_balance,
+            provisional_receipts_amount,
+            equipment_depreciation_reserves_balance,
+            equipment_depreciation_reserves_amount,
+            equipment_depreciation_loss_balance,
+            equipment_depreciation_loss_amount,
+            asset_dispose_gain_balance,
+            asset_dispose_gain_amount,
+            asset_dispose_loss_balance,
+            asset_dispose_loss_amount,
+            receivable_other_balance,
+            receivable_other_amount,
+            receivable_collection_transfer_balance,
+            receivable_collection_transfer_amount,
+            receivable_related_party_balance,
+            receivable_related_party_amount,
+            collection_transfer_balance,
+            collection_transfer_amount,
+            collect_payment_other_balance,
+            collect_payment_other_amount,
+            receivable_interest_balance,
+            receivable_interest_amount,
+            receivable_litigation_margin_balance,
+            receivable_litigation_margin_amount,
+            property_cost_balance,
+            property_cost_amount,
+            property_depreciation_reserves_balance,
+            property_depreciation_reserves_amount,
+            machine_cost_balance,
+            machine_cost_amount,
+            machine_depreciation_reserves_balance,
+            machine_depreciation_reserves_amount,
+            other_cost_balance,
+            other_cost_amount,
+            other_depreciation_reserves_balance,
+            other_depreciation_reserves_amount,
+            receivable_factoring_principal_balance,
+            receivable_factoring_principal_amount,
+            receivable_factoring_interest_balance,
+            receivable_factoring_interest_amount,
+            payable_discount_cost_outtax_balance,
+            payable_discount_cost_outtax_amount,
+            receivable_rent_investment_property_balance,
+            receivable_rent_investment_property_amount,
+            receivable_outtax_investment_property_balance,
+            receivable_outtax_investment_property_amount,
+            depreciation_reserves_trade_balance,
+            depreciation_reserves_trade_amount,
+            depreciation_reserves_service_balance,
+            depreciation_reserves_service_amount,
+            depreciation_reserves_other_receivable_balance,
+            depreciation_reserves_other_receivable_amount,
+            depreciation_reserves_temp_balance,
+            depreciation_reserves_temp_amount,
+            depreciation_reserves_other_margin_balance,
+            depreciation_reserves_other_margin_amount,
+            depreciation_reserves_investment_property_balance,
+            depreciation_reserves_investment_property_amount,
+            depreciation_reserves_deposit_balance,
+            depreciation_reserves_deposit_amount,
+            depreciation_reserves_litigation_balance,
+            depreciation_reserves_litigation_amount,
+            depreciation_reserves_litigation_margin_balance,
+            depreciation_reserves_litigation_margin_amount,
+            depreciation_reserves_other_balance,
+            depreciation_reserves_other_amount,
+            depreciation_reserves_individual_balance,
+            depreciation_reserves_individual_amount,
+            depreciation_reserves_bill_balance,
+            depreciation_reserves_bill_amount,
+            depreciation_reserves_gov_balance,
+            depreciation_reserves_gov_amount,
+            depreciation_reserves_other_long_receibles_balance,
+            depreciation_reserves_other_long_receibles_amount,
+            depreciation_reserves_long_related_balance,
+            depreciation_reserves_long_related_amount,
+            depreciation_reserves_interest_balance,
+            depreciation_reserves_interest_amount,
+            receivable_principal_balance,
+            receivable_principal_amount,
+            receivable_interest_adjustment_balance,
+            receivable_interest_adjustment_amount,
+            receivable_principal_nonfinancial_balance,
+            receivable_principal_nonfinancial_amount,
+            receivable_commission_nonfinancial_balance,
+            receivable_commission_nonfinancial_amount,
+            receivable_interest_adjustment_nonfinancial_balance,
+            receivable_interest_adjustment_nonfinancial_amount,
+            depreciation_reserves_bank_balance,
+            depreciation_reserves_bank_amount,
+            depreciation_reserves_buying_back_balance,
+            depreciation_reserves_buying_back_amount,
+            depreciation_reserves_term_deposit_interest_balance,
+            depreciation_reserves_term_deposit_interest_amount,
+            depreciation_reserves_borrowings_interest_balance,
+            depreciation_reserves_borrowings_interest_amount,
+            depreciation_reserves_buying_back_interest_balance,
+            depreciation_reserves_buying_back_interest_amount,
+            depreciation_reserves_financial_product_interest_balance,
+            depreciation_reserves_financial_product_interest_amount,
+            depreciation_reserves_structured_deposit_interest_balance,
+            depreciation_reserves_structured_deposit_interest_amount,
+            depreciation_reserves_fvpl_interest_other_balance,
+            depreciation_reserves_fvpl_interest_other_amount,
+            depreciation_reserves_bond_fvoci_interest_balance,
+            depreciation_reserves_bond_fvoci_interest_amount,
+            depreciation_reserves_fvoci_interest_other_balance,
+            depreciation_reserves_fvoci_interest_other_amount,
+            depreciation_reserves_bond_ac_interest_balance,
+            depreciation_reserves_bond_ac_interest_amount,
+            depreciation_reserves_ac_interest_other_balance,
+            depreciation_reserves_ac_interest_other_amount,
+            depreciation_reserves_bond_ac_balance,
+            depreciation_reserves_bond_ac_amount,
+            depreciation_reserves_turst_ac_balance,
+            depreciation_reserves_turst_ac_amount,
+            depreciation_reserves_other_financial_ac_balance,
+            depreciation_reserves_other_financial_ac_amount,
+            depreciation_reserves_other_asset_ac_balance,
+            depreciation_reserves_other_asset_ac_amount,
+            depreciation_reserves_bond_fvoci_balance,
+            depreciation_reserves_bond_fvoci_amount,
+            depreciation_reserves_other_financial_fvoci_balance,
+            depreciation_reserves_other_financial_fvoci_amount,
+            depreciation_reserves_subsidiary_balance,
+            depreciation_reserves_subsidiary_amount,
+            depreciation_reserves_jv_balance,
+            depreciation_reserves_jv_amount,
+            depreciation_reserves_associate_balance,
+            depreciation_reserves_associate_amount,
+            receivable_virtual_balance,
+            receivable_virtual_amount,
+            unrealized_revenue_other_balance,
+            unrealized_revenue_other_amount,
+            payable_factoring_balance,
+            payable_factoring_amount,
+            payable_entrust_balance,
+            payable_entrust_amount,
+            collect_claims_balance,
+            collect_claims_amount,
+            payable_other_balance,
+            payable_other_amount,
+            prereceived_rent_balance,
+            prereceived_rent_amount,
+            payable_related_party_balance,
+            payable_related_party_amount,
+            other_payable_spv_balance,
+            other_payable_spv_amount,
+            other_payable_trust_balance,
+            other_payable_trust_amount,
+            other_payable_claim_asset_balance,
+            other_payable_claim_asset_amount,
+            other_payable_rent_balance,
+            other_payable_rent_amount,
+            other_payable_residual_balance,
+            other_payable_residual_amount,
+            other_payable_other_balance,
+            other_payable_other_amount,
+            other_payable_claim_balance,
+            other_payable_claim_amount,
+            other_payable_claim_other_balance,
+            other_payable_claim_other_amount,
+            other_payable_collect_balance,
+            other_payable_collect_amount,
+            supplier_pool_balance,
+            supplier_pool_amount,
+            agent_margin_balance,
+            agent_margin_amount,
+            other_margin_balance,
+            other_margin_amount,
+            rent_margin_balance,
+            rent_margin_amount,
+            other_long_margin_balance,
+            other_long_margin_amount,
+            other_business_income_balance,
+            other_business_income_amount,
+            other_income_service_balance,
+            other_income_service_amount,
+            interest_other_long_payables_balance,
+            interest_other_long_payables_amount,
+            interest_other_financial_ac_balance,
+            interest_other_financial_ac_amount,
+            lease_revenue6_balance,
+            lease_revenue6_amount,
+            lease_revenue3_balance,
+            lease_revenue3_amount,
+            other_income_lease_transfer_balance,
+            other_income_lease_transfer_amount,
+            rent_investment_property_balance,
+            rent_investment_property_amount,
+            other_income_factoring_transfer_balance,
+            other_income_factoring_transfer_amount,
+            asset_dispose_gain_foreclosed_balance,
+            asset_dispose_gain_foreclosed_amount,
+            asset_dispose_loss_foreclosed_balance,
+            asset_dispose_loss_foreclosed_amount,
+            other_cost_lease_transfer_balance,
+            other_cost_lease_transfer_amount,
+            other_cost_factoring_transfer_balance,
+            other_cost_factoring_transfer_amount,
+            assessment_fee_balance,
+            assessment_fee_amount,
+            attorney_fee_balance,
+            attorney_fee_amount,
+            intermediary_fee_other_balance,
+            intermediary_fee_other_amount,
+            consultation_fee_balance,
+            consultation_fee_amount,
+            notary_fee_balance,
+            notary_fee_amount,
+            lease_asset_recovery_fee_balance,
+            lease_asset_recovery_fee_amount,
+            depreciation_loss_trade_balance,
+            depreciation_loss_trade_amount,
+            depreciation_loss_service_balance,
+            depreciation_loss_service_amount,
+            depreciation_loss_other_receivables_balance,
+            depreciation_loss_other_receivables_amount,
+            depreciation_loss_temp_balance,
+            depreciation_loss_temp_amount,
+            depreciation_loss_other_margin_balance,
+            depreciation_loss_other_margin_amount,
+            depreciation_loss_rent_investment_property_balance,
+            depreciation_loss_rent_investment_property_amount,
+            depreciation_loss_deposit_balance,
+            depreciation_loss_deposit_amount,
+            depreciation_loss_litigation_balance,
+            depreciation_loss_litigation_amount,
+            depreciation_loss_litigation_margin_balance,
+            depreciation_loss_litigation_margin_amount,
+            depreciation_loss_other_receivable_balance,
+            depreciation_loss_other_receivable_amount,
+            depreciation_loss_reverse_balance,
+            depreciation_loss_reverse_amount,
+            depreciation_loss_equity_investment_balance,
+            depreciation_loss_equity_investment_amount,
+            depreciation_loss_interest_balance,
+            depreciation_loss_interest_amount,
+            depreciation_loss_bill_balance,
+            depreciation_loss_bill_amount,
+            depreciation_loss_collateral_balance,
+            depreciation_loss_collateral_amount,
+            depreciation_loss_financial_balance,
+            depreciation_loss_financial_amount,
+            depreciation_loss_buying_back_balance,
+            depreciation_loss_buying_back_amount,
+            depreciation_loss_bond_ac_balance,
+            depreciation_loss_bond_ac_amount,
+            depreciation_loss_financial_fvoci_balance,
+            depreciation_loss_financial_fvoci_amount,
+            depreciation_loss_bank_balance,
+            depreciation_loss_bank_amount,
+            depreciation_loss_trust_ac_balance,
+            depreciation_loss_trust_ac_amount,
+            depreciation_loss_other_asset_ac_balance,
+            depreciation_loss_other_asset_ac_amount,
+            depreciation_loss_other_financial_ac_balance,
+            depreciation_loss_other_financial_ac_amount,
+            depreciation_loss_gov_balance,
+            depreciation_loss_gov_amount,
+            depreciation_loss_other_long_receivables_balance,
+            depreciation_loss_other_long_receivables_amount,
+            depreciation_loss_other_long_related_balance,
+            depreciation_loss_other_long_related_amount,
+            depreciation_loss_borrowings_interest_balance,
+            depreciation_loss_borrowings_interest_amount,
+            depreciation_loss_investment_property_balance,
+            depreciation_loss_investment_property_amount,
+            depreciation_loss_other_balance,
+            depreciation_loss_other_amount,
+            publication_fee_balance,
+            publication_fee_amount,
+            receive_sum_debt_restructure_balance,
+            receive_sum_debt_restructure_amount,
+            unrealized_revenue_debt_restructure_balance,
+            unrealized_revenue_debt_restructure_amount,
+            receivable_outtax_debt_restructure_balance,
+            receivable_outtax_debt_restructure_amount,
+            unrealized_revenue_other_debt_restructure_balance,
+            unrealized_revenue_other_debt_restructure_amount,
+            collect_payment_balance,
+            collect_payment_amount,
+            receivable_default_interest_balance,
+            receivable_default_interest_amount,
+            receivable_terminate_balance,
+            receivable_terminate_amount,
+            litigation_virtual_balance,
+            litigation_virtual_amount,
+            period_code,
+            eas_voucher_id,
+            bill_contract_code,
+            receivable_other_revenue_balance,
+            receivable_other_revenue_amount,
+            receivable_damages_revenue_balance,
+            receivable_damages_revenue_amount,
+            continue_involving_assets_balance,
+            continue_involving_assets_amount,
+            payable_margin_entrusted_loans_balance,
+            payable_margin_entrusted_loans_amount,
+            continue_involving_debts_balance,
+            continue_involving_debts_amount,
+            debt_restructuring_income_balance,
+            debt_restructuring_income_amount,
+            lease_transfer_income_balance,
+            lease_transfer_income_amount,
+            other_business_cost_balance,
+            other_business_cost_amount,
+            financial_institution_fee_balance,
+            financial_institution_fee_amount,
+            payable_bill_balance,
+            payable_bill_amount,
+            receivable_bill_balance,
+            receivable_bill_amount,
+            margin_transition_balance,
+            margin_transition_amount,
+            depreciation_reserves_entrusted_loans_interest_balance,
+            depreciation_reserves_entrusted_loans_interest_amount,
+            bank_deposits_transition_balance,
+            bank_deposits_transition_amount,
+            bank_deposits_balance,
+            bank_deposits_amount,
+            payable_account_transition_balance,
+            payable_account_transition_amount,
+            payable_other_margin_year_balance,
+            payable_other_margin_year_amount,
+            receivable_other_collection_balance,
+            receivable_other_collection_amount
+        )
+        select
+        ecb.id,
+        ecb.voucher_id,
+        ecb.interface_data_id,
+        ecb.system_code,
+        ecb.business_code,
+        ecb.business_date,
+        ecb.voucher_date,
+        ecb.scene_code,
+        ecb.contract_code,
+        ecb.client_code,
+        ecb.client_type,
+        ecb.org_id,
+        ecb.create_by,
+        ecb.create_time,
+        ecb.update_by,
+        ecb.update_time,
+        ecb.del_flag,
+        ecb.receivable_rent_balance,
+        ecb.receivable_rent_amount,
+        ecb.receivable_downpayment_balance,
+        ecb.receivable_downpayment_amount,
+        ecb.receivable_residual_value_balance,
+        ecb.receivable_residual_value_amount,
+        ecb.receivable_commission_balance,
+        ecb.receivable_commission_amount,
+        ecb.receivable_rebate_balance,
+        ecb.receivable_rebate_amount,
+        ecb.receivable_insurance_balance,
+        ecb.receivable_insurance_amount,
+        ecb.receivable_otherincome_balance,
+        ecb.receivable_otherincome_amount,
+        ecb.receivable_outtax_balance,
+        ecb.receivable_outtax_amount,
+        ecb.receivable_outputtax_base_balance,
+        ecb.receivable_outputtax_base_amount,
+        ecb.receivable_unconfirm_receipt_balance,
+        ecb.receivable_unconfirm_receipt_amount,
+        ecb.receivable_service_balance,
+        ecb.receivable_service_amount,
+        ecb.receivable_service_outtax_balance,
+        ecb.receivable_service_outtax_amount,
+        ecb.unrealized_revenue_balance,
+        ecb.unrealized_revenue_amount,
+        ecb.lease_revenue_balance,
+        ecb.lease_revenue_amount,
+        ecb.service_revenue_balance,
+        ecb.service_revenue_amount,
+        ecb.insurance_differ_balance,
+        ecb.insurance_differ_amount,
+        ecb.dinterest_revenue_balance,
+        ecb.dinterest_revenue_amount,
+        ecb.terminate_balance,
+        ecb.terminate_amount,
+        ecb.other_revenue_balance,
+        ecb.other_revenue_amount,
+        ecb.damages_revenue_balance,
+        ecb.damages_revenue_amount,
+        ecb.margin_interest_balance,
+        ecb.margin_interest_amount,
+        ecb.payable_device_estimate_balance,
+        ecb.payable_device_estimate_amount,
+        ecb.payable_device_balance,
+        ecb.payable_device_amount,
+        ecb.payable_other_cost_estimate_balance,
+        ecb.payable_other_cost_estimate_amount,
+        ecb.payable_other_cost_balance,
+        ecb.payable_other_cost_amount,
+        ecb.payable_agency_estimate_balance,
+        ecb.payable_agency_estimate_amount,
+        ecb.payable_agency_balance,
+        ecb.payable_agency_amount,
+        ecb.payable_vehicle_estimate_balance,
+        ecb.payable_vehicle_estimate_amount,
+        ecb.payable_vehicle_balance,
+        ecb.payable_vehicle_amount,
+        ecb.payable_band_cost_estimate_balance,
+        ecb.payable_band_cost_estimate_amount,
+        ecb.payable_band_cost_balance,
+        ecb.payable_band_cost_amount,
+        ecb.payable_pledge_estimate_balance,
+        ecb.payable_pledge_estimate_amount,
+        ecb.payable_pledge_balance,
+        ecb.payable_pledge_amount,
+        ecb.payable_unpledge_estimate_balance,
+        ecb.payable_unpledge_estimate_amount,
+        ecb.payable_unpledge_balance,
+        ecb.payable_unpledge_amount,
+        ecb.lessee_margin_balance,
+        ecb.lessee_margin_amount,
+        ecb.supplier_margin_balance,
+        ecb.supplier_margin_amount,
+        ecb.payable_insurance_estimate_balance,
+        ecb.payable_insurance_estimate_amount,
+        ecb.payable_insurance_balance,
+        ecb.payable_insurance_amount,
+        ecb.intax_balance,
+        ecb.intax_amount,
+        ecb.outtax_balance,
+        ecb.outtax_amount,
+        ecb.litigation_expenses_balance,
+        ecb.litigation_expenses_amount,
+        ecb.depreciation_reserves_balance,
+        ecb.depreciation_reserves_amount,
+        ecb.depreciation_loss_balance,
+        ecb.depreciation_loss_amount,
+        ecb.receive_cost_balance,
+        ecb.receive_cost_amount,
+        ecb.off_income_balance,
+        ecb.off_income_amount,
+        ecb.defer_income_balance,
+        ecb.defer_income_amount,
+        ecb.payable_account_balance,
+        ecb.payable_account_amount,
+        ecb.payable_margin_balance,
+        ecb.payable_margin_amount,
+        ecb.payable_margin_year_balance,
+        ecb.payable_margin_year_amount,
+        ecb.margin_ointerest_balance,
+        ecb.margin_ointerest_amount,
+        ecb.receive_sum_balance,
+        ecb.receive_sum_amount,
+        ecb.receive_sum_outtax_balance,
+        ecb.receive_sum_outtax_amount,
+        ecb.receive_unrealized_revenue_balance,
+        ecb.receive_unrealized_revenue_amount,
+        ecb.payable_lessee_margin_year_balance,
+        ecb.payable_lessee_margin_year_amount,
+        ecb.payable_supplier_margin_year_balance,
+        ecb.payable_supplier_margin_year_amount,
+        ecb.receivable_litigation_expenses_balance,
+        ecb.receivable_litigation_expenses_amount,
+        ecb.payable_other_estimate_balance,
+        ecb.payable_other_estimate_amount,
+        ecb.payable_discount_cost_balance,
+        ecb.payable_discount_cost_amount,
+        ecb.payable_procedure_cost_balance,
+        ecb.payable_procedure_cost_amount,
+        ecb.provisional_receipts_balance,
+        ecb.provisional_receipts_amount,
+        ecb.equipment_depreciation_reserves_balance,
+        ecb.equipment_depreciation_reserves_amount,
+        ecb.equipment_depreciation_loss_balance,
+        ecb.equipment_depreciation_loss_amount,
+        ecb.asset_dispose_gain_balance,
+        ecb.asset_dispose_gain_amount,
+        ecb.asset_dispose_loss_balance,
+        ecb.asset_dispose_loss_amount,
+        ecb.receivable_other_balance,
+        ecb.receivable_other_amount,
+        ecb.receivable_collection_transfer_balance,
+        ecb.receivable_collection_transfer_amount,
+        ecb.receivable_related_party_balance,
+        ecb.receivable_related_party_amount,
+        ecb.collection_transfer_balance,
+        ecb.collection_transfer_amount,
+        ecb.collect_payment_other_balance,
+        ecb.collect_payment_other_amount,
+        ecb.receivable_interest_balance,
+        ecb.receivable_interest_amount,
+        ecb.receivable_litigation_margin_balance,
+        ecb.receivable_litigation_margin_amount,
+        ecb.property_cost_balance,
+        ecb.property_cost_amount,
+        ecb.property_depreciation_reserves_balance,
+        ecb.property_depreciation_reserves_amount,
+        ecb.machine_cost_balance,
+        ecb.machine_cost_amount,
+        ecb.machine_depreciation_reserves_balance,
+        ecb.machine_depreciation_reserves_amount,
+        ecb.other_cost_balance,
+        ecb.other_cost_amount,
+        ecb.other_depreciation_reserves_balance,
+        ecb.other_depreciation_reserves_amount,
+        ecb.receivable_factoring_principal_balance,
+        ecb.receivable_factoring_principal_amount,
+        ecb.receivable_factoring_interest_balance,
+        ecb.receivable_factoring_interest_amount,
+        ecb.payable_discount_cost_outtax_balance,
+        ecb.payable_discount_cost_outtax_amount,
+        ecb.receivable_rent_investment_property_balance,
+        ecb.receivable_rent_investment_property_amount,
+        ecb.receivable_outtax_investment_property_balance,
+        ecb.receivable_outtax_investment_property_amount,
+        ecb.depreciation_reserves_trade_balance,
+        ecb.depreciation_reserves_trade_amount,
+        ecb.depreciation_reserves_service_balance,
+        ecb.depreciation_reserves_service_amount,
+        ecb.depreciation_reserves_other_receivable_balance,
+        ecb.depreciation_reserves_other_receivable_amount,
+        ecb.depreciation_reserves_temp_balance,
+        ecb.depreciation_reserves_temp_amount,
+        ecb.depreciation_reserves_other_margin_balance,
+        ecb.depreciation_reserves_other_margin_amount,
+        ecb.depreciation_reserves_investment_property_balance,
+        ecb.depreciation_reserves_investment_property_amount,
+        ecb.depreciation_reserves_deposit_balance,
+        ecb.depreciation_reserves_deposit_amount,
+        ecb.depreciation_reserves_litigation_balance,
+        ecb.depreciation_reserves_litigation_amount,
+        ecb.depreciation_reserves_litigation_margin_balance,
+        ecb.depreciation_reserves_litigation_margin_amount,
+        ecb.depreciation_reserves_other_balance,
+        ecb.depreciation_reserves_other_amount,
+        ecb.depreciation_reserves_individual_balance,
+        ecb.depreciation_reserves_individual_amount,
+        ecb.depreciation_reserves_bill_balance,
+        ecb.depreciation_reserves_bill_amount,
+        ecb.depreciation_reserves_gov_balance,
+        ecb.depreciation_reserves_gov_amount,
+        ecb.depreciation_reserves_other_long_receibles_balance,
+        ecb.depreciation_reserves_other_long_receibles_amount,
+        ecb.depreciation_reserves_long_related_balance,
+        ecb.depreciation_reserves_long_related_amount,
+        ecb.depreciation_reserves_interest_balance,
+        ecb.depreciation_reserves_interest_amount,
+        ecb.receivable_principal_balance,
+        ecb.receivable_principal_amount,
+        ecb.receivable_interest_adjustment_balance,
+        ecb.receivable_interest_adjustment_amount,
+        ecb.receivable_principal_nonfinancial_balance,
+        ecb.receivable_principal_nonfinancial_amount,
+        ecb.receivable_commission_nonfinancial_balance,
+        ecb.receivable_commission_nonfinancial_amount,
+        ecb.receivable_interest_adjustment_nonfinancial_balance,
+        ecb.receivable_interest_adjustment_nonfinancial_amount,
+        ecb.depreciation_reserves_bank_balance,
+        ecb.depreciation_reserves_bank_amount,
+        ecb.depreciation_reserves_buying_back_balance,
+        ecb.depreciation_reserves_buying_back_amount,
+        ecb.depreciation_reserves_term_deposit_interest_balance,
+        ecb.depreciation_reserves_term_deposit_interest_amount,
+        ecb.depreciation_reserves_borrowings_interest_balance,
+        ecb.depreciation_reserves_borrowings_interest_amount,
+        ecb.depreciation_reserves_buying_back_interest_balance,
+        ecb.depreciation_reserves_buying_back_interest_amount,
+        ecb.depreciation_reserves_financial_product_interest_balance,
+        ecb.depreciation_reserves_financial_product_interest_amount,
+        ecb.depreciation_reserves_structured_deposit_interest_balance,
+        ecb.depreciation_reserves_structured_deposit_interest_amount,
+        ecb.depreciation_reserves_fvpl_interest_other_balance,
+        ecb.depreciation_reserves_fvpl_interest_other_amount,
+        ecb.depreciation_reserves_bond_fvoci_interest_balance,
+        ecb.depreciation_reserves_bond_fvoci_interest_amount,
+        ecb.depreciation_reserves_fvoci_interest_other_balance,
+        ecb.depreciation_reserves_fvoci_interest_other_amount,
+        ecb.depreciation_reserves_bond_ac_interest_balance,
+        ecb.depreciation_reserves_bond_ac_interest_amount,
+        ecb.depreciation_reserves_ac_interest_other_balance,
+        ecb.depreciation_reserves_ac_interest_other_amount,
+        ecb.depreciation_reserves_bond_ac_balance,
+        ecb.depreciation_reserves_bond_ac_amount,
+        ecb.depreciation_reserves_turst_ac_balance,
+        ecb.depreciation_reserves_turst_ac_amount,
+        ecb.depreciation_reserves_other_financial_ac_balance,
+        ecb.depreciation_reserves_other_financial_ac_amount,
+        ecb.depreciation_reserves_other_asset_ac_balance,
+        ecb.depreciation_reserves_other_asset_ac_amount,
+        ecb.depreciation_reserves_bond_fvoci_balance,
+        ecb.depreciation_reserves_bond_fvoci_amount,
+        ecb.depreciation_reserves_other_financial_fvoci_balance,
+        ecb.depreciation_reserves_other_financial_fvoci_amount,
+        ecb.depreciation_reserves_subsidiary_balance,
+        ecb.depreciation_reserves_subsidiary_amount,
+        ecb.depreciation_reserves_jv_balance,
+        ecb.depreciation_reserves_jv_amount,
+        ecb.depreciation_reserves_associate_balance,
+        ecb.depreciation_reserves_associate_amount,
+        ecb.receivable_virtual_balance,
+        ecb.receivable_virtual_amount,
+        ecb.unrealized_revenue_other_balance,
+        ecb.unrealized_revenue_other_amount,
+        ecb.payable_factoring_balance,
+        ecb.payable_factoring_amount,
+        ecb.payable_entrust_balance,
+        ecb.payable_entrust_amount,
+        ecb.collect_claims_balance,
+        ecb.collect_claims_amount,
+        ecb.payable_other_balance,
+        ecb.payable_other_amount,
+        ecb.prereceived_rent_balance,
+        ecb.prereceived_rent_amount,
+        ecb.payable_related_party_balance,
+        ecb.payable_related_party_amount,
+        ecb.other_payable_spv_balance,
+        ecb.other_payable_spv_amount,
+        ecb.other_payable_trust_balance,
+        ecb.other_payable_trust_amount,
+        ecb.other_payable_claim_asset_balance,
+        ecb.other_payable_claim_asset_amount,
+        ecb.other_payable_rent_balance,
+        ecb.other_payable_rent_amount,
+        ecb.other_payable_residual_balance,
+        ecb.other_payable_residual_amount,
+        ecb.other_payable_other_balance,
+        ecb.other_payable_other_amount,
+        ecb.other_payable_claim_balance,
+        ecb.other_payable_claim_amount,
+        ecb.other_payable_claim_other_balance,
+        ecb.other_payable_claim_other_amount,
+        ecb.other_payable_collect_balance,
+        ecb.other_payable_collect_amount,
+        ecb.supplier_pool_balance,
+        ecb.supplier_pool_amount,
+        ecb.agent_margin_balance,
+        ecb.agent_margin_amount,
+        ecb.other_margin_balance,
+        ecb.other_margin_amount,
+        ecb.rent_margin_balance,
+        ecb.rent_margin_amount,
+        ecb.other_long_margin_balance,
+        ecb.other_long_margin_amount,
+        ecb.other_business_income_balance,
+        ecb.other_business_income_amount,
+        ecb.other_income_service_balance,
+        ecb.other_income_service_amount,
+        ecb.interest_other_long_payables_balance,
+        ecb.interest_other_long_payables_amount,
+        ecb.interest_other_financial_ac_balance,
+        ecb.interest_other_financial_ac_amount,
+        ecb.lease_revenue6_balance,
+        ecb.lease_revenue6_amount,
+        ecb.lease_revenue3_balance,
+        ecb.lease_revenue3_amount,
+        ecb.other_income_lease_transfer_balance,
+        ecb.other_income_lease_transfer_amount,
+        ecb.rent_investment_property_balance,
+        ecb.rent_investment_property_amount,
+        ecb.other_income_factoring_transfer_balance,
+        ecb.other_income_factoring_transfer_amount,
+        ecb.asset_dispose_gain_foreclosed_balance,
+        ecb.asset_dispose_gain_foreclosed_amount,
+        ecb.asset_dispose_loss_foreclosed_balance,
+        ecb.asset_dispose_loss_foreclosed_amount,
+        ecb.other_cost_lease_transfer_balance,
+        ecb.other_cost_lease_transfer_amount,
+        ecb.other_cost_factoring_transfer_balance,
+        ecb.other_cost_factoring_transfer_amount,
+        ecb.assessment_fee_balance,
+        ecb.assessment_fee_amount,
+        ecb.attorney_fee_balance,
+        ecb.attorney_fee_amount,
+        ecb.intermediary_fee_other_balance,
+        ecb.intermediary_fee_other_amount,
+        ecb.consultation_fee_balance,
+        ecb.consultation_fee_amount,
+        ecb.notary_fee_balance,
+        ecb.notary_fee_amount,
+        ecb.lease_asset_recovery_fee_balance,
+        ecb.lease_asset_recovery_fee_amount,
+        ecb.depreciation_loss_trade_balance,
+        ecb.depreciation_loss_trade_amount,
+        ecb.depreciation_loss_service_balance,
+        ecb.depreciation_loss_service_amount,
+        ecb.depreciation_loss_other_receivables_balance,
+        ecb.depreciation_loss_other_receivables_amount,
+        ecb.depreciation_loss_temp_balance,
+        ecb.depreciation_loss_temp_amount,
+        ecb.depreciation_loss_other_margin_balance,
+        ecb.depreciation_loss_other_margin_amount,
+        ecb.depreciation_loss_rent_investment_property_balance,
+        ecb.depreciation_loss_rent_investment_property_amount,
+        ecb.depreciation_loss_deposit_balance,
+        ecb.depreciation_loss_deposit_amount,
+        ecb.depreciation_loss_litigation_balance,
+        ecb.depreciation_loss_litigation_amount,
+        ecb.depreciation_loss_litigation_margin_balance,
+        ecb.depreciation_loss_litigation_margin_amount,
+        ecb.depreciation_loss_other_receivable_balance,
+        ecb.depreciation_loss_other_receivable_amount,
+        ecb.depreciation_loss_reverse_balance,
+        ecb.depreciation_loss_reverse_amount,
+        ecb.depreciation_loss_equity_investment_balance,
+        ecb.depreciation_loss_equity_investment_amount,
+        ecb.depreciation_loss_interest_balance,
+        ecb.depreciation_loss_interest_amount,
+        ecb.depreciation_loss_bill_balance,
+        ecb.depreciation_loss_bill_amount,
+        ecb.depreciation_loss_collateral_balance,
+        ecb.depreciation_loss_collateral_amount,
+        ecb.depreciation_loss_financial_balance,
+        ecb.depreciation_loss_financial_amount,
+        ecb.depreciation_loss_buying_back_balance,
+        ecb.depreciation_loss_buying_back_amount,
+        ecb.depreciation_loss_bond_ac_balance,
+        ecb.depreciation_loss_bond_ac_amount,
+        ecb.depreciation_loss_financial_fvoci_balance,
+        ecb.depreciation_loss_financial_fvoci_amount,
+        ecb.depreciation_loss_bank_balance,
+        ecb.depreciation_loss_bank_amount,
+        ecb.depreciation_loss_trust_ac_balance,
+        ecb.depreciation_loss_trust_ac_amount,
+        ecb.depreciation_loss_other_asset_ac_balance,
+        ecb.depreciation_loss_other_asset_ac_amount,
+        ecb.depreciation_loss_other_financial_ac_balance,
+        ecb.depreciation_loss_other_financial_ac_amount,
+        ecb.depreciation_loss_gov_balance,
+        ecb.depreciation_loss_gov_amount,
+        ecb.depreciation_loss_other_long_receivables_balance,
+        ecb.depreciation_loss_other_long_receivables_amount,
+        ecb.depreciation_loss_other_long_related_balance,
+        ecb.depreciation_loss_other_long_related_amount,
+        ecb.depreciation_loss_borrowings_interest_balance,
+        ecb.depreciation_loss_borrowings_interest_amount,
+        ecb.depreciation_loss_investment_property_balance,
+        ecb.depreciation_loss_investment_property_amount,
+        ecb.depreciation_loss_other_balance,
+        ecb.depreciation_loss_other_amount,
+        ecb.publication_fee_balance,
+        ecb.publication_fee_amount,
+        ecb.receive_sum_debt_restructure_balance,
+        ecb.receive_sum_debt_restructure_amount,
+        ecb.unrealized_revenue_debt_restructure_balance,
+        ecb.unrealized_revenue_debt_restructure_amount,
+        ecb.receivable_outtax_debt_restructure_balance,
+        ecb.receivable_outtax_debt_restructure_amount,
+        ecb.unrealized_revenue_other_debt_restructure_balance,
+        ecb.unrealized_revenue_other_debt_restructure_amount,
+        ecb.collect_payment_balance,
+        ecb.collect_payment_amount,
+        ecb.receivable_default_interest_balance,
+        ecb.receivable_default_interest_amount,
+        ecb.receivable_terminate_balance,
+        ecb.receivable_terminate_amount,
+        ecb.litigation_virtual_balance,
+        ecb.litigation_virtual_amount,
+        #{param.periodCode},
+        ecb.eas_voucher_id,
+        ecb.bill_contract_code,
+        ecb.receivable_other_revenue_balance,
+        ecb.receivable_other_revenue_amount,
+        ecb.receivable_damages_revenue_balance,
+        ecb.receivable_damages_revenue_amount,
+        ecb.continue_involving_assets_balance,
+        ecb.continue_involving_assets_amount,
+        ecb.payable_margin_entrusted_loans_balance,
+        ecb.payable_margin_entrusted_loans_amount,
+        ecb.continue_involving_debts_balance,
+        ecb.continue_involving_debts_amount,
+        ecb.debt_restructuring_income_balance,
+        ecb.debt_restructuring_income_amount,
+        ecb.lease_transfer_income_balance,
+        ecb.lease_transfer_income_amount,
+        ecb.other_business_cost_balance,
+        ecb.other_business_cost_amount,
+        ecb.financial_institution_fee_balance,
+        ecb.financial_institution_fee_amount,
+        ecb.payable_bill_balance,
+        ecb.payable_bill_amount,
+        ecb.receivable_bill_balance,
+        ecb.receivable_bill_amount,
+        ecb.margin_transition_balance,
+        ecb.margin_transition_amount,
+        ecb.depreciation_reserves_entrusted_loans_interest_balance,
+        ecb.depreciation_reserves_entrusted_loans_interest_amount,
+        ecb.bank_deposits_transition_balance,
+        ecb.bank_deposits_transition_amount,
+        ecb.bank_deposits_balance,
+        ecb.bank_deposits_amount,
+        ecb.payable_account_transition_balance,
+        ecb.payable_account_transition_amount,
+        ecb.payable_other_margin_year_balance,
+        ecb.payable_other_margin_year_amount,
+        ecb.receivable_other_collection_balance,
+        ecb.receivable_other_collection_amount
+
+        from eg_contract_balance ecb,id_temp a
+        where ecb.id =a.id
+            --and org_id  in ('01-C0001','02-C0001','30001','80001')
+            <if test="param.orgIdList != null and param.orgIdList.size() != 0">
+                and org_id in
+                <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+    </insert>
+</mapper>
+

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.invoicing.mapper.TaxicOiInvoiceMiddleMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.invoicing.entity.TaxicOiInvoiceMiddleEntity">
+                    <id column="ID" property="id" />
+                    <result column="BEIZ" property="beiz" />
+                    <result column="CANKZD1" property="cankzd1" />
+                    <result column="CANKZD10" property="cankzd10" />
+                    <result column="CANKZD2" property="cankzd2" />
+                    <result column="CANKZD3" property="cankzd3" />
+                    <result column="CANKZD4" property="cankzd4" />
+                    <result column="CANKZD5" property="cankzd5" />
+                    <result column="CANKZD6" property="cankzd6" />
+                    <result column="CANKZD7" property="cankzd7" />
+                    <result column="CANKZD8" property="cankzd8" />
+                    <result column="CANKZD9" property="cankzd9" />
+                    <result column="CAOZRQ" property="caozrq" />
+                    <result column="CHUANGJRQ" property="chuangjrq" />
+                    <result column="CONTRACTNO" property="contractno" />
+                    <result column="CONTRACTZT" property="contractzt" />
+                    <result column="DANJ" property="danj" />
+                    <result column="DANJH" property="danjh" />
+                    <result column="DANJRQ" property="danjrq" />
+                    <result column="DANW" property="danw" />
+                    <result column="DUQZT" property="duqzt" />
+                    <result column="FAPLX" property="faplx" />
+                    <result column="FUGR" property="fugr" />
+                    <result column="GOUFDZDH" property="goufdzdh" />
+                    <result column="GOUFMC" property="goufmc" />
+                    <result column="GOUFNSRSBH" property="goufnsrsbh" />
+                    <result column="GOUFYHZH" property="goufyhzh" />
+                    <result column="GUIGXH" property="guigxh" />
+                    <result column="JIASHJ" property="jiashj" />
+                    <result column="JIJFS" property="jijfs" />
+                    <result column="JINE" property="jine" />
+                    <result column="KEHHY" property="kehhy" />
+                    <result column="PICH" property="pich" />
+                    <result column="QISHU" property="qishu" />
+                    <result column="QIYBH" property="qiybh" />
+                    <result column="QUANJNJSTATE" property="quanjnjstate" />
+                    <result column="SHANGPBH" property="shangpbh" />
+                    <result column="SHANGPMC" property="shangpmc" />
+                    <result column="SHISRQ" property="shisrq" />
+                    <result column="SHUIE" property="shuie" />
+                    <result column="SHUIL" property="shuil" />
+                    <result column="SHUISFLBM" property="shuisflbm" />
+                    <result column="SHUISFLBMBBH" property="shuisflbmbbh" />
+                    <result column="SHUL" property="shul" />
+                    <result column="YEWLX" property="yewlx" />
+                    <result column="YUXKAIPSTATE" property="yuxkaipstate" />
+                    <result column="ZBKPSTATE" property="zbkpstate" />
+                    <result column="YEWCZR" property="yewczr" />
+                    <result column="BEIZ2" property="beiz2" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            ID, BEIZ, CANKZD1, CANKZD10, CANKZD2, CANKZD3, CANKZD4, CANKZD5, CANKZD6, CANKZD7, CANKZD8, CANKZD9, CAOZRQ, CHUANGJRQ, CONTRACTNO, CONTRACTZT, DANJ, DANJH, DANJRQ, DANW, DUQZT, FAPLX, FUGR, GOUFDZDH, GOUFMC, GOUFNSRSBH, GOUFYHZH, GUIGXH, JIASHJ, JIJFS, JINE, KEHHY, PICH, QISHU, QIYBH, QUANJNJSTATE, SHANGPBH, SHANGPMC, SHISRQ, SHUIE, SHUIL, SHUISFLBM, SHUISFLBMBBH, SHUL, YEWLX, YUXKAIPSTATE, ZBKPSTATE, YEWCZR, BEIZ2
+        </sql>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.etl.financial.model.vo.InvoiceClaimVO">
+        SELECT
+        distinct
+        x.DANJH AS documentNum,
+        x.QIYBH AS enterpriseNum,
+        x.qiybh AS sellerTaxCode,
+        b.FAPDM AS invoicePointCode,
+--         x.FAPLX AS invoiceType,
+        case x.FAPLX when '222' then '收据' when '004' then '专用发票' when '007' then '普通发票' when '008' then '数电专票' when '009' then '数电普票' else null end AS invoiceType,
+        x.FUGR  AS payer,
+        x.KEHHY  AS clientIndustry,
+--         x.DANJRQ AS documentDate,
+        b.KAIPRQ AS documentDate,
+        x.CONTRACTZT AS contractStatus,
+        x.JIASHJ AS taxAmount,
+        x.SHUIL AS taxRate,
+        x.JINE  AS noTaxAmount,
+        x.SHUIE  AS taxValue,
+        x.YUXKAIPSTATE  AS isFirstInvoice,
+        x.QUANJNJSTATE  AS isRentPayFull,
+        CASE TO_CHAR(x.YUXKAIPSTATE) WHEN '否' THEN '0' WHEN '0' THEN '0' WHEN '是' THEN '1' WHEN '1' THEN '1' ELSE null END AS isHoldInvoice,
+        x.GOUFNSRSBH  AS purchaserTaxCode,
+        x.GOUFMC  AS purchaserName,
+        x.GOUFDZDH  AS purchaserDress,
+        x.GOUFDZDH  AS purchaserTel,
+        x.GOUFYHZH  AS purchaserBankName,
+        x.GOUFYHZH  AS purchaserBankNum,
+        x.SHISRQ  AS planRepayDate,
+        x.QISHU  AS periodNum,
+        x.SHANGPBH  AS productCode,
+        to_nchar(b.KAIPXMM)  AS productName,
+        x.DANW  AS unit,
+        x.SHUL  AS quantity,
+        x.CONTRACTNO AS contractCode,
+        '0' AS sourceFrom,
+        to_char(b.SHANGPMC) AS mainCategory,
+        x.ID as systemInvoiceId,
+        x.yewlx as businessSource,
+        x.beiz as comments,
+        b.faphm as invoiceNumber
+        FROM
+        FINANCINGINVOICE.TAXIC_OI_INVOICE_MIDDLE x
+        RIGHT JOIN FINANCINGINVOICE.TAXIC_OI_INVOICE_BACK_MIDDLE b ON
+        x.DANJH = b.DANJH AND x.CONTRACTNO = b.CONTRACTNO
+        AND x.cankzd1 = b.cankzd1
+        WHERE 1=1
+        AND x.FAPLX != '222'
+--         and 1=2
+--         AND TO_CHAR(x.DANJRQ,'yyyy-MM-dd') &gt;= '2024-05-01'
+            <if test="queryDTO.danjrq!=null">-->
+                AND TO_CHAR(b.KAIPRQ,'yyyy-MM-dd') &gt;= TO_CHAR(#{queryDTO.danjrq},'yyyy-MM-dd')
+            </if>
+            UNION ALL
+            SELECT
+            distinct
+            x.DANJH AS documentNum,
+            x.QIYBH AS enterpriseNum,
+            x.XFSH AS sellerTaxCode,
+            b.FAPDM AS invoicePointCode,
+--             x.FAPLX AS invoiceType,
+            case x.FAPLX when '222' then '收据' when '004' then '专用发票' when '007' then '普通发票' when '008' then '数电专票' when '009' then '数电普票' else null end AS invoiceType,
+            x.FUGR  AS payer,
+            x.KEHHY  AS clientIndustry,
+--             x.DANJRQ AS documentDate,
+            b.KAIPRQ AS documentDate,
+            x.CONTRACTZT AS contractStatus,
+            x.JIASHJ AS taxAmount,
+            x.SHUIL AS taxRate,
+            x.JINE  AS noTaxAmount,
+            x.SHUIE  AS taxValue,
+            x.YUXKAIPSTATE  AS isFirstInvoice,
+            x.QUANJNJSTATE  AS isRentPayFull,
+            CASE TO_CHAR(x.YUXKAIPSTATE) WHEN '否' THEN '0' WHEN '0' THEN '0' WHEN '是' THEN '1' WHEN '1' THEN '1' ELSE null END AS isHoldInvoice,
+            x.GOUFNSRSBH  AS purchaserTaxCode,
+            x.GOUFMC  AS purchaserName,
+            x.GOUFDZ AS purchaserDress,
+            x.GOUFDH  AS purchaserTel,
+            x.goufyhmc  AS purchaserBankName,
+            x.goufyhzh  AS purchaserBankNum,
+            x.SHISRQ  AS planRepayDate,
+            x.QISHU  AS periodNum,
+            x.SHANGPBH  AS productCode,
+            x.SHANGPMC  AS productName,
+            x.DANW  AS unit,
+            x.SHUL  AS quantity,
+            x.CONTRACTNO AS contractCode,
+            '1' AS sourceFrom,
+            b.KAIPXMM AS mainCategory,
+            x.ID as systemInvoiceId,
+            x.yewlx as businessSource,
+            x.beiz as comments,
+            b.faphm as invoiceNumber
+            FROM
+            FINANCINGINVOICE.TY_OI_INVOICE_MIDDLE x
+            RIGHT JOIN FINANCINGINVOICE.TY_OI_INVOICE_BACK_MIDDLE b ON
+            x.DANJH = b.DANJH AND x.CONTRACTNO = b.CONTRACTNO
+            AND x.cankzd1 = b.cankzd1
+            WHERE 1=1
+            AND x.FAPLX != '222'
+    --         AND x.DANJH ='08-000017331'	AND x.QIYBH='91310000764705772UHT01'
+--             AND TO_CHAR(x.DANJRQ,'yyyy-MM-dd') &gt;= '2024-05-01'
+            <if test="queryDTO.danjrq!=null">
+                AND TO_CHAR(b.KAIPRQ,'yyyy-MM-dd') &gt;= TO_CHAR(#{queryDTO.danjrq},'yyyy-MM-dd')
+            </if>
+        </select>
+
+<!--    SELECT-->
+<!--    distinct-->
+<!--    x.DANJH AS documentNum,-->
+<!--    x.QIYBH AS enterpriseNum,-->
+<!--    x.qiybh AS sellerTaxCode,-->
+<!--    b.FAPDM AS invoicePointCode,-->
+<!--    x.FAPLX AS invoiceType,-->
+<!--    x.FUGR  AS payer,-->
+<!--    x.KEHHY  AS clientIndustry,-->
+<!--    x.DANJRQ AS documentDate,-->
+<!--    x.CONTRACTZT AS contractStatus,-->
+<!--    x.JIASHJ AS taxAmount,-->
+<!--    x.SHUIL AS taxRate,-->
+<!--    x.JINE  AS noTaxAmount,-->
+<!--    x.SHUIE  AS taxValue,-->
+<!--    x.YUXKAIPSTATE  AS isFirstInvoice,-->
+<!--    x.QUANJNJSTATE  AS isRentPayFull,-->
+<!--    CASE TO_CHAR(x.YUXKAIPSTATE) WHEN '否' THEN '0' WHEN '0' THEN '0' WHEN '是' THEN '1' WHEN '1' THEN '1' ELSE null END AS isHoldInvoice,-->
+<!--    x.GOUFNSRSBH  AS purchaserTaxCode,-->
+<!--    x.GOUFMC  AS purchaserName,-->
+<!--    x.GOUFDZDH  AS purchaserDress,-->
+<!--    x.GOUFDZDH  AS purchaserTel,-->
+<!--    x.GOUFYHZH  AS purchaserBankName,-->
+<!--    x.GOUFYHZH  AS purchaserBankNum,-->
+<!--    x.SHISRQ  AS planRepayDate,-->
+<!--    x.QISHU  AS periodNum,-->
+<!--    x.SHANGPBH  AS productCode,-->
+<!--    to_nchar(b.KAIPXMM)  AS productName,-->
+<!--    x.DANW  AS unit,-->
+<!--    x.SHUL  AS quantity,-->
+<!--    x.CONTRACTNO AS contractCode,-->
+<!--    '0' AS sourceFrom,-->
+<!--    to_char(b.SHANGPMC) AS mainCategory,-->
+<!--    x.ID as systemInvoiceId,-->
+<!--    x.yewlx as businessSource,-->
+<!--    x.beiz as comments,-->
+<!--    b.faphm as invoiceNumber-->
+<!--    FROM-->
+<!--    FINANCINGINVOICE.TAXIC_OI_INVOICE_MIDDLE x-->
+<!--    RIGHT JOIN FINANCINGINVOICE.TAXIC_OI_INVOICE_BACK_MIDDLE b ON-->
+<!--    x.DANJH = b.DANJH AND x.CONTRACTNO = b.CONTRACTNO-->
+<!--    AND x.cankzd1 = b.cankzd1-->
+<!--    WHERE 1=1-->
+<!--    AND x.FAPLX != '222'-->
+<!--    &#45;&#45;         and 1=2-->
+<!--    &#45;&#45;         AND TO_CHAR(x.DANJRQ,'yyyy-MM-dd') &gt;= '2024-07-02'-->
+<!--    <if test="queryDTO.danjrq!=null">&ndash;&gt;-->
+<!--        AND TO_CHAR(x.DANJRQ,'yyyy-MM-dd') = TO_CHAR(#{queryDTO.danjrq},'yyyy-MM-dd')-->
+<!--    </if>-->
+<!--    <if test="queryDTO.chuangjrq!=null">-->
+<!--        AND TO_CHAR(x.chuangjrq,'yyyy-MM-dd') = TO_CHAR(#{queryDTO.chuangjrq},'yyyy-MM-dd')-->
+<!--    </if>-->
+<!--    UNION ALL-->
+<!--    SELECT-->
+<!--    distinct-->
+<!--    x.DANJH AS documentNum,-->
+<!--    x.QIYBH AS enterpriseNum,-->
+<!--    x.XFSH AS sellerTaxCode,-->
+<!--    b.FAPDM AS invoicePointCode,-->
+<!--    x.FAPLX AS invoiceType,-->
+<!--    x.FUGR  AS payer,-->
+<!--    x.KEHHY  AS clientIndustry,-->
+<!--    x.DANJRQ AS documentDate,-->
+<!--    x.CONTRACTZT AS contractStatus,-->
+<!--    x.JIASHJ AS taxAmount,-->
+<!--    x.SHUIL AS taxRate,-->
+<!--    x.JINE  AS noTaxAmount,-->
+<!--    x.SHUIE  AS taxValue,-->
+<!--    x.YUXKAIPSTATE  AS isFirstInvoice,-->
+<!--    x.QUANJNJSTATE  AS isRentPayFull,-->
+<!--    CASE TO_CHAR(x.YUXKAIPSTATE) WHEN '否' THEN '0' WHEN '0' THEN '0' WHEN '是' THEN '1' WHEN '1' THEN '1' ELSE null END AS isHoldInvoice,-->
+<!--    x.GOUFNSRSBH  AS purchaserTaxCode,-->
+<!--    x.GOUFMC  AS purchaserName,-->
+<!--    x.GOUFDZ AS purchaserDress,-->
+<!--    x.GOUFDH  AS purchaserTel,-->
+<!--    x.goufyhmc  AS purchaserBankName,-->
+<!--    x.goufyhzh  AS purchaserBankNum,-->
+<!--    x.SHISRQ  AS planRepayDate,-->
+<!--    x.QISHU  AS periodNum,-->
+<!--    x.SHANGPBH  AS productCode,-->
+<!--    x.SHANGPMC  AS productName,-->
+<!--    x.DANW  AS unit,-->
+<!--    x.SHUL  AS quantity,-->
+<!--    x.CONTRACTNO AS contractCode,-->
+<!--    '1' AS sourceFrom,-->
+<!--    b.KAIPXMM AS mainCategory,-->
+<!--    x.ID as systemInvoiceId,-->
+<!--    x.yewlx as businessSource,-->
+<!--    x.beiz as comments,-->
+<!--    b.faphm as invoiceNumber-->
+<!--    FROM-->
+<!--    FINANCINGINVOICE.TY_OI_INVOICE_MIDDLE x-->
+<!--    RIGHT JOIN FINANCINGINVOICE.TY_OI_INVOICE_BACK_MIDDLE b ON-->
+<!--    x.DANJH = b.DANJH AND x.CONTRACTNO = b.CONTRACTNO-->
+<!--    AND x.cankzd1 = b.cankzd1-->
+<!--    WHERE 1=1-->
+<!--    AND x.FAPLX != '222'-->
+<!--    &#45;&#45;         AND x.DANJH ='08-000017331'	AND x.QIYBH='91310000764705772UHT01'-->
+<!--    &#45;&#45;             AND TO_CHAR(x.DANJRQ,'yyyy-MM-dd') &gt;= '2024-07-02'-->
+<!--    <if test="queryDTO.danjrq!=null">-->
+<!--        AND TO_CHAR(x.DANJRQ,'yyyy-MM-dd') = TO_CHAR(#{queryDTO.danjrq},'yyyy-MM-dd')-->
+<!--    </if>-->
+<!--    <if test="queryDTO.chuangjrq!=null">-->
+<!--        AND TO_CHAR(x.yewcjrq,'yyyy-MM-dd') = TO_CHAR(#{queryDTO.chuangjrq},'yyyy-MM-dd')-->
+<!--    </if>-->
+</mapper>
+

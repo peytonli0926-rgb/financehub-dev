@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.PayableInsuranceDetailsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.PayableInsuranceDetailsEntity">
+                    <id column="id" property="id" />
+                    <result column="payable_insurance_id" property="payableInsuranceId" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="org_id" property="orgId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="payable_insurance_estimate_balance_opening" property="payableInsuranceEstimateBalanceOpening" />
+                    <result column="payable_insurance_estimate_amount_debit" property="payableInsuranceEstimateAmountDebit" />
+                    <result column="payable_insurance_estimate_amount_credit" property="payableInsuranceEstimateAmountCredit" />
+                    <result column="payable_insurance_estimate_balance_ending" property="payableInsuranceEstimateBalanceEnding" />
+                    <result column="payable_insurance_balance" property="payableInsuranceBalance" />
+                    <result column="carryover_amount" property="carryoverAmount" />
+                    <result column="payable_insurance_balance_report" property="payableInsuranceBalanceReport" />
+                    <result column="payable_insurance_balance_actual" property="payableInsuranceBalanceActual" />
+                    <result column="payable_insurance_balance_lease" property="payableInsuranceBalanceLease" />
+                    <result column="payable_insurance_balance_structure" property="payableInsuranceBalanceStructure" />
+                    <result column="payable_insurance_balance_withdrawal" property="payableInsuranceBalanceWithdrawal" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, eg_payable_insurance_id, account_date, org_id, contract_code, client_code, client_name, contract_status, financial_contract_status, payable_insurance_estimate_balance_opening, payable_insurance_estimate_amount_debit, payable_insurance_estimate_amount_credit, payable_insurance_estimate_balance_ending, payable_insurance_balance, carryover_amount, payable_insurance_balance_report, payable_insurance_balance_actual, payable_insurance_balance_lease, payable_insurance_balance_structure, payable_insurance_balance_withdrawal, voucher_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+</mapper>
+

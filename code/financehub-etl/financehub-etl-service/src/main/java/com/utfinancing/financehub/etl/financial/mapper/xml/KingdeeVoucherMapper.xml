@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.KingdeeVoucherMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.KingdeeVoucherEntity">
+        <id column="id" property="id"/>
+        <result column="eas_id" property="easId"/>
+        <result column="voucher_code" property="voucherCode"/>
+        <result column="period_code" property="periodCode"/>
+        <result column="voucher_type_code" property="voucherTypeCode"/>
+        <result column="voucher_type_name" property="voucherTypeName"/>
+        <result column="business_date" property="businessDate"/>
+        <result column="voucher_date" property="voucherDate"/>
+        <result column="base_debit_amount" property="baseDebitAmount"/>
+        <result column="base_credit_amount" property="baseCreditAmount"/>
+        <result column="report_debit_amount" property="reportDebitAmount"/>
+        <result column="report_credit_amount" property="reportCreditAmount"/>
+        <result column="voucher_status" property="voucherStatus"/>
+        <result column="currency_code" property="currencyCode"/>
+        <result column="org_id" property="orgId"/>
+        <result column="org_name" property="orgName"/>
+        <result column="voucher_abstract" property="voucherAbstract"/>
+        <result column="voucher_description" property="voucherDescription"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="del_flag" property="delFlag"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, eas_id, voucher_code, period_code, voucher_type_code, voucher_type_name, business_date, voucher_date,
+        base_debit_amount, base_credit_amount, report_debit_amount, report_credit_amount, voucher_status, currency_code,
+        org_id, org_name, voucher_abstract, voucher_description, create_by, create_time, update_by, update_time,
+        del_flag
+    </sql>
+
+    <select id="selectKingdeeVoucherEntrySumByPeriod" resultType="com.utfinancing.financehub.etl.financial.model.dto.KingdeeVoucherEntryInnerDTO">
+        select
+            ev.org_id ,
+            t.contract_code ,
+            t.client_code ,
+            t.bill_contract_code,
+            t.account_code ,
+            t.account_name ,
+            max(ev.currency_code) as currency_code,
+            max(t.debit_credit_type) as debit_credit_type,
+            sum(t.debit_amount) as debit_amount,
+            sum(t.credit_amount) as credit_amount
+        from eg_kingdee_voucher_entry t
+        join eg_kingdee_voucher ev on
+        t.voucher_eas_id = ev.eas_id
+        where t.period_code = #{periodCode}
+        <if test="contractCodeList != null and contractCodeList.size > 0">
+            and t.contract_code in
+            <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by ev.org_id ,
+                t.contract_code ,
+                t.client_code ,
+                t.bill_contract_code,
+                t.account_code ,
+                t.account_name
+        order by 1, 2, 3, 4
+    </select>
+</mapper>
+

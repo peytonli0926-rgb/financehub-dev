@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.KingdeeCheckMapper">
+    <select id="getKingdeeCheckData">
+        SELECT toc.FNUMBER ORG_ID--,TOC.FNAME_L2
+             ,tbc.FISOCODE CURRENCY_TYPE,ga.FNUMBER ACCOUNT_CODE--ga.FNAME_L2
+             ,SUM(gb.FBEGINBALANCEFOR) FBEGINBALANCEFOR,SUM(gb.FENDBALANCEFOR) FENDBALANCEFOR
+        FROM HXORACLE.T_GL_ACCOUNTBALANCE_5F gb
+                 LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GB.FACCOUNTID = GA.FID
+                 LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =gb.FORGUNITID
+                 LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gb.FCURRENCYID =tbc.FID
+        WHERE gb.FPERIOD =#{periodCode} AND toc.FNUMBER IN ('01-C0001','02-C0001','80001','30001')
+        GROUP BY gb.FPERIOD ,toc.FNUMBER ,ga.FNUMBER ,tbc.FISOCODE
+        ORDER BY toc.FNUMBER,ga.FNUMBER
+    </select>
+</mapper>

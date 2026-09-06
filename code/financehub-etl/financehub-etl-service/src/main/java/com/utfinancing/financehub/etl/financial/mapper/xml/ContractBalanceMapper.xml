@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.ContractBalanceMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.ContractBalanceEntity">
+        <id column="id" property="id"/>
+        <result column="voucher_id" property="voucherId"/>
+        <result column="business_code" property="businessCode"/>
+        <result column="business_date" property="businessDate"/>
+        <result column="voucher_date" property="voucherDate"/>
+        <result column="scene_code" property="sceneCode"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="client_type" property="clientType"/>
+        <result column="org_id" property="orgId"/>
+        <result column="receivable_rent_balance" property="receivableRentBalance"/>
+        <result column="receivable_rent_amount" property="receivableRentAmount"/>
+        <result column="receivable_downpayment_balance" property="receivableDownpaymentBalance"/>
+        <result column="receivable_downpayment_amount" property="receivableDownpaymentAmount"/>
+        <result column="receivable_residual_value_balance" property="receivableResidualValueBalance"/>
+        <result column="receivable_residual_value_amount" property="receivableResidualValueAmount"/>
+        <result column="receivable_commission_balance" property="receivableCommissionBalance"/>
+        <result column="receivable_commission_amount" property="receivableCommissionAmount"/>
+        <result column="receivable_rebate_balance" property="receivableRebateBalance"/>
+        <result column="receivable_rebate_amount" property="receivableRebateAmount"/>
+        <result column="receivable_insurance_balance" property="receivableInsuranceBalance"/>
+        <result column="receivable_insurance_amount" property="receivableInsuranceAmount"/>
+        <result column="receivable_otherincome_balance" property="receivableOtherincomeBalance"/>
+        <result column="receivable_otherincome_amount" property="receivableOtherincomeAmount"/>
+        <result column="receivable_outtax_balance" property="receivableOuttaxBalance"/>
+        <result column="receivable_outtax_amount" property="receivableOuttaxAmount"/>
+        <result column="receivable_outputtax_base_balance" property="receivableOutputtaxBaseBalance"/>
+        <result column="receivable_outputtax_base_amount" property="receivableOutputtaxBaseAmount"/>
+        <result column="receivable_unconfirm_receipt_balance" property="receivableUnconfirmReceiptBalance"/>
+        <result column="receivable_unconfirm_receipt_amount" property="receivableUnconfirmReceiptAmount"/>
+        <result column="receivable_service_balance" property="receivableServiceBalance"/>
+        <result column="receivable_service_amount" property="receivableServiceAmount"/>
+        <result column="receivable_service_outtax_balance" property="receivableServiceOuttaxBalance"/>
+        <result column="receivable_service_outtax_amount" property="receivableServiceOuttaxAmount"/>
+        <result column="receivable_bill_balance" property="receivableBillBalance"/>
+        <result column="receivable_bill_amount" property="receivableBillAmount"/>
+        <result column="unrealized_revenue_balance" property="unrealizedRevenueBalance"/>
+        <result column="unrealized_revenue_amount" property="unrealizedRevenueAmount"/>
+        <result column="lease_revenue_balance" property="leaseRevenueBalance"/>
+        <result column="lease_revenue_amount" property="leaseRevenueAmount"/>
+        <result column="service_revenue_balance" property="serviceRevenueBalance"/>
+        <result column="service_revenue_amount" property="serviceRevenueAmount"/>
+        <result column="insurance_differ_balance" property="insuranceDifferBalance"/>
+        <result column="insurance_differ_amount" property="insuranceDifferAmount"/>
+        <result column="dinterest_revenue_balance" property="dinterestRevenueBalance"/>
+        <result column="dinterest_revenue_amount" property="dinterestRevenueAmount"/>
+        <result column="terminate_balance" property="terminateBalance"/>
+        <result column="terminate_amount" property="terminateAmount"/>
+        <result column="other_revenue_balance" property="otherRevenueBalance"/>
+        <result column="other_revenue_amount" property="otherRevenueAmount"/>
+        <result column="damages_revenue_balance" property="damagesRevenueBalance"/>
+        <result column="damages_revenue_amount" property="damagesRevenueAmount"/>
+        <result column="mid_commission_balance" property="midCommissionBalance"/>
+        <result column="mid_commission_amount" property="midCommissionAmount"/>
+        <result column="margin_interest_balance" property="marginInterestBalance"/>
+        <result column="margin_interest_amount" property="marginInterestAmount"/>
+        <result column="payable_device_estimate_balance" property="payableDeviceEstimateBalance"/>
+        <result column="payable_device_estimate_amount" property="payableDeviceEstimateAmount"/>
+        <result column="payable_device_balance" property="payableDeviceBalance"/>
+        <result column="payable_device_amount" property="payableDeviceAmount"/>
+        <result column="payable_other_cost_estimate_balance" property="payableOtherCostEstimateBalance"/>
+        <result column="payable_other_cost_estimate_amount" property="payableOtherCostEstimateAmount"/>
+        <result column="payable_other_cost_balance" property="payableOtherCostBalance"/>
+        <result column="payable_other_cost_amount" property="payableOtherCostAmount"/>
+        <result column="payable_agency_estimate_balance" property="payableAgencyEstimateBalance"/>
+        <result column="payable_agency_estimate_amount" property="payableAgencyEstimateAmount"/>
+        <result column="payable_agency_balance" property="payableAgencyBalance"/>
+        <result column="payable_agency_amount" property="payableAgencyAmount"/>
+        <result column="payable_vehicle_estimate_balance" property="payableVehicleEstimateBalance"/>
+        <result column="payable_vehicle_estimate_amount" property="payableVehicleEstimateAmount"/>
+        <result column="payable_vehicle_balance" property="payableVehicleBalance"/>
+        <result column="payable_vehicle_amount" property="payableVehicleAmount"/>
+        <result column="payable_band_cost_estimate_balance" property="payableBandCostEstimateBalance"/>
+        <result column="payable_band_cost_estimate_amount" property="payableBandCostEstimateAmount"/>
+        <result column="payable_band_cost_balance" property="payableBandCostBalance"/>
+        <result column="payable_band_cost_amount" property="payableBandCostAmount"/>
+        <result column="payable_pledge_estimate_balance" property="payablePledgeEstimateBalance"/>
+        <result column="payable_pledge_estimate_amount" property="payablePledgeEstimateAmount"/>
+        <result column="payable_pledge_balance" property="payablePledgeBalance"/>
+        <result column="payable_pledge_amount" property="payablePledgeAmount"/>
+        <result column="payable_unpledge_estimate_balance" property="payableUnpledgeEstimateBalance"/>
+        <result column="payable_unpledge_estimate_amount" property="payableUnpledgeEstimateAmount"/>
+        <result column="payable_unpledge_balance" property="payableUnpledgeBalance"/>
+        <result column="payable_unpledge_amount" property="payableUnpledgeAmount"/>
+        <result column="lessee_margin_balance" property="lesseeMarginBalance"/>
+        <result column="lessee_margin_amount" property="lesseeMarginAmount"/>
+        <result column="supplier_margin_balance" property="supplierMarginBalance"/>
+        <result column="supplier_margin_amount" property="supplierMarginAmount"/>
+        <result column="payable_insurance_estimate_balance" property="payableInsuranceEstimateBalance"/>
+        <result column="payable_insurance_estimate_amount" property="payableInsuranceEstimateAmount"/>
+        <result column="payable_insurance_balance" property="payableInsuranceBalance"/>
+        <result column="payable_insurance_amount" property="payableInsuranceAmount"/>
+        <result column="payable_bill_balance" property="payableBillBalance"/>
+        <result column="payable_bill_amount" property="payableBillAmount"/>
+        <result column="bank_deposit_balance" property="bankDepositBalance"/>
+        <result column="bank_deposit_amount" property="bankDepositAmount"/>
+        <result column="intax_balance" property="intaxBalance"/>
+        <result column="intax_amount" property="intaxAmount"/>
+        <result column="outtax_balance" property="outtaxBalance"/>
+        <result column="outtax_amount" property="outtaxAmount"/>
+        <result column="litigation_expenses_balance" property="litigationExpensesBalance"/>
+        <result column="litigation_expenses_amount" property="litigationExpensesAmount"/>
+        <result column="depreciation_reserves_balance" property="depreciationReservesBalance"/>
+        <result column="depreciation_reserves_amount" property="depreciationReservesAmount"/>
+        <result column="depreciation_loss_balance" property="depreciationLossBalance"/>
+        <result column="depreciation_loss_amount" property="depreciationLossAmount"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="deputy_rent_balance" property="deputyRentBalance"/>
+        <result column="deputy_rent_amount" property="deputyRentAmount"/>
+        <result column="deputy_residual_value_balance" property="deputyResidualValueBalance"/>
+        <result column="deputy_residual_value_amount" property="deputyResidualValueAmount"/>
+        <result column="deputy_other_balance" property="deputyOtherBalance"/>
+        <result column="deputy_other_amount" property="deputyOtherAmount"/>
+        <result column="receive_cost_balance" property="receiveCostBalance"/>
+        <result column="receive_cost_amount" property="receiveCostAmount"/>
+        <result column="receive_dinterest_balance" property="receiveDinterestBalance"/>
+        <result column="receive_dinterest_amount" property="receiveDinterestAmount"/>
+        <result column="receive_terminate_balance" property="receiveTerminateBalance"/>
+        <result column="receive_terminate_amount" property="receiveTerminateAmount"/>
+        <result column="deputy_outtax_balance" property="deputyOuttaxBalance"/>
+        <result column="deputy_outtax_amount" property="deputyOuttaxAmount"/>
+        <result column="off_income_balance" property="offIncomeBalance"/>
+        <result column="off_income_amount" property="offIncomeAmount"/>
+        <result column="defer_income_balance" property="deferIncomeBalance"/>
+        <result column="defer_income_amount" property="deferIncomeAmount"/>
+        <result column="payable_account_balance" property="payableAccountBalance"/>
+        <result column="payable_account_amount" property="payableAccountAmount"/>
+        <result column="payable_margin_balance" property="payableMarginBalance"/>
+        <result column="payable_margin_amount" property="payableMarginAmount"/>
+        <result column="payable_margin_year_balance" property="payableMarginYearBalance"/>
+        <result column="payable_margin_year_amount" property="payableMarginYearAmount"/>
+        <result column="margin_ointerest_balance" property="marginOinterestBalance"/>
+        <result column="margin_ointerest_amount" property="marginOinterestAmount"/>
+        <result column="law_expenses_balance" property="lawExpensesBalance"/>
+        <result column="law_expenses_amount" property="lawExpensesAmount"/>
+        <result column="receive_sum_balance" property="receiveSumBalance"/>
+        <result column="receive_sum_amount" property="receiveSumAmount"/>
+        <result column="receive_sum_outtax_balance" property="receiveSumOuttaxBalance"/>
+        <result column="receive_sum_outtax_amount" property="receiveSumOuttaxAmount"/>
+        <result column="receive_unrealized_revenue_balance" property="receiveUnrealizedRevenueBalance"/>
+        <result column="receive_unrealized_revenue_amount" property="receiveUnrealizedRevenueAmount"/>
+        <result column="payable_lessee_margin_year_balance" property="payableLesseeMarginYearBalance"/>
+        <result column="payable_lessee_margin_year_amount" property="payableLesseeMarginYearAmount"/>
+        <result column="payable_supplier_margin_year_balance" property="payableSupplierMarginYearBalance"/>
+        <result column="payable_supplier_margin_year_amount" property="payableSupplierMarginYearAmount"/>
+        <result column="receivable_litigation_expenses_balance" property="receivableLitigationExpensesBalance"/>
+        <result column="receivable_litigation_expenses_amount" property="receivableLitigationExpensesAmount"/>
+        <result column="payable_other_estimate_balance" property="payableOtherEstimateBalance"/>
+        <result column="payable_other_estimate_amount" property="payableOtherEstimateAmount"/>
+        <result column="payable_discount_cost_balance" property="payableDiscountCostBalance"/>
+        <result column="payable_discount_cost_amount" property="payableDiscountCostAmount"/>
+        <result column="payable_procedure_cost_balance" property="payableProcedureCostBalance"/>
+        <result column="payable_procedure_cost_amount" property="payableProcedureCostAmount"/>
+        <result column="provisional_receipts_balance" property="provisionalReceiptsBalance"/>
+        <result column="provisional_receipts_amount" property="provisionalReceiptsAmount"/>
+        <result column="equipment_depreciation_reserves_balance" property="equipmentDepreciationReservesBalance"/>
+        <result column="equipment_depreciation_reserves_amount" property="equipmentDepreciationReservesAmount"/>
+        <result column="equipment_depreciation_loss_balance" property="equipmentDepreciationLossBalance"/>
+        <result column="equipment_depreciation_loss_amount" property="equipmentDepreciationLossAmount"/>
+        <result column="asset_dispose_gain_balance" property="assetDisposeGainBalance"/>
+        <result column="asset_dispose_gain_amount" property="assetDisposeGainAmount"/>
+        <result column="asset_dispose_loss_balance" property="assetDisposeLossBalance"/>
+        <result column="asset_dispose_loss_amount" property="assetDisposeLossAmount"/>
+        <result column="receivable_other_balance" property="receivableOtherBalance"/>
+        <result column="receivable_other_amount" property="receivableOtherAmount"/>
+        <result column="client_name" property="clientName"/>
+        <result column="interface_data_id" property="interfaceDataId"/>
+        <result column="receive_interest_income_balance" property="receiveInterestIncomeBalance"/>
+        <result column="receive_interest_income_amount" property="receiveInterestIncomeAmount"/>
+        <result column="receivable_collection_transfer_balance" property="receivableCollectionTransferBalance"/>
+        <result column="receivable_collection_transfer_amount" property="receivableCollectionTransferAmount"/>
+        <result column="receivable_related_party_balance" property="receivableRelatedPartyBalance"/>
+        <result column="receivable_related_party_amount" property="receivableRelatedPartyAmount"/>
+        <result column="collection_transfer_balance" property="collectionTransferBalance"/>
+        <result column="collection_transfer_amount" property="collectionTransferAmount"/>
+        <result column="collect_payment_other_balance" property="collectPaymentOtherBalance"/>
+        <result column="collect_payment_other_amount" property="collectPaymentOtherAmount"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, voucher_id, business_code, business_date, voucher_date, scene_code, contract_code, client_code, client_type,
+        org_id, receivable_rent_balance, receivable_rent_amount, receivable_downpayment_balance,
+        receivable_downpayment_amount, receivable_residual_value_balance, receivable_residual_value_amount,
+        receivable_commission_balance, receivable_commission_amount, receivable_rebate_balance,
+        receivable_rebate_amount, receivable_insurance_balance, receivable_insurance_amount,
+        receivable_otherincome_balance, receivable_otherincome_amount, receivable_outtax_balance,
+        receivable_outtax_amount, receivable_outputtax_base_balance, receivable_outputtax_base_amount,
+        receivable_unconfirm_receipt_balance, receivable_unconfirm_receipt_amount, receivable_service_balance,
+        receivable_service_amount, receivable_service_outtax_balance, receivable_service_outtax_amount,
+        receivable_bill_balance, receivable_bill_amount, unrealized_revenue_balance, unrealized_revenue_amount,
+        lease_revenue_balance, lease_revenue_amount, service_revenue_balance, service_revenue_amount,
+        insurance_differ_balance, insurance_differ_amount, dinterest_revenue_balance, dinterest_revenue_amount,
+        terminate_balance, terminate_amount, other_revenue_balance, other_revenue_amount, damages_revenue_balance,
+        damages_revenue_amount, mid_commission_balance, mid_commission_amount, margin_interest_balance,
+        margin_interest_amount, payable_device_estimate_balance, payable_device_estimate_amount, payable_device_balance,
+        payable_device_amount, payable_other_cost_estimate_balance, payable_other_cost_estimate_amount,
+        payable_other_cost_balance, payable_other_cost_amount, payable_agency_estimate_balance,
+        payable_agency_estimate_amount, payable_agency_balance, payable_agency_amount, payable_vehicle_estimate_balance,
+        payable_vehicle_estimate_amount, payable_vehicle_balance, payable_vehicle_amount,
+        payable_band_cost_estimate_balance, payable_band_cost_estimate_amount, payable_band_cost_balance,
+        payable_band_cost_amount, payable_pledge_estimate_balance, payable_pledge_estimate_amount,
+        payable_pledge_balance, payable_pledge_amount, payable_unpledge_estimate_balance,
+        payable_unpledge_estimate_amount, payable_unpledge_balance, payable_unpledge_amount, lessee_margin_balance,
+        lessee_margin_amount, supplier_margin_balance, supplier_margin_amount, payable_insurance_estimate_balance,
+        payable_insurance_estimate_amount, payable_insurance_balance, payable_insurance_amount, payable_bill_balance,
+        payable_bill_amount, bank_deposit_balance, bank_deposit_amount, intax_balance, intax_amount, outtax_balance,
+        outtax_amount, litigation_expenses_balance, litigation_expenses_amount, depreciation_reserves_balance,
+        depreciation_reserves_amount, depreciation_loss_balance, depreciation_loss_amount, create_by, create_time,
+        update_by, update_time, del_flag, deputy_rent_balance, deputy_rent_amount, deputy_residual_value_balance,
+        deputy_residual_value_amount, deputy_other_balance, deputy_other_amount, receive_cost_balance,
+        receive_cost_amount, receive_dinterest_balance, receive_dinterest_amount, receive_terminate_balance,
+        receive_terminate_amount, deputy_outtax_balance, deputy_outtax_amount, off_income_balance, off_income_amount,
+        defer_income_balance, defer_income_amount, payable_account_balance, payable_account_amount,
+        payable_margin_balance, payable_margin_amount, payable_margin_year_balance, payable_margin_year_amount,
+        margin_ointerest_balance, margin_ointerest_amount, law_expenses_balance, law_expenses_amount,
+        receive_sum_balance, receive_sum_amount, receive_sum_outtax_balance, receive_sum_outtax_amount,
+        receive_unrealized_revenue_balance, receive_unrealized_revenue_amount, payable_lessee_margin_year_balance,
+        payable_lessee_margin_year_amount, payable_supplier_margin_year_balance, payable_supplier_margin_year_amount,
+        receivable_litigation_expenses_balance, receivable_litigation_expenses_amount, payable_other_estimate_balance,
+        payable_other_estimate_amount, payable_discount_cost_balance, payable_discount_cost_amount,
+        payable_procedure_cost_balance, payable_procedure_cost_amount, provisional_receipts_balance,
+        provisional_receipts_amount, equipment_depreciation_reserves_balance, equipment_depreciation_reserves_amount,
+        equipment_depreciation_loss_balance, equipment_depreciation_loss_amount, asset_dispose_gain_balance,
+        asset_dispose_gain_amount, asset_dispose_loss_balance, asset_dispose_loss_amount, receivable_other_balance,
+        receivable_other_amount, client_name, interface_data_id, receive_interest_income_balance,
+        receive_interest_income_amount, receivable_collection_transfer_balance, receivable_collection_transfer_amount,
+        receivable_related_party_balance, receivable_related_party_amount, collection_transfer_balance,
+        collection_transfer_amount, collect_payment_other_balance, collect_payment_other_amount
+    </sql>
+
+    <insert id="insertContractBalance">
+        insert into eg_contract_balance<foreach item="column" collection="columns" separator="," open="(" close=")" index="">${column}</foreach>
+        values<foreach item="value" collection="values" separator="," open="(" close=")" index="">#{value}</foreach>
+    </insert>
+
+</mapper>
+

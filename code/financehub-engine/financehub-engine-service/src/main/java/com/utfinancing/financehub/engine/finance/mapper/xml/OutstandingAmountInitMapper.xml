@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.OutstandingAmountInitMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.OutstandingAmountInitEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="account_number" property="accountNumber" />
+                    <result column="account_name" property="accountName" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="end_balance_for" property="endBalanceFor" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, account_number, account_name, client_code, org_id, end_balance_for
+        </sql>
+
+    <select id="selectEndBalFor" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectEndBalForInputDTO" resultMap="BaseResultMap">
+        select contract_code, account_number, sum(coalesce(end_balance_for,0)) end_balance_for
+        from eg_outstanding_amount_init
+        where
+            account_number in ('1532.01', '1505.03.02') and coalesce(end_balance_for, 0) != 0
+            <if test="params.contractList != null and params.contractList.size() > 0">
+                and contract_code in
+                <foreach collection="params.contractList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        group by contract_code , account_number
+    </select>
+</mapper>
+

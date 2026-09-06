@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.DataExecutionTaskMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.DataExecutionTaskEntity">
+                    <id column="id" property="id" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="status" property="status" />
+                    <result column="task_start_time" property="taskStartTime" />
+                    <result column="task_end_time" property="taskEndTime" />
+                    <result column="business_date_start" property="businessDateStart" />
+                    <result column="business_date_end" property="businessDateEnd" />
+                    <result column="data_size" property="dataSize" />
+                    <result column="data_success_size" property="dataSuccessSize" />
+                    <result column="data_failed_size" property="dataFailedSize" />
+                    <result column="error_message" property="errorMessage" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, system_code, status, task_start_time, task_end_time, business_date_start, business_date_end, data_size, data_success_size, data_failed_size, error_message, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

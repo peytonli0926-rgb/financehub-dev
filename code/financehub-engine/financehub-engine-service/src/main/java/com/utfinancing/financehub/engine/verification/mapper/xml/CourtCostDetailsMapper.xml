@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.verification.mapper.CourtCostDetailsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.verification.entity.CourtCostDetailsEntity">
+                    <id column="id" property="id" />
+                    <result column="court_cost_id" property="courtCostId" />
+                    <result column="org_id" property="orgId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="transger_cost_amount" property="transgerCostAmount" />
+                    <result column="cost_center" property="costCenter" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="voucher_id" property="voucherId" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, court_cost_id, org_id, contract_code, account_date, transger_cost_amount, cost_center, del_flag, create_by, create_time, update_by, update_time, voucher_id
+        </sql>
+    <select id="selectReportFormPage"
+            resultType="com.utfinancing.financehub.engine.verification.model.vo.CourtCostReportFormVO">
+        select
+        distinct
+        x.contract_code,
+        x.sign_company as orgId
+        from
+        eg_voucher x
+        where
+        1 = 1
+        and x.scene_code = 'SSF'
+        and x.business_code ='ZLYW'
+        and x.system_code in ('MFXT','FINHUB')
+        and x.del_flag  = '0'
+        <if test="queryDTO.orgId!=null and queryDTO.orgId !=''">
+            and x.org_id = #{queryDTO.orgId}
+        </if>
+        <if test="queryDTO.contractCode!=null and queryDTO.contractCode !=''">
+            and x.contract_code = #{queryDTO.contractCode}
+        </if>
+        <if test="queryDTO.startAccountDate!=null">
+            and to_char(x.voucher_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{queryDTO.startAccountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="queryDTO.endAccountDate!=null">
+            and to_char(x.voucher_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{queryDTO.endAccountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+    </select>
+    <select id="selectReportFormDetails"
+            resultType="com.utfinancing.financehub.engine.verification.model.vo.CourtCostReportFormVO">
+        select
+        x.id as voucherId,
+        x.contract_code,
+        x.contract_name,
+        x.sign_company as orgId,
+        x.voucher_date as accountDate,
+        x.order_id,
+        x.batch_type,
+        x.voucher_summary
+        from
+        eg_voucher x
+        where
+        1 = 1
+        and x.scene_code = 'SSF'
+        and x.business_code ='ZLYW'
+        and x.system_code in ('MFXT','FINHUB')
+        and x.del_flag  = '0'
+        <if test="queryDTO.orgId!=null and queryDTO.orgId !=''">
+                and x.org_id = #{queryDTO.orgId}
+        </if>
+        <if test="queryDTO.contractCode!=null and queryDTO.contractCode !=''">
+                and x.contract_code = #{queryDTO.contractCode}
+        </if>
+    </select>
+    <select id="selectReportByCondition"
+            resultType="com.utfinancing.financehub.engine.verification.model.vo.CourtCostReportFormVO">
+        select
+            eve.*,
+            x.order_id
+        from
+            eg_voucher_entry eve
+                inner join eg_voucher x on
+                eve.voucher_id = x.id
+        where
+            1 = 1
+          and x.del_flag = '0'
+          and eve.del_flag = '0'
+          and x.scene_code = 'SSF'
+          and x.business_code = 'ZLYW'
+          and x.system_code in ('MFXT','FINHUB')
+        <if test="condition.contractCode!=null and contractCode.contractCode!=''">
+            and x.contract_code = #{condition.contractCode}
+        </if>
+        <if test="condition.orgId!=null and condition.orgId!=''">
+            and x.org_id = #{condition.orgId}
+        </if>
+    </select>
+</mapper>
+

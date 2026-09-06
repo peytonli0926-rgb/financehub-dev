@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.BankAccountMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.BankAccountEntity">
+                    <id column="id" property="id" />
+                    <result column="eas_id" property="easId" />
+                    <result column="bank_account_code" property="bankAccountCode" />
+                    <result column="bank_account_name" property="bankAccountName" />
+                    <result column="bank_account_number" property="bankAccountNumber" />
+                    <result column="org_id" property="orgId" />
+                    <result column="bank_name" property="bankName" />
+                    <result column="account_name" property="accountName" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="currency_code" property="currencyCode" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, eas_id, bank_account_code, bank_account_name, bank_account_number, org_id, bank_name, account_name, account_code, currency_code, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

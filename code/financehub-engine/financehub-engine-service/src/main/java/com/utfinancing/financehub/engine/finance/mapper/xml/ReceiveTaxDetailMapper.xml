@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ReceiveTaxDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ReceiveTaxDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="bill_no" property="billNo" />
+                    <result column="bill_status" property="billStatus" />
+                    <result column="invoice_type" property="invoiceType" />
+                    <result column="invoice_code" property="invoiceCode" />
+                    <result column="invoice_number" property="invoiceNumber" />
+                    <result column="invoice_date" property="invoiceDate" />
+                    <result column="purchaser_name" property="purchaserName" />
+                    <result column="purchaser_tax_code" property="purchaserTaxCode" />
+                    <result column="purchaser_dress_tel" property="purchaserDressTel" />
+                    <result column="purchaser_bank_name_num" property="purchaserBankNameNum" />
+                    <result column="seller_name" property="sellerName" />
+                    <result column="seller_tax_code" property="sellerTaxCode" />
+                    <result column="seller_dress_tel" property="sellerDressTel" />
+                    <result column="seller_bank_name_num" property="sellerBankNameNum" />
+                    <result column="remark" property="remark" />
+                    <result column="receipt_name" property="receiptName" />
+                    <result column="review_name" property="reviewName" />
+                    <result column="drawer_name" property="drawerName" />
+                    <result column="invoice_machine_no" property="invoiceMachineNo" />
+                    <result column="product_name" property="productName" />
+                    <result column="model" property="model" />
+                    <result column="unit" property="unit" />
+                    <result column="quantity" property="quantity" />
+                    <result column="total_amount" property="totalAmount" />
+                    <result column="tax_amount" property="taxAmount" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="tax_classification_code" property="taxClassificationCode" />
+                    <result column="tax_classification_name" property="taxClassificationName" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, bill_no, bill_status, invoice_type, invoice_code, invoice_number, invoice_date, purchaser_name, purchaser_tax_code, purchaser_dress_tel, purchaser_bank_name_num, seller_name, seller_tax_code, seller_dress_tel, seller_bank_name_num, remark, receipt_name, review_name, drawer_name, invoice_machine_no, product_name, model, unit, quantity, total_amount, tax_amount, tax_rate, tax_classification_code, tax_classification_name, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+</mapper>
+

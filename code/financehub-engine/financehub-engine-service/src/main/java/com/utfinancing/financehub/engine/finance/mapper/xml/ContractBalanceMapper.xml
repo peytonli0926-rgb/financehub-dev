@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractBalanceMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractBalanceEntity">
+        <id column="id" property="id" />
+        <result column="voucher_id" property="voucherId" />
+        <result column="business_code" property="businessCode" />
+        <result column="business_date" property="businessDate" />
+        <result column="voucher_date" property="voucherDate" />
+        <result column="scene_code" property="sceneCode" />
+        <result column="contract_code" property="contractCode" />
+        <result column="client_code" property="clientCode" />
+        <result column="client_type" property="clientType" />
+        <result column="org_id" property="orgId" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+        <result column="client_name" property="clientName" />
+        <result column="interface_data_id" property="interfaceDataId" />
+            <!-- 华夏金租最新金额类型 -->
+        <result column="bank_deposit_amount" property="bankDepositAmount" />
+        <result column="bank_deposit_balance" property="bankDepositBalance" />
+        <result column="bank_acceptance_payable_amount" property="bankAcceptancePayableAmount" />
+        <result column="bank_acceptance_payable_balance" property="bankAcceptancePayableBalance" />
+        <result column="advance_lease_receipts_amount" property="advanceLeaseReceiptsAmount" />
+        <result column="advance_lease_receipts_balance" property="advanceLeaseReceiptsBalance" />
+        <result column="unidentified_receipts_amount" property="unidentifiedReceiptsAmount" />
+        <result column="unidentified_receipts_balance" property="unidentifiedReceiptsBalance" />
+        <result column="customer_deposit_payable_amount" property="customerDepositPayableAmount" />
+        <result column="customer_deposit_payable_balance" property="customerDepositPayableBalance" />
+        <result column="supplier_payable_amount" property="supplierPayableAmount" />
+        <result column="supplier_payable_balance" property="supplierPayableBalance" />
+        <result column="interbank_interest_receivable_amount" property="interbankInterestReceivableAmount" />
+        <result column="interbank_interest_receivable_balance" property="interbankInterestReceivableBalance" />
+        <result column="interbank_interest_income_amount" property="interbankInterestIncomeAmount" />
+        <result column="interbank_interest_income_balance" property="interbankInterestIncomeBalance" />
+        <result column="borrowing_interest_expense_amount" property="borrowingInterestExpenseAmount" />
+        <result column="borrowing_interest_expense_balance" property="borrowingInterestExpenseBalance" />
+        <result column="lease_asset_cost_amount" property="leaseAssetCostAmount" />
+        <result column="lease_asset_cost_balance" property="leaseAssetCostBalance" />
+        <result column="lease_rent_receivable_amount" property="leaseRentReceivableAmount" />
+        <result column="lease_rent_receivable_balance" property="leaseRentReceivableBalance" />
+        <result column="lease_rental_income_amount" property="leaseRentalIncomeAmount" />
+        <result column="lease_rental_income_balance" property="leaseRentalIncomeBalance" />
+        <result column="lease_asset_depreciation_expense_amount" property="leaseAssetDepreciationExpenseAmount" />
+        <result column="lease_asset_depreciation_expense_balance" property="leaseAssetDepreciationExpenseBalance" />
+        <result column="accumulated_lease_asset_depreciation_amount" property="accumulatedLeaseAssetDepreciationAmount" />
+        <result column="accumulated_lease_asset_depreciation_balance" property="accumulatedLeaseAssetDepreciationBalance" />
+        <result column="lease_asset_impairment_allowance_amount" property="leaseAssetImpairmentAllowanceAmount" />
+        <result column="lease_asset_impairment_allowance_balance" property="leaseAssetImpairmentAllowanceBalance" />
+        <result column="lease_asset_impairment_loss_amount" property="leaseAssetImpairmentLossAmount" />
+        <result column="lease_asset_impairment_loss_balance" property="leaseAssetImpairmentLossBalance" />
+        <result column="lease_asset_disposal_gain_loss_amount" property="leaseAssetDisposalGainLossAmount" />
+        <result column="lease_asset_disposal_gain_loss_balance" property="leaseAssetDisposalGainLossBalance" />
+        <result column="lease_principal_receivable_amount" property="leasePrincipalReceivableAmount" />
+        <result column="lease_principal_receivable_balance" property="leasePrincipalReceivableBalance" />
+        <result column="lease_interest_receivable_amount" property="leaseInterestReceivableAmount" />
+        <result column="lease_interest_receivable_balance" property="leaseInterestReceivableBalance" />
+        <result column="lease_interest_vat_receivable_amount" property="leaseInterestVatReceivableAmount" />
+        <result column="lease_interest_vat_receivable_balance" property="leaseInterestVatReceivableBalance" />
+        <result column="residual_value_receivable_amount" property="residualValueReceivableAmount" />
+        <result column="residual_value_receivable_balance" property="residualValueReceivableBalance" />
+        <result column="residual_value_vat_receivable_amount" property="residualValueVatReceivableAmount" />
+        <result column="residual_value_vat_receivable_balance" property="residualValueVatReceivableBalance" />
+        <result column="unearned_lease_interest_amount" property="unearnedLeaseInterestAmount" />
+        <result column="unearned_lease_interest_balance" property="unearnedLeaseInterestBalance" />
+        <result column="unearned_lease_interest_vat_amount" property="unearnedLeaseInterestVatAmount" />
+        <result column="unearned_lease_interest_vat_balance" property="unearnedLeaseInterestVatBalance" />
+        <result column="unearned_residual_value_amount" property="unearnedResidualValueAmount" />
+        <result column="unearned_residual_value_balance" property="unearnedResidualValueBalance" />
+        <result column="unearned_residual_value_vat_amount" property="unearnedResidualValueVatAmount" />
+        <result column="unearned_residual_value_vat_balance" property="unearnedResidualValueVatBalance" />
+        <result column="overdue_lease_principal_amount" property="overdueLeasePrincipalAmount" />
+        <result column="overdue_lease_principal_balance" property="overdueLeasePrincipalBalance" />
+        <result column="overdue_lease_interest_amount" property="overdueLeaseInterestAmount" />
+        <result column="overdue_lease_interest_balance" property="overdueLeaseInterestBalance" />
+        <result column="overdue_lease_interest_vat_amount" property="overdueLeaseInterestVatAmount" />
+        <result column="overdue_lease_interest_vat_balance" property="overdueLeaseInterestVatBalance" />
+        <result column="overdue_residual_value_amount" property="overdueResidualValueAmount" />
+        <result column="overdue_residual_value_balance" property="overdueResidualValueBalance" />
+        <result column="overdue_residual_value_vat_amount" property="overdueResidualValueVatAmount" />
+        <result column="overdue_residual_value_vat_balance" property="overdueResidualValueVatBalance" />
+        <result column="lease_interest_income_amount" property="leaseInterestIncomeAmount" />
+        <result column="lease_interest_income_balance" property="leaseInterestIncomeBalance" />
+        <result column="penalty_interest_income_amount" property="penaltyInterestIncomeAmount" />
+        <result column="penalty_interest_income_balance" property="penaltyInterestIncomeBalance" />
+        <result column="early_termination_income_amount" property="earlyTerminationIncomeAmount" />
+        <result column="early_termination_income_balance" property="earlyTerminationIncomeBalance" />
+        <result column="early_settlement_penalty_income_amount" property="earlySettlementPenaltyIncomeAmount" />
+        <result column="early_settlement_penalty_income_balance" property="earlySettlementPenaltyIncomeBalance" />
+        <result column="vehicle_profit_sharing_payable_amount" property="vehicleProfitSharingPayableAmount" />
+        <result column="vehicle_profit_sharing_payable_balance" property="vehicleProfitSharingPayableBalance" />
+        <result column="vehicle_profit_sharing_receivable_amount" property="vehicleProfitSharingReceivableAmount" />
+        <result column="vehicle_profit_sharing_receivable_balance" property="vehicleProfitSharingReceivableBalance" />
+        <result column="vehicle_management_fee_payable_amount" property="vehicleManagementFeePayableAmount" />
+        <result column="vehicle_management_fee_payable_balance" property="vehicleManagementFeePayableBalance" />
+        <result column="vehicle_project_service_fee_expense_amount" property="vehicleProjectServiceFeeExpenseAmount" />
+        <result column="vehicle_project_service_fee_expense_balance" property="vehicleProjectServiceFeeExpenseBalance" />
+        <result column="vehicle_clearing_payable_amount" property="vehicleClearingPayableAmount" />
+        <result column="vehicle_clearing_payable_balance" property="vehicleClearingPayableBalance" />
+        <result column="bank_service_fee_expense_amount" property="bankServiceFeeExpenseAmount" />
+        <result column="bank_service_fee_expense_balance" property="bankServiceFeeExpenseBalance" />
+        <result column="payment_channel_fee_expense_amount" property="paymentChannelFeeExpenseAmount" />
+        <result column="payment_channel_fee_expense_balance" property="paymentChannelFeeExpenseBalance" />
+        <result column="input_vat_receivable_amount" property="inputVatReceivableAmount" />
+        <result column="input_vat_receivable_balance" property="inputVatReceivableBalance" />
+        <result column="input_vat_pending_certification_amount" property="inputVatPendingCertificationAmount" />
+        <result column="input_vat_pending_certification_balance" property="inputVatPendingCertificationBalance" />
+        <result column="output_vat_payable_amount" property="outputVatPayableAmount" />
+        <result column="output_vat_payable_balance" property="outputVatPayableBalance" />
+        <result column="vat_invoice_difference_amount" property="vatInvoiceDifferenceAmount" />
+        <result column="vat_invoice_difference_balance" property="vatInvoiceDifferenceBalance" />
+        <result column="stamp_duty_expense_amount" property="stampDutyExpenseAmount" />
+        <result column="stamp_duty_expense_balance" property="stampDutyExpenseBalance" />
+        <result column="stamp_duty_payable_amount" property="stampDutyPayableAmount" />
+        <result column="stamp_duty_payable_balance" property="stampDutyPayableBalance" />
+        <result column="lease_receivable_impairment_allowance_amount" property="leaseReceivableImpairmentAllowanceAmount" />
+        <result column="lease_receivable_impairment_allowance_balance" property="leaseReceivableImpairmentAllowanceBalance" />
+        <result column="lease_receivable_impairment_loss_amount" property="leaseReceivableImpairmentLossAmount" />
+        <result column="lease_receivable_impairment_loss_balance" property="leaseReceivableImpairmentLossBalance" />
+        <result column="impaired_lease_principal_amount" property="impairedLeasePrincipalAmount" />
+        <result column="impaired_lease_principal_balance" property="impairedLeasePrincipalBalance" />
+        <result column="impaired_lease_interest_income_amount" property="impairedLeaseInterestIncomeAmount" />
+        <result column="impaired_lease_interest_income_balance" property="impairedLeaseInterestIncomeBalance" />
+        <result column="written_off_lease_principal_amount" property="writtenOffLeasePrincipalAmount" />
+        <result column="written_off_lease_principal_balance" property="writtenOffLeasePrincipalBalance" />
+        <result column="off_balance_lease_interest_receivable_amount" property="offBalanceLeaseInterestReceivableAmount" />
+        <result column="off_balance_lease_interest_receivable_balance" property="offBalanceLeaseInterestReceivableBalance" />
+        <result column="off_balance_offset_amount" property="offBalanceOffsetAmount" />
+        <result column="off_balance_offset_balance" property="offBalanceOffsetBalance" />
+</resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+            id, voucher_id, interface_data_id, system_code, business_code, business_date, voucher_date, scene_code, contract_code, client_code, client_type, org_id, create_by, create_time, update_by, update_time, del_flag, eas_voucher_id, period_code, bill_contract_code, bank_deposit_amount, bank_deposit_balance, bank_acceptance_payable_amount, bank_acceptance_payable_balance, advance_lease_receipts_amount, advance_lease_receipts_balance, unidentified_receipts_amount, unidentified_receipts_balance, customer_deposit_payable_amount, customer_deposit_payable_balance, supplier_payable_amount, supplier_payable_balance, interbank_interest_receivable_amount, interbank_interest_receivable_balance, interbank_interest_income_amount, interbank_interest_income_balance, borrowing_interest_expense_amount, borrowing_interest_expense_balance, lease_asset_cost_amount, lease_asset_cost_balance, lease_rent_receivable_amount, lease_rent_receivable_balance, lease_rental_income_amount, lease_rental_income_balance, lease_asset_depreciation_expense_amount, lease_asset_depreciation_expense_balance, accumulated_lease_asset_depreciation_amount, accumulated_lease_asset_depreciation_balance, lease_asset_impairment_allowance_amount, lease_asset_impairment_allowance_balance, lease_asset_impairment_loss_amount, lease_asset_impairment_loss_balance, lease_asset_disposal_gain_loss_amount, lease_asset_disposal_gain_loss_balance, lease_principal_receivable_amount, lease_principal_receivable_balance, lease_interest_receivable_amount, lease_interest_receivable_balance, lease_interest_vat_receivable_amount, lease_interest_vat_receivable_balance, residual_value_receivable_amount, residual_value_receivable_balance, residual_value_vat_receivable_amount, residual_value_vat_receivable_balance, unearned_lease_interest_amount, unearned_lease_interest_balance, unearned_lease_interest_vat_amount, unearned_lease_interest_vat_balance, unearned_residual_value_amount, unearned_residual_value_balance, unearned_residual_value_vat_amount, unearned_residual_value_vat_balance, overdue_lease_principal_amount, overdue_lease_principal_balance, overdue_lease_interest_amount, overdue_lease_interest_balance, overdue_lease_interest_vat_amount, overdue_lease_interest_vat_balance, overdue_residual_value_amount, overdue_residual_value_balance, overdue_residual_value_vat_amount, overdue_residual_value_vat_balance, lease_interest_income_amount, lease_interest_income_balance, penalty_interest_income_amount, penalty_interest_income_balance, early_termination_income_amount, early_termination_income_balance, early_settlement_penalty_income_amount, early_settlement_penalty_income_balance, vehicle_profit_sharing_payable_amount, vehicle_profit_sharing_payable_balance, vehicle_profit_sharing_receivable_amount, vehicle_profit_sharing_receivable_balance, vehicle_management_fee_payable_amount, vehicle_management_fee_payable_balance, vehicle_project_service_fee_expense_amount, vehicle_project_service_fee_expense_balance, vehicle_clearing_payable_amount, vehicle_clearing_payable_balance, bank_service_fee_expense_amount, bank_service_fee_expense_balance, payment_channel_fee_expense_amount, payment_channel_fee_expense_balance, input_vat_receivable_amount, input_vat_receivable_balance, input_vat_pending_certification_amount, input_vat_pending_certification_balance, output_vat_payable_amount, output_vat_payable_balance, vat_invoice_difference_amount, vat_invoice_difference_balance, stamp_duty_expense_amount, stamp_duty_expense_balance, stamp_duty_payable_amount, stamp_duty_payable_balance, lease_receivable_impairment_allowance_amount, lease_receivable_impairment_allowance_balance, lease_receivable_impairment_loss_amount, lease_receivable_impairment_loss_balance, impaired_lease_principal_amount, impaired_lease_principal_balance, impaired_lease_interest_income_amount, impaired_lease_interest_income_balance, written_off_lease_principal_amount, written_off_lease_principal_balance, off_balance_lease_interest_receivable_amount, off_balance_lease_interest_receivable_balance, off_balance_offset_amount, off_balance_offset_balance
+        </sql>
+
+    <insert id="insertContractBalance">
+        insert into eg_contract_balance<foreach item="column" collection="columns" separator="," open="(" close=")" index="">${column}</foreach>
+        values<foreach item="value" collection="values" separator="," open="(" close=")" index="">#{value}</foreach>
+    </insert>
+    <select id="selectContractMap"
+            resultType="java.util.Map">
+        select
+            a.contract_code,
+            a.org_id,
+            a.client_code,
+            a.business_code,
+            a.lessee_margin_balance,
+            a.supplier_margin_balance,
+            a.payable_margin_balance,
+            a.other_margin_balance,
+            ec.contract_name ,
+            ec.lease_date_start ,
+            ec.lease_date_end ,
+            ec.business_name ,
+            ec.currency_type ,
+            ec.client_name
+        from eg_contract_balance a
+        inner join (
+            select contract_code, max(update_time) update_time
+            from eg_contract_balance
+            where
+                period_code = #{param.periodCode}
+                and del_flag = '0'
+                and contract_code is not null
+                and client_code is not null
+                and (lessee_margin_balance != 0 or supplier_margin_balance != 0 or payable_margin_balance != 0 or other_margin_balance !=0)
+            group by contract_code
+        ) b on a.update_time = b.update_time and a.contract_code = b.contract_code
+        left join eg_contract ec on a.contract_code = ec.contract_code
+        where
+            a.period_code = #{param.periodCode}
+            and a.del_flag = '0'
+            and a.contract_code is not null
+            and a.client_code is not null
+            and (a.lessee_margin_balance != 0 or a.supplier_margin_balance != 0 or payable_margin_balance != 0 or other_margin_balance !=0)
+        <if test="param.businessCodeList != null and param.businessCodeList.size > 0">
+            and a.business_code in
+            <foreach item="item" index="index" collection="param.businessCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.idList != null and param.idList.size > 0">
+            and a.id in
+            <foreach item="item" index="index" collection="param.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.contractCodeListNotIn != null and param.contractCodeListNotIn.size > 0">
+            and a.contract_code not in
+            <foreach item="item" index="index" collection="param.contractCodeListNotIn" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgId != null and param.orgId != ''">
+            and a.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and a.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdListNotIn != null and param.orgIdListNotIn.size > 0">
+            and a.org_id not in
+            <foreach item="item" index="index" collection="param.orgIdListNotIn" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectLatestBalance"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractBalanceVO">
+        select
+        t.org_id,
+        t.business_code,
+        t.contract_code,
+        t.client_code,
+        sum(coalesce(payable_other_cost_estimate_balance, 0)) as payable_other_cost_estimate_balance,
+        sum(coalesce(payable_agency_estimate_balance, 0)) as payable_agency_estimate_balance,
+        sum(coalesce(payable_vehicle_estimate_balance, 0)) as payable_vehicle_estimate_balance,
+        sum(coalesce(payable_band_cost_estimate_balance, 0)) as payable_band_cost_estimate_balance,
+        sum(coalesce(payable_pledge_estimate_balance, 0)) as payable_pledge_estimate_balance,
+        sum(coalesce(payable_unpledge_estimate_balance, 0)) as payable_unpledge_estimate_balance,
+        sum(coalesce(payable_device_estimate_balance, 0)) as payable_device_estimate_balance,
+        sum(coalesce(receivable_outtax_balance, 0)) as receivable_outtax_balance,
+        sum(coalesce(unrealized_revenue_balance, 0)) as unrealized_revenue_balance,
+        sum(coalesce(receive_sum_outtax_balance, 0)) as receive_sum_outtax_balance,
+        sum(coalesce(receive_unrealized_revenue_balance, 0)) as receive_unrealized_revenue_balance,
+        sum(coalesce(payable_other_estimate_balance, 0)) as payable_other_estimate_balance,
+        sum(coalesce(receivable_rent_balance, 0)) as receivable_rent_balance,
+        sum(coalesce(receivable_residual_value_balance, 0)) as receivable_residual_value_balance,
+        sum(coalesce(payable_device_balance, 0)) as payable_device_balance,
+        sum(coalesce(payable_other_balance, 0)) as payable_other_balance
+        from
+        (select * from eg_contract_balance_latest order by org_id,business_code,contract_code,client_code) t
+        where
+        1 = 1
+        and (t.payable_other_cost_estimate_balance!=0
+        or t.payable_agency_estimate_balance!=0
+        or t.payable_vehicle_estimate_balance!=0
+        or t.payable_band_cost_estimate_balance!=0
+        or t.payable_pledge_estimate_balance!=0
+        or t.payable_unpledge_estimate_balance!=0
+        or t.payable_device_estimate_balance !=0
+        or t.receivable_outtax_balance !=0
+        or t.unrealized_revenue_balance !=0
+        or t.receive_sum_outtax_balance !=0
+        or t.receive_unrealized_revenue_balance !=0
+        or t.payable_other_estimate_balance !=0
+        )
+        <if test="param.periodCode!='' and param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherDate!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') = to_char(#{param.voucherDate},'YYYY-MM-DD')
+        </if>
+        group by
+        t.org_id,
+        t.business_code,
+        t.contract_code,
+        t.client_code
+<!--        -->
+<!--        select-->
+<!--        *-->
+<!--        from-->
+<!--        eg_contract_balance-->
+<!--        where-->
+<!--        1 = 1-->
+<!--        and id in (-->
+<!--        select-->
+<!--        max(id)-->
+<!--        from-->
+<!--        eg_contract_balance t-->
+<!--        where-->
+<!--        1 = 1-->
+<!--        and t.org_id is not null-->
+<!--        and t.contract_code is not null-->
+<!--        <if test="param.periodCode!='' and param.periodCode!=null">-->
+<!--            and t.period_code = #{param.periodCode}-->
+<!--        </if>-->
+<!--        <if test="param.orgIdList != null and param.orgIdList.size > 0">-->
+<!--            and t.org_id in-->
+<!--            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+<!--        </if>-->
+<!--        <if test="param.voucherDate!=null">-->
+<!--            and to_char(t.voucher_date,'YYYY-MM-DD') = to_char(#{param.voucherDate},'YYYY-MM-DD')-->
+<!--        </if>-->
+<!--        group by-->
+<!--        t.org_id,-->
+<!--        t.contract_code-->
+<!--        )-->
+    </select>
+    <select id="selectCheckPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractBalanceVO">
+        with balance as (
+        select
+        cb.*
+        from
+        eg_contract_balance_latest cb
+        where
+        1 = 1
+        and cb.id in (
+        select
+        max(x.id)
+        from
+        eg_contract_balance_latest x
+        where
+        1 = 1
+        and x.del_flag = '0'
+        <if test="param.periodCode!=null and param.periodCode!=''">
+            and x.period_code = #{param.periodCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and x.org_id = #{param.orgId}
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and x.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and x.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.clientCodeList != null and param.clientCodeList.size > 0">
+            and x.client_code in
+            <foreach item="item" index="index" collection="param.clientCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        x.org_id,
+        x.contract_code)
+        union all
+        select
+        *
+        from
+        eg_contract_balance_temp ecbt
+        where
+        1 = 1
+        and ecbt.id in (
+        select
+        max(x.id)
+        from
+        eg_contract_balance_temp x
+        where
+        1 = 1
+        and x.del_flag = '0'
+        <if test="param.periodCode!=null and param.periodCode!=''">
+            and x.period_code = #{param.periodCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and x.org_id = #{param.orgId}
+        </if>
+        <if test="param.sceneCodeForTemp!=null and param.sceneCodeForTemp!=''">
+            and x.scene_code = #{param.sceneCodeForTemp}
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and x.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and x.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.clientCodeList != null and param.clientCodeList.size > 0">
+            and x.client_code in
+            <foreach item="item" index="index" collection="param.clientCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        x.org_id,
+        x.contract_code)
+        )
+
+        select
+        *
+        from
+        balance
+        where
+        1 = 1
+        and id in (
+        select
+        id
+        from
+        (
+        select
+        id,
+        row_number() over (partition by org_id,
+        contract_code
+        order by
+        create_time desc) as rn
+        from
+        balance
+        ) sub
+        where
+        rn = 1
+        )
+        <if test="param.periodCode!=null and param.periodCode!=''">
+            and period_code = #{param.periodCode}
+        </if>
+    </select>
+    <select id="selectLatestBalanceByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractBalanceVO">
+        select
+        contract_code,
+        org_id,
+        client_code,
+        receivable_rent_balance,
+        receivable_residual_value_balance,
+        receivable_outtax_balance,
+        unrealized_revenue_balance,
+        lessee_margin_balance,
+        payable_agency_estimate_balance,
+        payable_vehicle_estimate_balance,
+        payable_band_cost_estimate_balance,
+        payable_pledge_estimate_balance,
+        payable_unpledge_estimate_balance,
+        payable_other_cost_estimate_balance,
+        depreciation_reserves_balance
+        from
+        eg_contract_balance
+        where
+        1 = 1
+        and id in (
+        select
+        max(id)
+        from
+        eg_contract_balance t
+        where
+        1 = 1
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and t.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.clientCodeList != null and param.clientCodeList.size > 0">
+            and t.client_code in
+            <foreach item="item" index="index" collection="param.clientCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherDate!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDate},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        )
+    </select>
+    <select id="sumAccountBalancePage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractAccountBalanceVO">
+        select
+        ecb.business_date,
+        ecb.voucher_date,
+        ecb.period_code,
+        ecb.scene_code,
+        es.scene_name,
+        sum(ecb.receivable_rent_balance) as receivable_rent_balance,
+        sum(ecb.receivable_rent_amount) as receivable_rent_amount,
+        sum(ecb.unrealized_revenue_balance) as unrealized_revenue_balance,
+        sum(ecb.unrealized_revenue_amount) as unrealized_revenue_amount,
+        sum(ecb.lease_revenue_balance) as lease_revenue_balance,
+        sum(ecb.lease_revenue_amount) as lease_revenue_amount,
+        sum(ecb.depreciation_reserves_balance) as depreciation_reserves_balance,
+        sum(ecb.depreciation_reserves_amount) as depreciation_reserves_amount,
+        sum(ecb.receivable_outtax_balance) as receivable_outtax_balance,
+        sum(ecb.receivable_outtax_amount) as receivable_outtax_amount,
+        sum(ecb.receivable_service_outtax_balance) as receivable_service_outtax_balance,
+        sum(ecb.receivable_service_outtax_amount) as receivable_service_outtax_amount,
+        sum(ecb.payable_device_balance + ecb.payable_device_estimate_balance) as payable_device_balances,
+        sum(ecb.payable_device_estimate_amount + ecb.payable_device_amount) as payable_device_amounts,
+        sum(ecb.lessee_margin_balance) as lessee_margin_balance,
+        sum(ecb.lessee_margin_amount) as lessee_margin_amount
+        from
+        eg_contract_balance ecb
+        left join eg_scene es on ecb.scene_code = es.scene_code and es.del_flag ='0'
+        where 1=1
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and ecb.contract_code = #{param.contractCode}
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and ecb.org_id = #{param.orgId}
+        </if>
+        group by ecb.business_date,
+        ecb.voucher_date,
+        ecb.period_code,
+        ecb.scene_code,
+        es.scene_name
+        order by ecb.voucher_date desc
+    </select>
+
+
+    <select id="getLastContract" resultType="com.utfinancing.financehub.engine.finance.entity.ContractBalanceEntity">
+        select
+        contract_code,
+        org_id,
+        sum(receivable_rent_balance) receivable_rent_balance,
+        sum(receivable_residual_value_balance) receivable_residual_value_balance,
+        sum(receivable_outtax_balance) receivable_outtax_balance,
+        sum(unrealized_revenue_balance) unrealized_revenue_balance,
+        sum(lessee_margin_balance) lessee_margin_balance,
+        sum(receive_cost_balance) receive_cost_balance,
+        sum(equipment_depreciation_reserves_balance) equipment_depreciation_reserves_balance
+        from
+        eg_contract_balance ecb
+        where 1=1
+        <if test="param.orgId!=null and param.orgId!=''">
+            and ecb.org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and ecb.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and ecb.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and ecb.id in(
+        select
+        max(id)
+        from
+        eg_contract_balance
+        where 1=1
+        <if test="param.orgId!=null and param.orgId!=''">
+            and org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherDate!=null and param.voucherDate!=''">
+            and voucher_date &lt;= #{param.voucherDate}
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by
+        org_id,
+        contract_code,
+        client_code
+        )
+        group by
+        org_id,
+        contract_code
+    </select>
+
+    <select id="sumContractBalanceJYJGBG" resultType="java.util.Map">
+        select sum(receivable_downpayment_amount)      as receivable_downpayment_amount,
+               sum(receivable_commission_amount)       as receivable_commission_amount,
+               sum(receivable_insurance_amount)        as receivable_insurance_amount,
+               sum(payable_insurance_estimate_amount)  as payable_insurance_estimate_amount,
+               sum(receivable_residual_value_amount)   as receivable_residual_value_amount,
+               sum(receivable_otherincome_amount)      as receivable_otherincome_amount,
+               sum(payable_device_estimate_amount)     as payable_device_estimate_amount,
+               sum(payable_other_cost_estimate_amount) as payable_other_cost_estimate_amount,
+               sum(payable_agency_estimate_amount)     as payable_agency_estimate_amount,
+               sum(payable_band_cost_estimate_amount)  as payable_band_cost_estimate_amount,
+               sum(receivable_outtax_amount)           as receivable_outtax_amount,
+               sum(unrealized_revenue_amount)          as unrealized_revenue_amount,
+               sum(receivable_service_amount)          as receivable_service_amount,
+               sum(receivable_service_outtax_amount)   as receivable_service_outtax_amount,
+               sum(service_revenue_amount)             as service_revenue_amount,
+               sum(outtax_amount)                      as outtax_amount,
+               sum(receive_sum_amount)                 as receive_sum_amount,
+               sum(receive_sum_outtax_amount)          as receive_sum_outtax_amount,
+               sum(payable_other_estimate_amount)      as payable_other_estimate_amount,
+               sum(receive_unrealized_revenue_amount)  as receive_unrealized_revenue_amount
+        from eg_contract_balance
+        where period_code = #{periodCode}
+          and scene_code = 'JYJGBG'
+          and org_id = #{orgId}
+          and contract_code = #{contractCode}
+          and voucher_date >= #{voucherDate}
+    </select>
+
+    <select id="sumContractBalanceZLSK" resultType="java.util.Map">
+        select sum(receivable_unconfirm_receipt_amount)                                   as receivable_downpayment_amount,
+               sum(receivable_rent_amount) filter ( where 0 >= lessee_margin_amount )     as receivable_rent_amount,
+                sum(receivable_residual_value_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_residual_value_amount,
+                sum(lessee_margin_amount) filter ( where 0 >= lessee_margin_amount )       as lessee_margin_amount,
+                sum(supplier_margin_amount) filter ( where 0 >= lessee_margin_amount )     as supplier_margin_amount,
+                sum(receivable_downpayment_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_downpayment_amount,
+                sum(receivable_commission_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_commission_amount,
+                sum(receivable_service_amount) filter ( where 0 >= lessee_margin_amount )  as receivable_service_amount,
+                sum(receivable_insurance_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_insurance_amount,
+                sum(insurance_differ_amount) filter ( where 0 >= lessee_margin_amount )    as insurance_differ_amount,
+                sum(receivable_otherincome_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_otherincome_amount,
+                sum(receivable_damages_revenue_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_damages_revenue_amount,
+                sum(receivable_other_revenue_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_other_revenue_amount,
+                sum(receivable_default_interest_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_default_interest_amount,
+                sum(receivable_terminate_amount)
+                    filter ( where 0 >= lessee_margin_amount )                                 as receivable_terminate_amount,
+                sum(dinterest_revenue_amount) filter ( where 0 >= lessee_margin_amount )   as dinterest_revenue_amount,
+                sum(terminate_amount) filter ( where 0 >= lessee_margin_amount )           as terminate_amount,
+                sum(damages_revenue_amount) filter ( where 0 >= lessee_margin_amount )     as damages_revenue_amount,
+                sum(other_revenue_amount) filter ( where 0 >= lessee_margin_amount )       as other_revenue_amount,
+                sum(receivable_outtax_amount)                                              as payable_other_estimate_amount,
+               sum(lessee_margin_amount) filter ( where lessee_margin_amount > 0 )        as lessee_margin_amount,
+                sum(receivable_rent_amount) filter ( where lessee_margin_amount > 0 )      as receivable_rent_amount,
+                sum(receivable_residual_value_amount)
+                    filter ( where lessee_margin_amount > 0 )                                  as receivable_residual_value_amount,
+                sum(receivable_default_interest_amount)
+                    filter ( where lessee_margin_amount > 0 )                                  as receivable_default_interest_amount,
+                sum(receivable_terminate_amount) filter ( where lessee_margin_amount > 0 ) as receivable_terminate_amount,
+                sum(dinterest_revenue_amount) filter ( where lessee_margin_amount > 0 )    as dinterest_revenue_amount,
+                sum(terminate_amount)
+                    filter ( where lessee_margin_amount > 0 and receivable_outtax_amount > 0 ) as terminate_amount,
+                sum(receivable_outtax_amount)                                              as receivable_outtax_amount
+        from eg_contract_balance
+        where period_code = #{periodCode}
+          and scene_code = 'ZLSK'
+          and org_id = #{orgId}
+          and contract_code = #{contractCode}
+          and voucher_date >= #{voucherDate}
+
+    </select>
+    <select id="sumContractBalanceKJFP" resultType="java.util.Map">
+        select sum(receivable_outtax_amount)         as receivable_outtax_amount,
+               sum(receivable_service_outtax_amount) as receivable_service_outtax_amount
+        from eg_contract_balance
+        where period_code = #{periodCode}
+          and scene_code = 'KJFP'
+          and org_id = #{orgId}
+          and contract_code = #{contractCode}
+          and voucher_date >= #{voucherDate}
+    </select>
+    <select id="selectLatestBalanceByOrgIdContractCodeList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractBalanceVO">
+        select *
+        from (select id,
+                     org_id,
+                     client_code,
+                     scene_code,
+                     contract_code,
+                     voucher_date,
+                     receivable_rent_balance,
+                     receivable_residual_value_balance,
+                     receivable_outtax_balance,
+                     unrealized_revenue_balance,
+                     lessee_margin_balance,
+                     payable_agency_estimate_balance,
+                     payable_vehicle_estimate_balance,
+                     payable_band_cost_estimate_balance,
+                     payable_pledge_estimate_balance,
+                     payable_unpledge_estimate_balance,
+                     payable_other_cost_estimate_balance,
+                     depreciation_reserves_balance,
+                     lease_revenue6_amount,
+                     lease_revenue_amount,
+                     depreciation_reserves_amount,
+                     receivable_unconfirm_receipt_amount,
+                     collect_claims_balance,
+                     receivable_service_outtax_amount,
+                     receivable_outtax_amount,
+                     row_number() over (partition by contract_code order by id desc) as rn
+              from eg_contract_balance x
+              where x.del_flag = '0'
+                and x.contract_code in
+                <foreach collection="param.contractCodeList" item="contractCode" separator="," open="(" close=")">
+                    #{contractCode}
+                </foreach>
+                <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+                    and x.scene_code in
+                    <foreach collection="param.sceneCodeList" item="sceneCode" separator="," open="(" close=")">
+                        #{sceneCode}
+                    </foreach>
+                </if>
+                and x.org_id = #{param.orgId}
+                <if test="param.voucherDateEnd!=null">
+                    and to_char(x.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+                </if>
+                <if test="param.voucherDateStart!=null">
+                    and to_char(x.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+                </if>
+              order by id desc ) t
+        where t.rn = 1
+    </select>
+    <select id="selectContractBalanceAfterJZRGroupByOrgIdContractScene"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractBalanceEntity">
+
+        select org_id                                            as org_id,
+               contract_code                                     as contract_code,
+               scene_code                                        as scene_code,
+               sum(lease_revenue6_amount)                        as lease_revenue6_amount,
+               sum(lease_revenue_amount)                         as lease_revenue_amount,
+               sum(depreciation_reserves_amount)                 as depreciation_reserves_amount,
+               sum(receivable_unconfirm_receipt_amount)          as receivable_unconfirm_receipt_amount,
+               sum(receivable_service_outtax_amount)             as receivable_service_outtax_amount,
+               sum(receivable_outtax_amount)                     as receivable_outtax_amount,
+               sum(receivable_outtax_debt_restructure_amount)    as receivable_outtax_debt_restructure_amount,
+               sum(interest_other_long_payables_amount)          as interest_other_long_payables_amount,
+               sum(other_payable_spv_amount)                     as other_payable_spv_amount,
+               sum(collect_payment_amount)                       as collect_payment_amount,
+               sum(receive_sum_outtax_amount)                    as receive_sum_outtax_amount,
+               sum(receivable_outtax_investment_property_amount) as receivable_outtax_investment_property_amount,
+               sum(other_business_income_amount)                 as other_business_income_amount
+        from eg_contract_balance
+        where del_flag = '0'
+          and voucher_date >= #{voucherDate}
+          and period_code >= #{periodCode}
+          and scene_code in
+          <foreach collection="sceneCode" item="sceneCode" open="(" close=")" separator=",">#{sceneCode}</foreach>
+          and (
+            <foreach collection="orgContractMap" open="(" close=")" separator="or" index="orgId" item="contractList">
+                org_id = #{orgId} and contract_code in
+                <foreach collection="contractList" item="contractCode" open="(" close=")" separator=",">
+                    #{contractCode}
+                </foreach>
+            </foreach>
+            )
+        GROUP BY org_id, contract_code, scene_code
+    </select>
+
+
+</mapper>
+

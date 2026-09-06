@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.rule.mapper.RawTransactionDataMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.rule.entity.RawTransactionDataEntity">
+                    <id column="id" property="id" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="order_id" property="orderId" />
+                    <result column="message_id" property="messageId" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="scene_code" property="sceneCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="message_content" property="messageContent" typeHandler="com.baomidou.mybatisplus.extension.handlers.FastjsonTypeHandler"/>
+                    <result column="message_status" property="messageStatus" />
+                    <result column="error_info" property="errorInfo" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, system_code, order_id, message_id, business_code, org_id, scene_code, contract_code, contract_status, message_content, message_status, error_info, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+    <select id="fetchTodoRawTransactionData" resultType="com.utfinancing.financehub.engine.rule.model.vo.RawTransactionDataQueryVO">
+        select *
+        from eg_raw_transaction_data
+        where message_status in ('NOT_EXECUTE', 'FAILED')
+        and system_code =#{systemCode}
+
+    </select>
+    <select id="getTodoRawTransactionDataInfo" resultType="com.alibaba.fastjson2.JSONObject">
+        select count(1) total,max(business_date) maxBusinessDate,min(business_date) minBusinessDate
+        from eg_raw_transaction_data
+        where message_status in ('NOT_EXECUTE', 'FAILED')
+          and system_code =#{systemCode}
+    </select>
+    <select id="getDuplicateData"
+            resultType="com.utfinancing.financehub.engine.rule.model.vo.RawTransactionDataDuplicateVo">
+        select *
+        from (select t.md5, count(1) duplicate_count, string_agg(t.id::text, ', ') AS ids
+              from (select id, md5((message_content::jsonb - 'businessDate')::text) md5
+                    from eg_raw_transaction_data
+                    where eg_raw_transaction_data.system_code = #{systemCode}
+                      and eg_raw_transaction_data.del_flag = '0'
+                      and eg_raw_transaction_data.create_time >= CURRENT_TIMESTAMP - INTERVAL '10 days'
+                    and eg_raw_transaction_data.scene_code not in
+                        <foreach item="sceneCode" index="index" collection="sceneCodes" open="(" separator="," close=")">
+                            #{sceneCode}
+                        </foreach>
+                    ) t
+              group by t.md5) t1
+        where t1.duplicate_count > 1
+    </select>
+</mapper>
+

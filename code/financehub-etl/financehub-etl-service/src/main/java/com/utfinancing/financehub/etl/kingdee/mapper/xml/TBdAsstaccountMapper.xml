@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TBdAsstaccountMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TBdAsstaccountEntity">
+        <id column="FID" property="fid"/>
+        <result column="FNAME_L1" property="fnameL1"/>
+        <result column="FNAME_L2" property="fnameL2"/>
+        <result column="FNAME_L3" property="fnameL3"/>
+        <result column="FNUMBER" property="fnumber"/>
+        <result column="FDESCRIPTION_L1" property="fdescriptionL1"/>
+        <result column="FDESCRIPTION_L2" property="fdescriptionL2"/>
+        <result column="FDESCRIPTION_L3" property="fdescriptionL3"/>
+        <result column="FSIMPLENAME" property="fsimplename"/>
+        <result column="FISCOMMON" property="fiscommon"/>
+        <result column="FISCOMPANY" property="fiscompany"/>
+        <result column="FCREATORID" property="fcreatorid"/>
+        <result column="FCREATETIME" property="fcreatetime"/>
+        <result column="FLASTUPDATEUSERID" property="flastupdateuserid"/>
+        <result column="FLASTUPDATETIME" property="flastupdatetime"/>
+        <result column="FACCOUNTTABLEID" property="faccounttableid"/>
+        <result column="FCOMPANYID" property="fcompanyid"/>
+        <result column="FISACTCUSSENT" property="fisactcussent"/>
+        <result column="FCOUNT" property="fcount"/>
+        <result column="FCONTROLUNITID" property="fcontrolunitid"/>
+        <result column="FISQTY" property="fisqty"/>
+        <result column="FMEASUREUNITID" property="fmeasureunitid"/>
+        <result column="FMEASUREUNITGROUPID" property="fmeasureunitgroupid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FNAME_L1, FNAME_L2, FNAME_L3, FNUMBER, FDESCRIPTION_L1, FDESCRIPTION_L2, FDESCRIPTION_L3, FSIMPLENAME,
+        FISCOMMON, FISCOMPANY, FCREATORID, FCREATETIME, FLASTUPDATEUSERID, FLASTUPDATETIME, FACCOUNTTABLEID, FCOMPANYID,
+        FISACTCUSSENT, FCOUNT, FCONTROLUNITID, FISQTY, FMEASUREUNITID, FMEASUREUNITGROUPID
+    </sql>
+</mapper>
+

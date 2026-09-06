@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.DwsBzHetkpxxDMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.dw.entity.DwsBzHetkpxxDEntity">
+        <id column="vc_hetbh" property="vcHetbh"/>
+        <result column="vc_kehbh" property="vcKehbh"/>
+        <result column="vc_nasrzl" property="vcNasrzl"/>
+        <result column="vc_kaipdx" property="vcKaipdx"/>
+        <result column="vc_shifkp" property="vcShifkp"/>
+        <result column="vc_shifxkfp" property="vcShifxkfp"/>
+        <result column="nu_xiankfpts" property="nuXiankfpts"/>
+        <result column="vc_zujfplx" property="vcZujfplx"/>
+        <result column="vc_zujfpbljsfcf" property="vcZujfpbljsfcf"/>
+        <result column="vc_fapwfkxjtj" property="vcFapwfkxjtj"/>
+        <result column="vc_benjsfksj" property="vcBenjsfksj"/>
+        <result column="vc_hetkpzt" property="vcHetkpzt"/>
+        <result column="vc_shuih" property="vcShuih"/>
+        <result column="vc_kaipdz" property="vcKaipdz"/>
+        <result column="vc_kaipdh" property="vcKaipdh"/>
+        <result column="vc_kaipkhx" property="vcKaipkhx"/>
+        <result column="vc_kaipyxzh" property="vcKaipyxzh"/>
+        <result column="vc_zanbkp" property="vcZanbkp"/>
+        <result column="vc_zixfwfkpzt" property="vcZixfwfkpzt"/>
+        <result column="dt_chuangjsj" property="dtChuangjsj"/>
+        <result column="vc_shuil" property="vcShuil"/>
+        <result column="vc_zixfwfkpdx" property="vcZixfwfkpdx"/>
+        <result column="pt" property="pt"/>
+        <result column="vc_yewxtid" property="vcYewxtid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        vc_hetbh, vc_kehbh, vc_nasrzl, vc_kaipdx, vc_shifkp, vc_shifxkfp, nu_xiankfpts, vc_zujfplx, vc_zujfpbljsfcf,
+        vc_fapwfkxjtj, vc_benjsfksj, vc_hetkpzt, vc_shuih, vc_kaipdz, vc_kaipdh, vc_kaipkhx, vc_kaipyxzh, vc_zanbkp,
+        vc_zixfwfkpzt, dt_chuangjsj, vc_shuil, vc_zixfwfkpdx, pt, vc_yewxtid
+    </sql>
+</mapper>
+

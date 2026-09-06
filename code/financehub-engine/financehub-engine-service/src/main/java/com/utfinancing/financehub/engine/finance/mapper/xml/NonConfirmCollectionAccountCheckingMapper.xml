@@ -1,0 +1,1633 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.NonConfirmCollectionAccountCheckingMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.NonConfirmCollectionAccountCheckingEntity">
+                    <id column="id" property="id" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="account_checking_month" property="accountCheckingMonth" />
+                    <result column="collection_accounts_bank" property="collectionAccountsBank" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="business_ebank_number" property="businessEbankNumber" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="business_happen_date" property="businessHappenDate" />
+                    <result column="account_age_class" property="accountAgeClass" />
+                    <result column="account_age" property="accountAge" />
+                    <result column="month_init_balance" property="monthInitBalance" />
+                    <result column="cur_month_credit_amount" property="curMonthCreditAmount" />
+                    <result column="cur_month_balance" property="curMonthBalance" />
+                    <result column="system_amount" property="systemAmount" />
+                    <result column="diff_amount" property="diffAmount" />
+                    <result column="account_checking_comments" property="accountCheckingComments" />
+                    <result column="financial_primary_classic" property="financialPrimaryClassic" />
+                    <result column="confirm_account_property" property="confirmAccountProperty" />
+                    <result column="is_confirmed" property="isConfirmed" />
+                    <result column="remark" property="remark" />
+                    <result column="collection_accounts_bank_code" property="collectionAccountsBankCode" />
+                    <result column="non_lease_account_checking_comments" property="nonLeaseAccountCheckingComments" />
+                    <result column="non_lease_non_claim_amount" property="nonLeaseNonClaimAmount" />
+                    <result column="non_lease_non_claim_reasons" property="nonLeaseNonClaimReasons" />
+                    <result column="reclass_amount" property="reclassAmount" />
+                    <result column="reclass_account_number" property="reclassAccountNumber" />
+                    <result column="operate_history_comments" property="operateHistoryComments" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, create_by, create_time, update_by, update_time, del_flag, account_checking_month, collection_accounts_bank, system_code, business_ebank_number, ebank_serial_number, business_happen_date, account_age_class, month_init_balance, cur_month_credit_amount, cur_month_balance, system_amount, diff_amount, account_checking_comments, financial_primary_classic, confirm_account_property, is_confirmed,collection_accounts_bank_code, remark, non_lease_account_checking_comments, non_lease_non_claim_amount, non_lease_non_claim_reasons, account_age
+        </sql>
+
+
+    <!--未确认收款-对账表-导出按钮-实时查询对账数据导出 -->
+    <select id="accountingCheckingDataExport" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.AccountCheckingExportDTO">
+        with non_confirm_sum as (
+        select
+        business_date,
+        bank_amount,
+        collection_accounts_bank,
+        collection_accounts_bank_code,
+        business_ebank_number,
+        comment as bank_trade_comments,
+        unnest(STRING_TO_ARRAY(ebank_serial_number, ',')) as ebank_serial_number
+        from
+        eg_non_confirm_collection_sum
+        where
+        del_flag = '0'
+        and to_date(to_char(business_date, 'yyyy-mm-dd'), 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate},'yyyy-mm-dd')
+        ),
+        crr as (
+        select
+        ebank_serial_number,
+        case
+        when min(system_code) != 'FINHUB' then min(system_code)
+        else max(system_code)
+        end as system_code,
+        max(business_date) as business_date,
+        max(org_id) as collection_accounts_bank_code,
+        max(org_name) as collection_accounts_bank
+        from
+        eg_business_claim_repayment_record
+        where
+        del_flag = '0'
+        and process_status in ('3', '4')
+        and business_date <![CDATA[>=]]> #{params.startDate}
+        and business_date <![CDATA[<=]]> #{params.endDate}
+        and claim_amount != 0
+        group by
+        ebank_serial_number
+        ),
+        wy_transaction as (
+        select
+        ft.ebank_number,
+        sum(coalesce(ft.bank_amount , 0)) bank_amount
+        from
+        (
+        select
+        t1.ebank_number,
+        t1.bank_amount,
+        t1.del_flag,
+        t1.currency_type,
+        t1.collection_type,
+        t1.business_date
+        from
+        eg_fund_ebank_transaction_data t1
+        where
+        t1.del_flag = '0'
+        and t1.currency_type = 'RMB'
+        and t1.collection_type in ('VC_SHOUKLX01', 'VC_SHOUKLX06', 'VC_SHOUKLX07', 'VC_SHOUKLX03')
+        and to_date(t1.business_date, 'yyyy-mm-dd') <![CDATA[>=]]> to_date(#{params.startDate}, 'yyyy-mm-dd')
+        and to_date(t1.business_date, 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate}, 'yyyy-mm-dd')
+        union all
+        select
+        t2.ebank_number,
+        t2.bank_amount,
+        t2.del_flag,
+        t2.currency_type,
+        t2.collection_type,
+        t2.business_date
+        from
+        hthx_offline_online_bank_data t2
+        where
+        t2.del_flag = '0'
+        and t2.currency_type = 'RMB'
+        and t2.collection_type in ('VC_SHOUKLX01', 'VC_SHOUKLX06', 'VC_SHOUKLX07', 'VC_SHOUKLX03')
+        and to_date(t2.business_date, 'yyyy-mm-dd') <![CDATA[>=]]> to_date(#{params.startDate}, 'yyyy-mm-dd')
+        and to_date(t2.business_date, 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate}, 'yyyy-mm-dd')
+        ) ft
+        group by
+        ft.ebank_number),
+        account_age as (
+        select
+        cs.bank_amount ,
+        case
+        when cs.collection_accounts_bank is not null then cs.collection_accounts_bank
+        else crr.collection_accounts_bank
+        end as collection_accounts_bank,
+        case
+        when cs.collection_accounts_bank_code is not null then cs.collection_accounts_bank_code
+        else crr.collection_accounts_bank_code
+        end as collection_accounts_bank_code,
+        case
+        when cs.ebank_serial_number is not null then cs.ebank_serial_number
+        else crr.ebank_serial_number
+        end as ebank_serial_number,
+        case
+        when hy.online_bank_no is not null then hy.online_bank_no
+        when cs.ebank_serial_number is not null then cs.ebank_serial_number
+        else crr.ebank_serial_number
+        end as business_ebank_number ,
+        crr.system_code,
+        case
+        when cs.business_date is not null then cs.business_date
+        else crr.business_date
+        end as business_date,
+        case
+        when cs.business_date is not null then #{params.endDate}- cs.business_date::date
+        when crr.business_date is not null then #{params.endDate}- crr.business_date::date
+        else 0
+        end as account_age,
+        cs.bank_trade_comments
+        from
+        crr
+        full join non_confirm_sum cs on
+        crr.ebank_serial_number = cs.ebank_serial_number
+        left join eg_hy_full_online_bank_batch_no_mapping hy on
+        hy.deduct_batch_no = crr.ebank_serial_number
+        ),
+        cur_month_claim as (
+        select
+        sum(coalesce(claim_amount, 0)) * -1 as cur_claim_amount,
+        ebank_serial_number
+        from
+        eg_business_claim_repayment_record
+        where
+        del_flag = '0'
+        and process_status in ('3', '4')
+        and business_date <![CDATA[>=]]> #{params.startDate}
+        and business_date <![CDATA[<=]]> #{params.endDate}
+        group by
+        ebank_serial_number
+        ),
+        system_claim as (
+        select
+        sum(claim_amount) as system_claim_amount,
+        ebank_serial_number
+        from
+        eg_business_claim_repayment_record
+        where
+        del_flag = '0'
+        and operation_type = 'BUSINESS_AUTO_CLAIM'
+        group by
+        ebank_serial_number
+        ),
+        ta_reclassification as (
+        select
+        t1.reclassification_month,
+        t1.ebank_batch_no,
+        max(t1.ta_account_code) as ta_account_code,
+        sum(t1.ta_reclassification_amount) as ta_reclassification_amount
+        from
+        (
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.ta_account_code) ta_account_code,
+        sum(coalesce(etd.ta_reclassification_amount, 0)) as ta_reclassification_amount
+        from
+        eg_ta_reclassification et inner join eg_ta_reclassification_detail etd on et.id = etd.ta_reclassification_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.ta_reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no
+        union all
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.account_code) ta_account_code,
+        sum(coalesce(etd.reclassification_amount, 0)) as reclassification_amount
+        from
+        eg_ta_other_payable et inner join eg_ta_other_payable_detail etd on et.id =  etd.ta_other_payable_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no) t1
+        group by
+        t1.reclassification_month,
+        t1.ebank_batch_no
+        ),
+        report_balance as (
+            select
+            ebank_batch_no as ebank_serial_number,
+            'CYCXT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_cyc tc
+            group by
+            ebank_batch_no ,
+            system_code
+            union all
+            select
+            ebank_batch_no as ebank_serial_number,
+            'SYCXT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_syc ts
+            group by
+            ebank_batch_no ,
+            system_code
+            union all
+            select
+            ebank_serial_number,
+            'TYPT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_typt tt
+            group by
+            ebank_serial_number ,
+            system_code
+            union all
+            select
+            ebank_serial_number,
+            'XWXT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_xw tx
+            group by
+            ebank_serial_number ,
+            system_code
+            union all
+            select
+            ebank_serial_number,
+            'YYPT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_yypt ty
+            group by
+            ebank_serial_number ,
+            system_code
+        )
+        select
+        table2.account_checking_month,
+        table2.collection_accounts_bank,
+        table2.collection_accounts_bank_code,
+        table2.business_ebank_number,
+        table2.ebank_serial_number,
+        table2.business_date as business_happen_date,
+        table2.account_age_class,
+        table2.account_age,
+        (case when eoceon.ebank_no is not null and eoceon.ebank_no!='' then eoceon.system_code
+        else table2.pre_system_code end) system_code,
+        table2.month_init_balance,
+        table2.cur_month_credit_amount,
+        table2.month_init_balance + table2.cur_month_credit_amount as cur_month_balance,
+        coalesce(fb.system_amount,
+        0) system_amount,
+        table2.month_init_balance + table2.cur_month_credit_amount-coalesce(fb.system_amount, 0) as diff_amount,
+        ta.ta_reclassification_amount as reclass_amount,
+        (coalesce(table2.month_init_balance, 0) + coalesce(table2.cur_month_credit_amount, 0) - coalesce(ta.ta_reclassification_amount, 0))
+        as curBalanceReclassAmount,
+        ta.ta_account_code as reclass_account_number,
+        table2.bank_trade_comments,
+        case when coalesce(table2.month_init_balance,0) + coalesce(table2.cur_month_credit_amount,0)-coalesce(fb.system_amount, 0) = 0
+                then 'ok'
+            when table2.account_checking_comments != 'ok'
+                then table2.account_checking_comments
+            else '待确认'
+        end as account_checking_comments,
+        case when coalesce(table2.month_init_balance,0) + coalesce(table2.cur_month_credit_amount,0) = 0
+        then '无需分类'
+        when rb.ta_excess_balance is not null and rb.ta_excess_balance != 0
+        then 'TA报表挂账'
+        when rb1.ta_excess_balance is not null and rb1.ta_excess_balance != 0
+        then '溢存款'
+        when fb1.system_amount!=0
+        then'UID挂账'
+        when table2.financial_primary_classic='待退款'
+        then '待退款'
+        when table2.financial_primary_classic='保证金'
+        then '保证金'
+        when fb2.system_amount is not null
+        then '有报表;无人认领'
+        when table2.non_lease_non_claim_amount >0
+        then '非租款'
+        else 'NULL'
+        end as financial_primary_classic,
+        table2.confirm_account_property,
+        (case
+        when fb3.ebank_serial_number is not null
+        and fb3.ebank_serial_number != '' then 'UID:' || coalesce(fb3.operation_department_history_comments, '')
+        else table2.operate_history_comments
+        end) as operate_history_comments
+        from
+        (
+        select
+        #{params.checkingMonth} account_checking_month,
+        aa.collection_accounts_bank,
+        aa.collection_accounts_bank_code,
+        case
+        when ehfobbnm.online_bank_no is not null then ehfobbnm.online_bank_no
+        else aa.ebank_serial_number
+        end as business_ebank_number,
+        aa.ebank_serial_number ,
+        aa.business_date ,
+        case
+        when aa.account_age <![CDATA[>]]> 365 * 5 then '五年以上'
+        when aa.account_age <![CDATA[>]]> 365 * 3
+        and aa.account_age <![CDATA[<=]]> 365 * 5 then '三年到五年'
+        when aa.account_age <![CDATA[>]]> 365 * 2
+        and aa.account_age <![CDATA[<=]]> 365 * 3 then '二年到三年'
+        when aa.account_age <![CDATA[>]]> 365 * 1
+        and aa.account_age <![CDATA[<=]]> 365 * 2 then '一年到二年'
+        when aa.account_age <![CDATA[>]]> 182
+        and aa.account_age <![CDATA[<=]]> 365 then '半年至一年'
+        when aa.account_age <![CDATA[>]]> 91
+        and aa.account_age <![CDATA[<=]]> 182 then '三个月至半年'
+        when aa.account_age <![CDATA[>]]> 60
+        and aa.account_age <![CDATA[<=]]> 91 then '二至三个月'
+        when aa.account_age <![CDATA[>]]> 30
+        and aa.account_age <![CDATA[<=]]> 60 then '一至二个月'
+        when aa.account_age <![CDATA[<=]]> 30 then '一个月以内'
+        end account_age_class,
+        aa.account_age,
+        aa.system_code,
+        aa.bank_trade_comments,
+        enccac.system_code pre_system_code,
+        coalesce(enccac.cur_month_balance, 0) as month_init_balance,
+        case
+        when enccac.ebank_serial_number is null
+        and ft.ebank_number is not null then coalesce(ft.bank_amount, 0) + coalesce(cmc.cur_claim_amount, 0)
+        when enccac.ebank_serial_number is null
+        and ehfobbnm.collect_amount is not null then ehfobbnm.collect_amount + coalesce(cmc.cur_claim_amount, 0)
+        else coalesce(cmc.cur_claim_amount, 0)
+        end as cur_month_credit_amount,
+        enccac.account_checking_comments as account_checking_comments,
+        case
+        when enccac.financial_primary_classic is not null then enccac.financial_primary_classic
+        when enccac.financial_primary_classic is null then 'NULL'
+        end as financial_primary_classic,
+        case
+        when enccac.confirm_account_property is not null then enccac.confirm_account_property
+        when enccac.confirm_account_property is null then 'NULL'
+        end as confirm_account_property,
+        enccac.operate_history_comments,
+        enccac.non_lease_non_claim_amount
+        from
+        account_age aa
+        left join eg_non_confirm_collection_account_checking enccac on
+        aa.ebank_serial_number = enccac.ebank_serial_number
+        and enccac.account_checking_month = #{params.lastCheckingMonth}
+        left join cur_month_claim cmc on
+        cmc.ebank_serial_number = aa.ebank_serial_number
+        left join system_claim sc on
+        sc.ebank_serial_number = aa.ebank_serial_number
+        left join eg_hy_full_online_bank_batch_no_mapping ehfobbnm on
+        ehfobbnm.deduct_batch_no = aa.ebank_serial_number
+        left join wy_transaction ft on
+        aa.ebank_serial_number = ft.ebank_number ) table2
+        left join ta_reclassification ta on
+        ta.ebank_batch_no = table2.ebank_serial_number
+        left join (
+        select
+        ebank_serial_number,
+        sum(coalesce(system_amount, 0)) system_amount
+        from
+        eg_non_confirm_amount_for_business
+        where
+        to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+        group by
+        ebank_serial_number) fb on
+        fb.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                sum(coalesce(system_amount, 0)) system_amount
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in('TYPT','XWXT','YYPT')
+                and report_type='未确认报表'
+            group by
+                ebank_serial_number
+        ) fb1 on fb1.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                sum(coalesce(system_amount, 0)) system_amount
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in ('CYCXT','SYCXT')
+            group by
+                ebank_serial_number
+        ) fb2 on fb2.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                operation_department_history_comments
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in('TYPT','XWXT','YYPT')
+                and report_type = '未确认报表'
+        ) fb3 on fb3.ebank_serial_number = table2.ebank_serial_number
+        left join report_balance rb on rb.ebank_serial_number = table2.ebank_serial_number and rb.system_code in ('TYPT','XWXT','YYPT')
+        left join report_balance rb1 on rb1.ebank_serial_number = table2.ebank_serial_number and rb1.system_code in ('SYCXT','CYCXT')
+        left join eg_org_claim_ebank_no eoceon on  eoceon.ebank_no=table2.business_ebank_number
+        and to_char(eoceon.update_time,'yyyy-mm-dd') <![CDATA[>]]> #{params.fromStartDate}
+        and eoceon.del_flag = '0'
+        where
+        1 = 1
+        and not (table2.month_init_balance=0 and table2.cur_month_credit_amount=0)
+        <if test="params.collectionAccountsBankCode != null and params.collectionAccountsBankCode.size() > 0">
+            and table2.collection_accounts_bank_code in
+            <foreach collection="params.collectionAccountsBankCode" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.accountAgeClass != null and params.accountAgeClass.size() > 0">
+            and table2.account_age_class in
+            <foreach collection="params.accountAgeClass" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.financialPrimaryClassic != null and params.financialPrimaryClassic.size() > 0">
+            and table2.financial_primary_classic in
+            <foreach collection="params.financialPrimaryClassic" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.confirmAccountProperty != null and params.confirmAccountProperty.size() > 0">
+            and table2.confirm_account_property in
+            <foreach collection="params.confirmAccountProperty" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.systemCode != null and params.systemCode.size() > 0">
+            and eoceon.system_code in
+            <foreach collection="params.systemCode" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by
+            table2.business_date, table2.ebank_serial_number
+    </select>
+
+    <!--未确认收款-对账表-导出按钮-直接查询已操作过对账的数据 -->
+    <select id="accountingCheckingHistroyDataExport" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.AccountCheckingExportDTO">
+        with claim_record as (
+            select
+                ebank_serial_number,
+                STRING_AGG(distinct new_ebank_serial_number, ',') source_ebank_serial_number
+            from eg_business_claim_repayment_record
+            where
+                del_flag = '0'
+                and claim_amount != 0
+                and business_date <![CDATA[>=]]> #{params.startDate}
+                and business_date <![CDATA[<=]]> #{params.endDate}
+            group by ebank_serial_number
+        ),
+        non_confirm_sum as (
+            select
+                client_name,
+                bank_summary,
+                comment,
+                client_accounts_bank_no,
+                collection_accounts_bank_no,
+                business_date,
+                bank_amount,
+                collection_accounts_bank,
+                collection_accounts_bank_code,
+                business_ebank_number,
+                unnest(STRING_TO_ARRAY(ebank_serial_number, ',')) as ebank_serial_number
+            from
+                eg_non_confirm_collection_sum
+            where
+                del_flag = '0'
+            and to_date(to_char(business_date, 'yyyy-mm-dd'), 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate},'yyyy-mm-dd')
+        ),
+        ta_reclassification as (
+        select
+        t1.reclassification_month,
+        t1.ebank_batch_no,
+        max(t1.ta_account_code) as ta_account_code,
+        sum(t1.ta_reclassification_amount) as ta_reclassification_amount
+        from
+        (
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.ta_account_code) ta_account_code,
+        sum(coalesce(etd.ta_reclassification_amount, 0)) as ta_reclassification_amount
+        from
+        eg_ta_reclassification et inner join eg_ta_reclassification_detail etd on et.id = etd.ta_reclassification_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.ta_reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no
+        union all
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.account_code) ta_account_code,
+        sum(coalesce(etd.reclassification_amount, 0)) as reclassification_amount
+        from
+        eg_ta_other_payable et inner join eg_ta_other_payable_detail etd on et.id =  etd.ta_other_payable_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no) t1
+        group by
+        t1.reclassification_month,
+        t1.ebank_batch_no
+        )
+        select
+            table2.account_checking_month,
+            table2.collection_accounts_bank,
+            table2.collection_accounts_bank_code,
+            table2.system_code ,
+            table2.business_ebank_number ,
+            table2.ebank_serial_number ,
+            table2.business_happen_date,
+            table2.account_age_class,
+            table2.account_age,
+            table2.month_init_balance,
+            table2.cur_month_credit_amount,
+            table2.cur_month_balance,
+            table2.system_amount,
+            table2.diff_amount,
+            table2.account_checking_comments,
+            table2.financial_primary_classic,
+            ta.ta_reclassification_amount reclass_amount,
+            (coalesce(table2.cur_month_balance, 0) - coalesce(ta.ta_reclassification_amount, 0))
+            as curBalanceReclassAmount,
+            ta.ta_account_code reclass_account_number,
+            table2.confirm_account_property,
+            ccs.client_name,
+            table2.non_lease_non_claim_amount,
+            table2.non_lease_non_claim_reasons,
+            COALESCE(table2.cur_month_balance, 0) - COALESCE(table2.non_lease_non_claim_amount) as accountChecking,
+            table2.non_lease_account_checking_comments,
+            crr.source_ebank_serial_number as sourceSystemEbankSerialNumber,
+            ccs.bank_summary,
+            ccs.comment as bank_trade_comments,
+            ccs.client_accounts_bank_no,
+            ccs.collection_accounts_bank_no,
+            table2.operate_history_comments
+        from eg_non_confirm_collection_account_checking table2
+        left join non_confirm_sum ccs on table2.ebank_serial_number=ccs.ebank_serial_number
+        left join claim_record crr on table2.ebank_serial_number = crr.ebank_serial_number
+        left join ta_reclassification ta on ta.ebank_batch_no = table2.ebank_serial_number
+        where 1=1
+        and not (table2.month_init_balance=0 and table2.cur_month_credit_amount=0 and table2.system_amount=0)
+        <if test="params.checkingMonth != null and params.checkingMonth != ''">
+            and table2.account_checking_month = #{params.checkingMonth}
+        </if>
+        <if test="params.collectionAccountsBankCode != null and params.collectionAccountsBankCode.size() > 0">
+            and table2.collection_accounts_bank_code in
+            <foreach collection="params.collectionAccountsBankCode" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.accountAgeClass != null and params.accountAgeClass.size() > 0">
+            and table2.account_age_class in
+            <foreach collection="params.accountAgeClass" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.financialPrimaryClassic != null and params.financialPrimaryClassic.size() > 0">
+            and table2.financial_primary_classic in
+            <foreach collection="params.financialPrimaryClassic" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.confirmAccountProperty != null and params.confirmAccountProperty.size() > 0">
+            and table2.confirm_account_property in
+            <foreach collection="params.confirmAccountProperty" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.systemCode != null and params.systemCode.size() > 0">
+            and table2.system_code in
+            <foreach collection="params.systemCode" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by
+            table2.business_happen_date, table2.ebank_serial_number
+    </select>
+
+    <!--未确认收款-对账表-分页查询-统计总数 -->
+    <select id="selectNonConfirmAccountCheckingCount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultType="java.lang.Integer">
+        with non_confirm_sum as (
+        select
+        business_date,
+        bank_amount,
+        collection_accounts_bank,
+        collection_accounts_bank_code,
+        business_ebank_number,
+        unnest(STRING_TO_ARRAY(ebank_serial_number, ',')) as ebank_serial_number
+        from
+        eg_non_confirm_collection_sum
+        where
+        del_flag = '0'
+        and to_date(to_char(business_date, 'yyyy-mm-dd'), 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate},'yyyy-mm-dd')
+        ),
+        crr as (
+        select
+        ebank_serial_number,
+        case
+        when min(system_code) != 'FINHUB' then min(system_code)
+        else max(system_code)
+        end as system_code,
+        max(business_date) as business_date,
+        max(org_id) as collection_accounts_bank_code,
+        max(org_name) as collection_accounts_bank
+        from
+        eg_business_claim_repayment_record
+        where
+        del_flag = '0'
+        and process_status in ('3', '4')
+        and business_date <![CDATA[>=]]> #{params.startDate}
+        and business_date <![CDATA[<=]]> #{params.endDate}
+        and claim_amount != 0
+        group by
+        ebank_serial_number
+        ),
+        wy_transaction as (
+        select
+        ft.ebank_number,
+        sum(coalesce(ft.bank_amount , 0)) bank_amount
+        from
+        (
+        select
+        t1.ebank_number,
+        t1.bank_amount,
+        t1.del_flag,
+        t1.currency_type,
+        t1.collection_type,
+        t1.business_date
+        from
+        eg_fund_ebank_transaction_data t1
+        where
+        t1.del_flag = '0'
+        and t1.currency_type = 'RMB'
+        and t1.collection_type in ('VC_SHOUKLX01', 'VC_SHOUKLX06', 'VC_SHOUKLX07', 'VC_SHOUKLX03')
+        and to_date(t1.business_date, 'yyyy-mm-dd') <![CDATA[>=]]> to_date(#{params.startDate}, 'yyyy-mm-dd')
+        and to_date(t1.business_date, 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate}, 'yyyy-mm-dd')
+        union all
+        select
+        t2.ebank_number,
+        t2.bank_amount,
+        t2.del_flag,
+        t2.currency_type,
+        t2.collection_type,
+        t2.business_date
+        from
+        hthx_offline_online_bank_data t2
+        where
+        t2.del_flag = '0'
+        and t2.currency_type = 'RMB'
+        and t2.collection_type in ('VC_SHOUKLX01', 'VC_SHOUKLX06', 'VC_SHOUKLX07', 'VC_SHOUKLX03')
+        and to_date(t2.business_date, 'yyyy-mm-dd') <![CDATA[>=]]> to_date(#{params.startDate}, 'yyyy-mm-dd')
+        and to_date(t2.business_date, 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate}, 'yyyy-mm-dd')
+        ) ft
+        group by
+        ft.ebank_number),
+        account_age as (
+        select
+        cs.bank_amount ,
+        case
+        when cs.collection_accounts_bank is not null then cs.collection_accounts_bank
+        else crr.collection_accounts_bank
+        end as collection_accounts_bank,
+        case
+        when cs.collection_accounts_bank_code is not null then cs.collection_accounts_bank_code
+        else crr.collection_accounts_bank_code
+        end as collection_accounts_bank_code,
+        case
+        when cs.ebank_serial_number is not null then cs.ebank_serial_number
+        else crr.ebank_serial_number
+        end as ebank_serial_number,
+        case
+        when hy.online_bank_no is not null then hy.online_bank_no
+        when cs.ebank_serial_number is not null then cs.ebank_serial_number
+        else crr.ebank_serial_number
+        end as business_ebank_number ,
+        crr.system_code,
+        case
+        when cs.business_date is not null then cs.business_date
+        else crr.business_date
+        end as business_date,
+        case
+        when cs.business_date is not null then #{params.endDate}- cs.business_date::date
+        when crr.business_date is not null then #{params.endDate}- crr.business_date::date
+        else 0
+        end as account_age
+        from
+        crr
+        full join non_confirm_sum cs on
+        crr.ebank_serial_number = cs.ebank_serial_number
+        left join eg_hy_full_online_bank_batch_no_mapping hy on
+        hy.deduct_batch_no = crr.ebank_serial_number
+        ),
+        cur_month_claim as (
+        select
+        sum(coalesce(claim_amount, 0)) * -1 as cur_claim_amount,
+        ebank_serial_number
+        from
+        eg_business_claim_repayment_record
+        where
+        del_flag = '0'
+        and process_status in ('3', '4')
+        and business_date <![CDATA[>=]]> #{params.startDate}
+        and business_date <![CDATA[<=]]> #{params.endDate}
+        group by
+        ebank_serial_number
+        ),
+        system_claim as (
+        select
+        sum(claim_amount) as system_claim_amount,
+        ebank_serial_number
+        from
+        eg_business_claim_repayment_record
+        where
+        del_flag = '0'
+        and operation_type = 'BUSINESS_AUTO_CLAIM'
+        group by
+        ebank_serial_number
+        ),
+        ta_reclassification as (
+        select
+        t1.reclassification_month,
+        t1.ebank_batch_no,
+        max(t1.ta_account_code) as ta_account_code,
+        sum(t1.ta_reclassification_amount) as ta_reclassification_amount
+        from
+        (
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.ta_account_code) ta_account_code,
+        sum(coalesce(etd.ta_reclassification_amount, 0)) as ta_reclassification_amount
+        from
+        eg_ta_reclassification et inner join eg_ta_reclassification_detail etd on et.id = etd.ta_reclassification_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.ta_reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no
+        union all
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.account_code) ta_account_code,
+        sum(coalesce(etd.reclassification_amount, 0)) as reclassification_amount
+        from
+        eg_ta_other_payable et inner join eg_ta_other_payable_detail etd on et.id =  etd.ta_other_payable_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no) t1
+        group by
+        t1.reclassification_month,
+        t1.ebank_batch_no
+        ),
+        report_balance as (
+            select
+            ebank_batch_no as ebank_serial_number,
+            'CYCXT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_cyc tc
+            group by
+            ebank_batch_no ,
+            system_code
+            union all
+            select
+            ebank_batch_no as ebank_serial_number,
+            'SYCXT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_syc ts
+            group by
+            ebank_batch_no ,
+            system_code
+            union all
+            select
+            ebank_serial_number,
+            'TYPT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_typt tt
+            group by
+            ebank_serial_number ,
+            system_code
+            union all
+            select
+            ebank_serial_number,
+            'XWXT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_xw tx
+            group by
+            ebank_serial_number ,
+            system_code
+            union all
+            select
+            ebank_serial_number,
+            'YYPT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_yypt ty
+            group by
+            ebank_serial_number ,
+            system_code
+        )
+        select
+        count(1) as totalCount
+        from
+        (
+        select
+        #{params.checkingMonth} account_checking_month,
+        aa.collection_accounts_bank,
+        aa.collection_accounts_bank_code,
+        case
+        when ehfobbnm.online_bank_no is not null then ehfobbnm.online_bank_no
+        else aa.ebank_serial_number
+        end as business_ebank_number,
+        aa.ebank_serial_number ,
+        aa.business_date ,
+        case
+        when aa.account_age <![CDATA[>]]> 365 * 5 then '五年以上'
+        when aa.account_age <![CDATA[>]]> 365 * 3
+        and aa.account_age <![CDATA[<=]]> 365 * 5 then '三年到五年'
+        when aa.account_age <![CDATA[>]]> 365 * 2
+        and aa.account_age <![CDATA[<=]]> 365 * 3 then '二年到三年'
+        when aa.account_age <![CDATA[>]]> 365 * 1
+        and aa.account_age <![CDATA[<=]]> 365 * 2 then '一年到二年'
+        when aa.account_age <![CDATA[>]]> 182
+        and aa.account_age <![CDATA[<=]]> 365 then '半年至一年'
+        when aa.account_age <![CDATA[>]]> 91
+        and aa.account_age <![CDATA[<=]]> 182 then '三个月至半年'
+        when aa.account_age <![CDATA[>]]> 60
+        and aa.account_age <![CDATA[<=]]> 91 then '二至三个月'
+        when aa.account_age <![CDATA[>]]> 30
+        and aa.account_age <![CDATA[<=]]> 60 then '一至二个月'
+        when aa.account_age <![CDATA[<=]]> 30 then '一个月以内'
+        end account_age_class,
+        aa.account_age,
+        aa.system_code,
+        enccac.system_code pre_system_code,
+        coalesce(enccac.cur_month_balance, 0) as month_init_balance,
+        case
+        when enccac.ebank_serial_number is null
+        and ft.ebank_number is not null then coalesce(ft.bank_amount, 0) + coalesce(cmc.cur_claim_amount, 0)
+        when enccac.ebank_serial_number is null
+        and ehfobbnm.collect_amount is not null then ehfobbnm.collect_amount + coalesce(cmc.cur_claim_amount, 0)
+        else coalesce(cmc.cur_claim_amount, 0)
+        end as cur_month_credit_amount,
+        enccac.account_checking_comments as account_checking_comments,
+        case
+        when enccac.financial_primary_classic is not null then enccac.financial_primary_classic
+        when enccac.financial_primary_classic is null then 'NULL'
+        end as financial_primary_classic,
+        case
+        when enccac.confirm_account_property is not null then enccac.confirm_account_property
+        when enccac.confirm_account_property is null then 'NULL'
+        end as confirm_account_property,
+        enccac.operate_history_comments,
+        enccac.non_lease_non_claim_amount
+        from
+        account_age aa
+        left join eg_non_confirm_collection_account_checking enccac on
+        aa.ebank_serial_number = enccac.ebank_serial_number
+        and enccac.account_checking_month = #{params.lastCheckingMonth}
+        left join cur_month_claim cmc on
+        cmc.ebank_serial_number = aa.ebank_serial_number
+        left join system_claim sc on
+        sc.ebank_serial_number = aa.ebank_serial_number
+        left join eg_hy_full_online_bank_batch_no_mapping ehfobbnm on
+        ehfobbnm.deduct_batch_no = aa.ebank_serial_number
+        left join wy_transaction ft on
+        aa.ebank_serial_number = ft.ebank_number ) table2
+        left join ta_reclassification ta on
+        ta.ebank_batch_no = table2.ebank_serial_number
+        left join (
+        select
+        ebank_serial_number,
+        sum(coalesce(system_amount, 0)) system_amount
+        from
+        eg_non_confirm_amount_for_business
+        where
+        to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+        group by
+        ebank_serial_number) fb on
+        fb.ebank_serial_number = table2.ebank_serial_number
+        left join (
+        select
+        ebank_serial_number,
+        sum(coalesce(system_amount, 0)) system_amount
+        from
+        eg_non_confirm_amount_for_business
+        where
+        to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+        and system_code in('TYPT','XWXT','YYPT')
+        and report_type='未确认报表'
+        group by
+        ebank_serial_number
+        ) fb1 on fb1.ebank_serial_number = table2.ebank_serial_number
+        left join (
+        select
+        ebank_serial_number,
+        sum(coalesce(system_amount, 0)) system_amount
+        from
+        eg_non_confirm_amount_for_business
+        where
+        to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+        and system_code in ('CYCXT','SYCXT')
+        group by
+        ebank_serial_number
+        ) fb2 on fb2.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                operation_department_history_comments
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in('TYPT','XWXT','YYPT')
+                and report_type = '未确认报表'
+        ) fb3 on fb3.ebank_serial_number = table2.ebank_serial_number
+        left join report_balance rb on rb.ebank_serial_number = table2.ebank_serial_number and rb.system_code in ('TYPT','XWXT','YYPT')
+        left join report_balance rb1 on rb1.ebank_serial_number = table2.ebank_serial_number and rb1.system_code in ('SYCXT','CYCXT')
+        left join eg_org_claim_ebank_no eoceon on  eoceon.ebank_no=table2.business_ebank_number
+        and to_char(eoceon.update_time,'yyyy-mm-dd') <![CDATA[>]]> #{params.fromStartDate}
+        and eoceon.del_flag = '0'
+        where
+        1 = 1
+            <if test="params.collectionAccountsBankCode != null and params.collectionAccountsBankCode.size() > 0">
+                and table2.collection_accounts_bank_code in
+                <foreach collection="params.collectionAccountsBankCode" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.accountAgeClass != null and params.accountAgeClass.size() > 0">
+                and table2.account_age_class in
+                <foreach collection="params.accountAgeClass" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.financialPrimaryClassic != null and params.financialPrimaryClassic.size() > 0">
+                and table2.financial_primary_classic in
+                <foreach collection="params.financialPrimaryClassic" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.confirmAccountProperty != null and params.confirmAccountProperty.size() > 0">
+                and table2.confirm_account_property in
+                <foreach collection="params.confirmAccountProperty" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.systemCode != null and params.systemCode.size() > 0">
+                and eoceon.system_code in
+                <foreach collection="params.systemCode" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+    </select>
+
+    <!--未确认收款-对账表-确认对账按钮-确认对账/分页查询 -->
+    <select id="selectNonConfirmAccountChecking" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultMap="BaseResultMap">
+        with non_confirm_sum as (
+        select
+            business_date,
+            bank_amount,
+            collection_accounts_bank,
+            collection_accounts_bank_code,
+            business_ebank_number,
+            unnest(STRING_TO_ARRAY(ebank_serial_number, ',')) as ebank_serial_number
+        from
+            eg_non_confirm_collection_sum
+        where
+            del_flag = '0'
+        and to_date(to_char(business_date, 'yyyy-mm-dd'), 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate},'yyyy-mm-dd')
+        ),
+        crr as (
+        select
+            ebank_serial_number,
+            case
+                when min(system_code) != 'FINHUB' then min(system_code)
+                else max(system_code)
+            end as system_code,
+            max(business_date) as business_date,
+            max(org_id) as collection_accounts_bank_code,
+            max(org_name) as collection_accounts_bank
+            from
+                eg_business_claim_repayment_record
+            where
+                del_flag = '0'
+                and process_status in ('3', '4')
+                and business_date <![CDATA[>=]]> #{params.startDate}
+                and business_date <![CDATA[<=]]> #{params.endDate}
+                and claim_amount != 0
+            group by
+                ebank_serial_number
+        ),
+        wy_transaction as (
+        select
+        ft.ebank_number,
+        sum(coalesce(ft.bank_amount , 0)) bank_amount
+        from
+        (
+        select
+        t1.ebank_number,
+        t1.bank_amount,
+        t1.del_flag,
+        t1.currency_type,
+        t1.collection_type,
+        t1.business_date
+        from
+        eg_fund_ebank_transaction_data t1
+        where
+        t1.del_flag = '0'
+        and t1.currency_type = 'RMB'
+        and t1.collection_type in ('VC_SHOUKLX01', 'VC_SHOUKLX06', 'VC_SHOUKLX07', 'VC_SHOUKLX03')
+        and to_date(t1.business_date, 'yyyy-mm-dd') <![CDATA[>=]]> to_date(#{params.startDate}, 'yyyy-mm-dd')
+        and to_date(t1.business_date, 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate}, 'yyyy-mm-dd')
+        union all
+        select
+        t2.ebank_number,
+        t2.bank_amount,
+        t2.del_flag,
+        t2.currency_type,
+        t2.collection_type,
+        t2.business_date
+        from
+        hthx_offline_online_bank_data t2
+        where
+        t2.del_flag = '0'
+        and t2.currency_type = 'RMB'
+        and t2.collection_type in ('VC_SHOUKLX01', 'VC_SHOUKLX06', 'VC_SHOUKLX07', 'VC_SHOUKLX03')
+        and to_date(t2.business_date, 'yyyy-mm-dd') <![CDATA[>=]]> to_date(#{params.startDate}, 'yyyy-mm-dd')
+        and to_date(t2.business_date, 'yyyy-mm-dd') <![CDATA[<=]]> to_date(#{params.endDate}, 'yyyy-mm-dd')
+        ) ft
+        group by
+        ft.ebank_number),
+        account_age as (
+        select
+            cs.bank_amount ,
+            case
+            when cs.collection_accounts_bank is not null then cs.collection_accounts_bank
+            else crr.collection_accounts_bank
+            end as collection_accounts_bank,
+            case
+            when cs.collection_accounts_bank_code is not null then cs.collection_accounts_bank_code
+            else crr.collection_accounts_bank_code
+            end as collection_accounts_bank_code,
+            case
+            when cs.ebank_serial_number is not null then cs.ebank_serial_number
+            else crr.ebank_serial_number
+            end as ebank_serial_number,
+            case
+            when hy.online_bank_no is not null then hy.online_bank_no
+            when cs.ebank_serial_number is not null then cs.ebank_serial_number
+            else crr.ebank_serial_number
+            end as business_ebank_number ,
+            crr.system_code,
+            case
+            when cs.business_date is not null then cs.business_date
+            else crr.business_date
+            end as business_date,
+            case
+            when cs.business_date is not null then #{params.endDate}- cs.business_date::date
+            when crr.business_date is not null then #{params.endDate}- crr.business_date::date
+            else 0
+            end as account_age
+        from
+            crr
+        full join non_confirm_sum cs on
+            crr.ebank_serial_number = cs.ebank_serial_number
+        left join eg_hy_full_online_bank_batch_no_mapping hy on
+            hy.deduct_batch_no = crr.ebank_serial_number
+        ),
+        cur_month_claim as (
+            select
+            sum(coalesce(claim_amount, 0)) * -1 as cur_claim_amount,
+            ebank_serial_number
+            from
+            eg_business_claim_repayment_record
+            where
+            del_flag = '0'
+            and process_status in ('3', '4')
+            and business_date <![CDATA[>=]]> #{params.startDate}
+            and business_date <![CDATA[<=]]> #{params.endDate}
+            group by
+            ebank_serial_number
+        ),
+        system_claim as (
+            select
+            sum(claim_amount) as system_claim_amount,
+            ebank_serial_number
+            from
+            eg_business_claim_repayment_record
+            where
+            del_flag = '0'
+            and operation_type = 'BUSINESS_AUTO_CLAIM'
+            group by
+            ebank_serial_number
+        ),
+        ta_reclassification as (
+        select
+        t1.reclassification_month,
+        t1.ebank_batch_no,
+        max(t1.ta_account_code) as ta_account_code,
+        sum(t1.ta_reclassification_amount) as ta_reclassification_amount
+        from
+        (
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.ta_account_code) ta_account_code,
+        sum(coalesce(etd.ta_reclassification_amount, 0)) as ta_reclassification_amount
+        from
+        eg_ta_reclassification et inner join eg_ta_reclassification_detail etd on et.id = etd.ta_reclassification_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.ta_reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no
+        union all
+        select
+        to_char(et.reclassification_month, 'yyyy-MM') as reclassification_month,
+        etd.ebank_batch_no,
+        max(etd.account_code) ta_account_code,
+        sum(coalesce(etd.reclassification_amount, 0)) as reclassification_amount
+        from
+        eg_ta_other_payable et inner join eg_ta_other_payable_detail etd on et.id =  etd.ta_other_payable_id
+        where
+        et.del_flag = '0'
+        and etd.del_flag = '0'
+        and et.process_status in ('2', '3', '4')
+        and to_char(et.reclassification_month, 'yyyy-MM') = #{params.checkingMonth}
+        and coalesce(etd.reclassification_amount, 0)!=0
+        group by
+        to_char(et.reclassification_month, 'yyyy-MM'), etd.ebank_batch_no) t1
+        group by
+        t1.reclassification_month,
+        t1.ebank_batch_no
+        ),
+        report_balance as (
+            select
+                ebank_batch_no as ebank_serial_number,
+                'CYCXT' as system_code,
+                sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+                ta_cyc tc
+            group by
+                ebank_batch_no ,
+                system_code
+            union all
+            select
+                ebank_batch_no as ebank_serial_number,
+                'SYCXT' as system_code,
+                sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+                ta_syc ts
+            group by
+                ebank_batch_no ,
+                system_code
+            union all
+            select
+                ebank_serial_number,
+                'TYPT' as system_code,
+                sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+                ta_typt tt
+            group by
+                ebank_serial_number ,
+                system_code
+            union all
+            select
+                ebank_serial_number,
+                'XWXT' as system_code,
+                sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+                ta_xw tx
+            group by
+                ebank_serial_number ,
+                system_code
+            union all
+            select
+            ebank_serial_number,
+            'YYPT' as system_code,
+            sum(coalesce (ta_excess_balance, 0)) as ta_excess_balance
+            from
+            ta_yypt ty
+            group by
+            ebank_serial_number ,
+            system_code
+        )
+        select
+            table2.account_checking_month,
+            table2.collection_accounts_bank,
+            table2.collection_accounts_bank_code,
+            table2.business_ebank_number,
+            table2.ebank_serial_number,
+            table2.business_date as business_happen_date,
+            table2.account_age_class,
+            table2.account_age,
+            (case when eoceon.ebank_no is not null and eoceon.ebank_no!='' then eoceon.system_code
+            else table2.pre_system_code end) system_code,
+            table2.month_init_balance,
+            table2.cur_month_credit_amount,
+            table2.month_init_balance + table2.cur_month_credit_amount as cur_month_balance,
+            coalesce(fb.system_amount,
+            0) system_amount,
+            table2.month_init_balance + table2.cur_month_credit_amount-coalesce(fb.system_amount, 0) as diff_amount,
+            ta.ta_reclassification_amount as reclass_amount,
+            ta.ta_account_code as reclass_account_number,
+            case when coalesce(table2.month_init_balance,0) + coalesce(table2.cur_month_credit_amount,0)-coalesce(fb.system_amount, 0) = 0
+                    then 'ok'
+                when table2.account_checking_comments != 'ok'
+                    then table2.account_checking_comments
+                else '待确认'
+            end as account_checking_comments,
+            case when coalesce(table2.month_init_balance,0) + coalesce(table2.cur_month_credit_amount,0) = 0
+                    then '无需分类'
+                when rb.ta_excess_balance is not null and rb.ta_excess_balance != 0
+                    then 'TA报表挂账'
+                when rb1.ta_excess_balance is not null and rb1.ta_excess_balance != 0
+                    then '溢存款'
+                when fb1.system_amount!=0
+                    then'UID挂账'
+                when table2.financial_primary_classic='待退款'
+                    then '待退款'
+                when table2.financial_primary_classic='保证金'
+                    then '保证金'
+                when fb2.system_amount is not null
+                    then '有报表;无人认领'
+                when table2.non_lease_non_claim_amount >0
+                    then '非租款'
+                else 'NULL'
+            end as financial_primary_classic,
+            table2.confirm_account_property,
+            (case
+            when fb3.ebank_serial_number is not null
+            and fb3.ebank_serial_number != '' then 'UID:' || coalesce(fb3.operation_department_history_comments, '')
+            else table2.operate_history_comments
+            end) as operate_history_comments
+        from
+        (
+            select
+                #{params.checkingMonth} account_checking_month,
+                aa.collection_accounts_bank,
+                aa.collection_accounts_bank_code,
+                case
+                when ehfobbnm.online_bank_no is not null then ehfobbnm.online_bank_no
+                else aa.ebank_serial_number
+                end as business_ebank_number,
+                aa.ebank_serial_number ,
+                aa.business_date ,
+                case
+                when aa.account_age <![CDATA[>]]> 365 * 5 then '五年以上'
+                when aa.account_age <![CDATA[>]]> 365 * 3
+                and aa.account_age <![CDATA[<=]]> 365 * 5 then '三年到五年'
+                when aa.account_age <![CDATA[>]]> 365 * 2
+                and aa.account_age <![CDATA[<=]]> 365 * 3 then '二年到三年'
+                when aa.account_age <![CDATA[>]]> 365 * 1
+                and aa.account_age <![CDATA[<=]]> 365 * 2 then '一年到二年'
+                when aa.account_age <![CDATA[>]]> 182
+                and aa.account_age <![CDATA[<=]]> 365 then '半年至一年'
+                when aa.account_age <![CDATA[>]]> 91
+                and aa.account_age <![CDATA[<=]]> 182 then '三个月至半年'
+                when aa.account_age <![CDATA[>]]> 60
+                and aa.account_age <![CDATA[<=]]> 91 then '二至三个月'
+                when aa.account_age <![CDATA[>]]> 30
+                and aa.account_age <![CDATA[<=]]> 60 then '一至二个月'
+                when aa.account_age <![CDATA[<=]]> 30 then '一个月以内'
+                end account_age_class,
+                aa.account_age,
+                aa.system_code,
+                enccac.system_code pre_system_code,
+                coalesce(enccac.cur_month_balance, 0) as month_init_balance,
+                case
+                when enccac.ebank_serial_number is null
+                and ft.ebank_number is not null then coalesce(ft.bank_amount, 0) + coalesce(cmc.cur_claim_amount, 0)
+                when enccac.ebank_serial_number is null
+                and ehfobbnm.collect_amount is not null then ehfobbnm.collect_amount + coalesce(cmc.cur_claim_amount, 0)
+                else coalesce(cmc.cur_claim_amount, 0)
+                end as cur_month_credit_amount,
+                enccac.account_checking_comments as account_checking_comments,
+                case
+                when enccac.financial_primary_classic is not null then enccac.financial_primary_classic
+                when enccac.financial_primary_classic is null then 'NULL'
+                end as financial_primary_classic,
+                case
+                when enccac.confirm_account_property is not null then enccac.confirm_account_property
+                when enccac.confirm_account_property is null then 'NULL'
+                end as confirm_account_property,
+                enccac.operate_history_comments,
+                enccac.non_lease_non_claim_amount
+            from
+                account_age aa
+            left join eg_non_confirm_collection_account_checking enccac on
+                aa.ebank_serial_number = enccac.ebank_serial_number
+                and enccac.account_checking_month = #{params.lastCheckingMonth}
+            left join cur_month_claim cmc on
+                cmc.ebank_serial_number = aa.ebank_serial_number
+            left join system_claim sc on
+                sc.ebank_serial_number = aa.ebank_serial_number
+            left join eg_hy_full_online_bank_batch_no_mapping ehfobbnm on
+                ehfobbnm.deduct_batch_no = aa.ebank_serial_number
+            left join wy_transaction ft on
+            aa.ebank_serial_number = ft.ebank_number ) table2
+        left join ta_reclassification ta on
+            ta.ebank_batch_no = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                sum(coalesce(system_amount, 0)) system_amount
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+            group by
+                ebank_serial_number
+        ) fb on fb.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                sum(coalesce(system_amount, 0)) system_amount
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in('TYPT','XWXT','YYPT')
+                and report_type='未确认报表'
+            group by
+                ebank_serial_number
+        ) fb1 on fb1.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                sum(coalesce(system_amount, 0)) system_amount
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in ('CYCXT','SYCXT')
+            group by
+                ebank_serial_number
+        ) fb2 on fb2.ebank_serial_number = table2.ebank_serial_number
+        left join (
+            select
+                ebank_serial_number,
+                operation_department_history_comments
+            from
+                eg_non_confirm_amount_for_business
+            where
+                to_date(account_checking_month,'yyyy-mm-dd') = to_date(#{params.endDate},'yyyy-mm-dd')
+                and system_code in('TYPT','XWXT','YYPT')
+                and report_type = '未确认报表'
+        ) fb3 on fb3.ebank_serial_number = table2.ebank_serial_number
+        left join report_balance rb on rb.ebank_serial_number = table2.ebank_serial_number and rb.system_code in ('TYPT','XWXT','YYPT')
+        left join report_balance rb1 on rb1.ebank_serial_number = table2.ebank_serial_number and rb1.system_code in ('SYCXT','CYCXT')
+        left join eg_org_claim_ebank_no eoceon on  eoceon.ebank_no=table2.business_ebank_number
+        and to_char(eoceon.update_time,'yyyy-mm-dd') <![CDATA[>]]> #{params.fromStartDate}
+        and eoceon.del_flag = '0'
+        where
+        1 = 1
+        <if test="params.collectionAccountsBankCode != null and params.collectionAccountsBankCode.size() > 0">
+            and table2.collection_accounts_bank_code in
+            <foreach collection="params.collectionAccountsBankCode" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.accountAgeClass != null and params.accountAgeClass.size() > 0">
+            and table2.account_age_class in
+            <foreach collection="params.accountAgeClass" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.financialPrimaryClassic != null and params.financialPrimaryClassic.size() > 0">
+            and table2.financial_primary_classic in
+            <foreach collection="params.financialPrimaryClassic" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.confirmAccountProperty != null and params.confirmAccountProperty.size() > 0">
+            and table2.confirm_account_property in
+            <foreach collection="params.confirmAccountProperty" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.systemCode != null and params.systemCode.size() > 0">
+            and eoceon.system_code in
+            <foreach collection="params.systemCode" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by
+            table2.business_date, table2.ebank_serial_number
+        limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+    </select>
+
+    <select id="selectLastAccountChecking" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultMap="BaseResultMap">
+        select
+            account_checking_month,
+            collection_accounts_bank,
+            collection_accounts_bank_code,
+            system_code ,
+            business_ebank_number ,
+            ebank_serial_number ,
+            business_happen_date,
+            account_age_class,
+            month_init_balance,
+            cur_month_credit_amount,
+            cur_month_balance,
+            system_amount,
+            diff_amount,
+            account_checking_comments,
+            financial_primary_classic,
+            confirm_account_property,
+            reclass_amount,
+            reclass_account_number
+        from eg_non_confirm_collection_account_checking
+        where 1=1
+            <if test="params.checkingMonth != null and params.checkingMonth != ''">
+                and account_checking_month = #{params.checkingMonth}
+            </if>
+            <if test="params.collectionAccountsBankCode != null and params.collectionAccountsBankCode.size() > 0">
+                and collection_accounts_bank_code in
+                <foreach item="item" index="index" collection="params.collectionAccountsBankCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.accountAgeClass != null and params.accountAgeClass.size() > 0">
+                and account_age_class in
+                <foreach item="item" index="index" collection="params.accountAgeClass" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.financialPrimaryClassic != null and params.financialPrimaryClassic.size() > 0">
+                and financial_primary_classic in
+                <foreach item="item" index="index" collection="params.financialPrimaryClassic" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.confirmAccountProperty != null and params.confirmAccountProperty.size() > 0">
+                and confirm_account_property in
+                <foreach item="item" index="index" collection="params.confirmAccountProperty" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.systemCode != null and params.systemCode.size() > 0">
+                and system_code in
+                <foreach item="item" index="index" collection="params.systemCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        order by
+            business_happen_date, ebank_serial_number
+        limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+    </select>
+
+    <select id="selectLastAccountCheckingCount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultType="java.lang.Integer">
+        select
+            count(1) as totalCount
+        from eg_non_confirm_collection_account_checking
+        where 1=1
+            <if test="params.checkingMonth != null and params.checkingMonth != ''">
+                and account_checking_month = #{params.checkingMonth}
+            </if>
+            <if test="params.collectionAccountsBankCode != null and params.collectionAccountsBankCode.size() > 0">
+                and collection_accounts_bank_code in
+                <foreach item="item" index="index" collection="params.collectionAccountsBankCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.accountAgeClass != null and params.accountAgeClass.size() > 0">
+                and account_age_class in
+                <foreach item="item" index="index" collection="params.accountAgeClass" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.financialPrimaryClassic != null and params.financialPrimaryClassic.size() > 0">
+                and financial_primary_classic in
+                <foreach item="item" index="index" collection="params.financialPrimaryClassic" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.confirmAccountProperty != null and params.confirmAccountProperty.size() > 0">
+                and confirm_account_property in
+                <foreach item="item" index="index" collection="params.confirmAccountProperty" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.systemCode != null and params.systemCode.size() > 0">
+                and system_code in
+                <foreach item="item" index="index" collection="params.systemCode" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+    </select>
+
+    <select id="selectAccountCheckingByBusKey" parameterType="java.util.List" resultMap="BaseResultMap">
+        select
+            table1.id,
+            table1.account_checking_month,
+            table1.ebank_serial_number,
+            table1.collection_accounts_bank ,
+            table1.collection_accounts_bank_code ,
+            table1.system_code,
+            table1.business_ebank_number,
+            table1.business_happen_date,
+            table1.account_age_class,
+            table1.non_lease_non_claim_amount ,
+            table1.non_lease_non_claim_reasons,
+            table1.cur_month_balance,
+            table1.reclass_amount,
+            table1.reclass_account_number,
+            table1.financial_primary_classic
+        from (
+            select
+                id,
+                account_checking_month,
+                ebank_serial_number,
+                collection_accounts_bank ,
+                collection_accounts_bank_code ,
+                system_code,
+                business_ebank_number,
+                business_happen_date,
+                account_age_class,
+                non_lease_non_claim_amount ,
+                non_lease_non_claim_reasons ,
+                cur_month_balance,
+                reclass_amount,
+                reclass_account_number,
+                financial_primary_classic,
+                account_checking_month || ebank_serial_number  as businessKey
+            from
+                eg_non_confirm_collection_account_checking
+        ) table1
+        <trim prefix="where" prefixOverrides="and">
+            table1.businessKey in
+            <foreach collection="businessKeyList" index="key" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </trim>
+    </select>
+
+    <update id="batchModifyUploadSql">
+        update eg_non_confirm_collection_account_checking a
+        set
+            system_code =b.system_code ,
+            remark =b.remark ,
+            account_checking_comments =b.remark ,
+            confirm_account_property =b.confirm_account_property ,
+            non_lease_account_checking_comments =b.non_lease_account_checking_comments ,
+            operate_history_comments =b.operate_history_comments,
+            financial_primary_classic = b.financial_primary_classic
+        from eg_batch_modify_template b
+        where
+            a.account_checking_month  = b.account_checking_month
+            and a.ebank_serial_number = b.ebank_serial_number
+    </update>
+</mapper>
+

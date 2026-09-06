@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ManualVoucherMapper">
+
+        <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ManualVoucherEntity">
+        <id column="id" property="id"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="contract_name" property="contractName"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="client_name" property="clientName"/>
+        <result column="org_id" property="orgId"/>
+        <result column="period_code" property="periodCode"/>
+        <result column="business_date" property="businessDate"/>
+        <result column="voucher_date" property="voucherDate"/>
+        <result column="voucher_type" property="voucherType"/>
+        <result column="voucher_summary" property="voucherSummary"/>
+        <result column="scene_code" property="sceneCode"/>
+        <result column="account_code" property="accountCode"/>
+        <result column="account_name" property="accountName"/>
+        <result column="currency_code" property="currencyCode"/>
+        <result column="rate" property="rate"/>
+        <result column="debit_amount" property="debitAmount"/>
+        <result column="credit_amount" property="creditAmount"/>
+        <result column="is_cash_flow" property="isCashFlow"/>
+        <result column="cash_flow_marker" property="cashFlowMarker"/>
+        <result column="subsidiary_account" property="subsidiaryAccount"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="manual_id" property="manualId"/>
+        <result column="loans_contract_code" property="loansContractCode"/>
+        <result column="cost_centre" property="costCentre"/>
+        <result column="employee_name" property="employeeName"/>
+        <result column="expense_type" property="expenseType"/>
+        <result column="financial_institution" property="financialInstitution"/>
+        <result column="batch_num" property="batchNum"/>
+        <result column="bank_no" property="bankNo"/>
+        <result column="preparer_name" property="preparerName"/>
+        <result column="loans_contract_code_name" property="loansContractCodeName"/>
+        <result column="cost_centre_name" property="costCentreName"/>
+        <result column="employee_code" property="employeeCode"/>
+        <result column="expense_type_name" property="expenseTypeName"/>
+        <result column="financial_institution_name" property="financialInstitutionName"/>
+        <result column="bank_no_name" property="bankNoName"/>
+        <result column="material_contract_name" property="materialContractName"/>
+        <result column="project_type_name" property="projectTypeName"/>
+    </resultMap>
+    <!--  通用查询结果列  -->
+    <sql id="Base_Column_List"> id, contract_code, contract_name, client_code, client_name, org_id, period_code, business_date, voucher_date, voucher_type, voucher_summary, scene_code, account_code, account_name, currency_code, rate, debit_amount, credit_amount, is_cash_flow, cash_flow_marker, subsidiary_account, create_by, create_time, update_by, update_time, del_flag, manual_id, loans_contract_code, cost_centre, employee_name, expense_type, financial_institution, batch_num, bank_no, preparer_name </sql>
+</mapper>
+

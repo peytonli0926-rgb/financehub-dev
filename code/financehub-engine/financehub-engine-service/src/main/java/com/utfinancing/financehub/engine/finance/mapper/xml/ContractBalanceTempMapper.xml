@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractBalanceTempMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractBalanceTempEntity">
+                    <id column="id" property="id" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="interface_data_id" property="interfaceDataId" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="voucher_date" property="voucherDate" />
+                    <result column="scene_code" property="sceneCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_type" property="clientType" />
+                    <result column="org_id" property="orgId" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="eas_voucher_id" property="easVoucherId" />
+                    <result column="bill_contract_code" property="billContractCode" />
+                <!-- 华夏金租最新金额类型 -->
+        <result column="bank_deposit_amount" property="bankDepositAmount" />
+        <result column="bank_deposit_balance" property="bankDepositBalance" />
+        <result column="bank_acceptance_payable_amount" property="bankAcceptancePayableAmount" />
+        <result column="bank_acceptance_payable_balance" property="bankAcceptancePayableBalance" />
+        <result column="advance_lease_receipts_amount" property="advanceLeaseReceiptsAmount" />
+        <result column="advance_lease_receipts_balance" property="advanceLeaseReceiptsBalance" />
+        <result column="unidentified_receipts_amount" property="unidentifiedReceiptsAmount" />
+        <result column="unidentified_receipts_balance" property="unidentifiedReceiptsBalance" />
+        <result column="customer_deposit_payable_amount" property="customerDepositPayableAmount" />
+        <result column="customer_deposit_payable_balance" property="customerDepositPayableBalance" />
+        <result column="supplier_payable_amount" property="supplierPayableAmount" />
+        <result column="supplier_payable_balance" property="supplierPayableBalance" />
+        <result column="interbank_interest_receivable_amount" property="interbankInterestReceivableAmount" />
+        <result column="interbank_interest_receivable_balance" property="interbankInterestReceivableBalance" />
+        <result column="interbank_interest_income_amount" property="interbankInterestIncomeAmount" />
+        <result column="interbank_interest_income_balance" property="interbankInterestIncomeBalance" />
+        <result column="borrowing_interest_expense_amount" property="borrowingInterestExpenseAmount" />
+        <result column="borrowing_interest_expense_balance" property="borrowingInterestExpenseBalance" />
+        <result column="lease_asset_cost_amount" property="leaseAssetCostAmount" />
+        <result column="lease_asset_cost_balance" property="leaseAssetCostBalance" />
+        <result column="lease_rent_receivable_amount" property="leaseRentReceivableAmount" />
+        <result column="lease_rent_receivable_balance" property="leaseRentReceivableBalance" />
+        <result column="lease_rental_income_amount" property="leaseRentalIncomeAmount" />
+        <result column="lease_rental_income_balance" property="leaseRentalIncomeBalance" />
+        <result column="lease_asset_depreciation_expense_amount" property="leaseAssetDepreciationExpenseAmount" />
+        <result column="lease_asset_depreciation_expense_balance" property="leaseAssetDepreciationExpenseBalance" />
+        <result column="accumulated_lease_asset_depreciation_amount" property="accumulatedLeaseAssetDepreciationAmount" />
+        <result column="accumulated_lease_asset_depreciation_balance" property="accumulatedLeaseAssetDepreciationBalance" />
+        <result column="lease_asset_impairment_allowance_amount" property="leaseAssetImpairmentAllowanceAmount" />
+        <result column="lease_asset_impairment_allowance_balance" property="leaseAssetImpairmentAllowanceBalance" />
+        <result column="lease_asset_impairment_loss_amount" property="leaseAssetImpairmentLossAmount" />
+        <result column="lease_asset_impairment_loss_balance" property="leaseAssetImpairmentLossBalance" />
+        <result column="lease_asset_disposal_gain_loss_amount" property="leaseAssetDisposalGainLossAmount" />
+        <result column="lease_asset_disposal_gain_loss_balance" property="leaseAssetDisposalGainLossBalance" />
+        <result column="lease_principal_receivable_amount" property="leasePrincipalReceivableAmount" />
+        <result column="lease_principal_receivable_balance" property="leasePrincipalReceivableBalance" />
+        <result column="lease_interest_receivable_amount" property="leaseInterestReceivableAmount" />
+        <result column="lease_interest_receivable_balance" property="leaseInterestReceivableBalance" />
+        <result column="lease_interest_vat_receivable_amount" property="leaseInterestVatReceivableAmount" />
+        <result column="lease_interest_vat_receivable_balance" property="leaseInterestVatReceivableBalance" />
+        <result column="residual_value_receivable_amount" property="residualValueReceivableAmount" />
+        <result column="residual_value_receivable_balance" property="residualValueReceivableBalance" />
+        <result column="residual_value_vat_receivable_amount" property="residualValueVatReceivableAmount" />
+        <result column="residual_value_vat_receivable_balance" property="residualValueVatReceivableBalance" />
+        <result column="unearned_lease_interest_amount" property="unearnedLeaseInterestAmount" />
+        <result column="unearned_lease_interest_balance" property="unearnedLeaseInterestBalance" />
+        <result column="unearned_lease_interest_vat_amount" property="unearnedLeaseInterestVatAmount" />
+        <result column="unearned_lease_interest_vat_balance" property="unearnedLeaseInterestVatBalance" />
+        <result column="unearned_residual_value_amount" property="unearnedResidualValueAmount" />
+        <result column="unearned_residual_value_balance" property="unearnedResidualValueBalance" />
+        <result column="unearned_residual_value_vat_amount" property="unearnedResidualValueVatAmount" />
+        <result column="unearned_residual_value_vat_balance" property="unearnedResidualValueVatBalance" />
+        <result column="overdue_lease_principal_amount" property="overdueLeasePrincipalAmount" />
+        <result column="overdue_lease_principal_balance" property="overdueLeasePrincipalBalance" />
+        <result column="overdue_lease_interest_amount" property="overdueLeaseInterestAmount" />
+        <result column="overdue_lease_interest_balance" property="overdueLeaseInterestBalance" />
+        <result column="overdue_lease_interest_vat_amount" property="overdueLeaseInterestVatAmount" />
+        <result column="overdue_lease_interest_vat_balance" property="overdueLeaseInterestVatBalance" />
+        <result column="overdue_residual_value_amount" property="overdueResidualValueAmount" />
+        <result column="overdue_residual_value_balance" property="overdueResidualValueBalance" />
+        <result column="overdue_residual_value_vat_amount" property="overdueResidualValueVatAmount" />
+        <result column="overdue_residual_value_vat_balance" property="overdueResidualValueVatBalance" />
+        <result column="lease_interest_income_amount" property="leaseInterestIncomeAmount" />
+        <result column="lease_interest_income_balance" property="leaseInterestIncomeBalance" />
+        <result column="penalty_interest_income_amount" property="penaltyInterestIncomeAmount" />
+        <result column="penalty_interest_income_balance" property="penaltyInterestIncomeBalance" />
+        <result column="early_termination_income_amount" property="earlyTerminationIncomeAmount" />
+        <result column="early_termination_income_balance" property="earlyTerminationIncomeBalance" />
+        <result column="early_settlement_penalty_income_amount" property="earlySettlementPenaltyIncomeAmount" />
+        <result column="early_settlement_penalty_income_balance" property="earlySettlementPenaltyIncomeBalance" />
+        <result column="vehicle_profit_sharing_payable_amount" property="vehicleProfitSharingPayableAmount" />
+        <result column="vehicle_profit_sharing_payable_balance" property="vehicleProfitSharingPayableBalance" />
+        <result column="vehicle_profit_sharing_receivable_amount" property="vehicleProfitSharingReceivableAmount" />
+        <result column="vehicle_profit_sharing_receivable_balance" property="vehicleProfitSharingReceivableBalance" />
+        <result column="vehicle_management_fee_payable_amount" property="vehicleManagementFeePayableAmount" />
+        <result column="vehicle_management_fee_payable_balance" property="vehicleManagementFeePayableBalance" />
+        <result column="vehicle_project_service_fee_expense_amount" property="vehicleProjectServiceFeeExpenseAmount" />
+        <result column="vehicle_project_service_fee_expense_balance" property="vehicleProjectServiceFeeExpenseBalance" />
+        <result column="vehicle_clearing_payable_amount" property="vehicleClearingPayableAmount" />
+        <result column="vehicle_clearing_payable_balance" property="vehicleClearingPayableBalance" />
+        <result column="bank_service_fee_expense_amount" property="bankServiceFeeExpenseAmount" />
+        <result column="bank_service_fee_expense_balance" property="bankServiceFeeExpenseBalance" />
+        <result column="payment_channel_fee_expense_amount" property="paymentChannelFeeExpenseAmount" />
+        <result column="payment_channel_fee_expense_balance" property="paymentChannelFeeExpenseBalance" />
+        <result column="input_vat_receivable_amount" property="inputVatReceivableAmount" />
+        <result column="input_vat_receivable_balance" property="inputVatReceivableBalance" />
+        <result column="input_vat_pending_certification_amount" property="inputVatPendingCertificationAmount" />
+        <result column="input_vat_pending_certification_balance" property="inputVatPendingCertificationBalance" />
+        <result column="output_vat_payable_amount" property="outputVatPayableAmount" />
+        <result column="output_vat_payable_balance" property="outputVatPayableBalance" />
+        <result column="vat_invoice_difference_amount" property="vatInvoiceDifferenceAmount" />
+        <result column="vat_invoice_difference_balance" property="vatInvoiceDifferenceBalance" />
+        <result column="stamp_duty_expense_amount" property="stampDutyExpenseAmount" />
+        <result column="stamp_duty_expense_balance" property="stampDutyExpenseBalance" />
+        <result column="stamp_duty_payable_amount" property="stampDutyPayableAmount" />
+        <result column="stamp_duty_payable_balance" property="stampDutyPayableBalance" />
+        <result column="lease_receivable_impairment_allowance_amount" property="leaseReceivableImpairmentAllowanceAmount" />
+        <result column="lease_receivable_impairment_allowance_balance" property="leaseReceivableImpairmentAllowanceBalance" />
+        <result column="lease_receivable_impairment_loss_amount" property="leaseReceivableImpairmentLossAmount" />
+        <result column="lease_receivable_impairment_loss_balance" property="leaseReceivableImpairmentLossBalance" />
+        <result column="impaired_lease_principal_amount" property="impairedLeasePrincipalAmount" />
+        <result column="impaired_lease_principal_balance" property="impairedLeasePrincipalBalance" />
+        <result column="impaired_lease_interest_income_amount" property="impairedLeaseInterestIncomeAmount" />
+        <result column="impaired_lease_interest_income_balance" property="impairedLeaseInterestIncomeBalance" />
+        <result column="written_off_lease_principal_amount" property="writtenOffLeasePrincipalAmount" />
+        <result column="written_off_lease_principal_balance" property="writtenOffLeasePrincipalBalance" />
+        <result column="off_balance_lease_interest_receivable_amount" property="offBalanceLeaseInterestReceivableAmount" />
+        <result column="off_balance_lease_interest_receivable_balance" property="offBalanceLeaseInterestReceivableBalance" />
+        <result column="off_balance_offset_amount" property="offBalanceOffsetAmount" />
+        <result column="off_balance_offset_balance" property="offBalanceOffsetBalance" />
+</resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, voucher_id, interface_data_id, system_code, business_code, business_date, voucher_date, scene_code, contract_code, client_code, client_type, org_id, create_by, create_time, update_by, update_time, del_flag, eas_voucher_id, period_code, bill_contract_code, bank_deposit_amount, bank_deposit_balance, bank_acceptance_payable_amount, bank_acceptance_payable_balance, advance_lease_receipts_amount, advance_lease_receipts_balance, unidentified_receipts_amount, unidentified_receipts_balance, customer_deposit_payable_amount, customer_deposit_payable_balance, supplier_payable_amount, supplier_payable_balance, interbank_interest_receivable_amount, interbank_interest_receivable_balance, interbank_interest_income_amount, interbank_interest_income_balance, borrowing_interest_expense_amount, borrowing_interest_expense_balance, lease_asset_cost_amount, lease_asset_cost_balance, lease_rent_receivable_amount, lease_rent_receivable_balance, lease_rental_income_amount, lease_rental_income_balance, lease_asset_depreciation_expense_amount, lease_asset_depreciation_expense_balance, accumulated_lease_asset_depreciation_amount, accumulated_lease_asset_depreciation_balance, lease_asset_impairment_allowance_amount, lease_asset_impairment_allowance_balance, lease_asset_impairment_loss_amount, lease_asset_impairment_loss_balance, lease_asset_disposal_gain_loss_amount, lease_asset_disposal_gain_loss_balance, lease_principal_receivable_amount, lease_principal_receivable_balance, lease_interest_receivable_amount, lease_interest_receivable_balance, lease_interest_vat_receivable_amount, lease_interest_vat_receivable_balance, residual_value_receivable_amount, residual_value_receivable_balance, residual_value_vat_receivable_amount, residual_value_vat_receivable_balance, unearned_lease_interest_amount, unearned_lease_interest_balance, unearned_lease_interest_vat_amount, unearned_lease_interest_vat_balance, unearned_residual_value_amount, unearned_residual_value_balance, unearned_residual_value_vat_amount, unearned_residual_value_vat_balance, overdue_lease_principal_amount, overdue_lease_principal_balance, overdue_lease_interest_amount, overdue_lease_interest_balance, overdue_lease_interest_vat_amount, overdue_lease_interest_vat_balance, overdue_residual_value_amount, overdue_residual_value_balance, overdue_residual_value_vat_amount, overdue_residual_value_vat_balance, lease_interest_income_amount, lease_interest_income_balance, penalty_interest_income_amount, penalty_interest_income_balance, early_termination_income_amount, early_termination_income_balance, early_settlement_penalty_income_amount, early_settlement_penalty_income_balance, vehicle_profit_sharing_payable_amount, vehicle_profit_sharing_payable_balance, vehicle_profit_sharing_receivable_amount, vehicle_profit_sharing_receivable_balance, vehicle_management_fee_payable_amount, vehicle_management_fee_payable_balance, vehicle_project_service_fee_expense_amount, vehicle_project_service_fee_expense_balance, vehicle_clearing_payable_amount, vehicle_clearing_payable_balance, bank_service_fee_expense_amount, bank_service_fee_expense_balance, payment_channel_fee_expense_amount, payment_channel_fee_expense_balance, input_vat_receivable_amount, input_vat_receivable_balance, input_vat_pending_certification_amount, input_vat_pending_certification_balance, output_vat_payable_amount, output_vat_payable_balance, vat_invoice_difference_amount, vat_invoice_difference_balance, stamp_duty_expense_amount, stamp_duty_expense_balance, stamp_duty_payable_amount, stamp_duty_payable_balance, lease_receivable_impairment_allowance_amount, lease_receivable_impairment_allowance_balance, lease_receivable_impairment_loss_amount, lease_receivable_impairment_loss_balance, impaired_lease_principal_amount, impaired_lease_principal_balance, impaired_lease_interest_income_amount, impaired_lease_interest_income_balance, written_off_lease_principal_amount, written_off_lease_principal_balance, off_balance_lease_interest_receivable_amount, off_balance_lease_interest_receivable_balance, off_balance_offset_amount, off_balance_offset_balance
+        </sql>
+
+
+        <insert id="insertContractBalanceTemp">
+            insert into eg_contract_balance_temp<foreach item="column" collection="columns" separator="," open="(" close=")" index="">${column}</foreach>
+            values<foreach item="value" collection="values" separator="," open="(" close=")" index="">#{value}</foreach>
+        </insert>
+</mapper>
+

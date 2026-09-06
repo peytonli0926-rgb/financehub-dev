@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.invoicing.mapper.TaxicOiInvoiceBackMiddleMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.invoicing.entity.TaxicOiInvoiceBackMiddleEntity">
+                    <id column="ID" property="id" />
+                    <result column="BEIZ" property="beiz" />
+                    <result column="CANKZD1" property="cankzd1" />
+                    <result column="CANKZD2" property="cankzd2" />
+                    <result column="CANKZD3" property="cankzd3" />
+                    <result column="CANKZD4" property="cankzd4" />
+                    <result column="CANKZD5" property="cankzd5" />
+                    <result column="CAOZR" property="caozr" />
+                    <result column="CAOZRQ" property="caozrq" />
+                    <result column="CHUANGJRQ" property="chuangjrq" />
+                    <result column="CONTRACTNO" property="contractno" />
+                    <result column="DANJH" property="danjh" />
+                    <result column="DUQZT" property="duqzt" />
+                    <result column="FAPDM" property="fapdm" />
+                    <result column="FAPDZPATH" property="fapdzpath" />
+                    <result column="FAPHM" property="faphm" />
+                    <result column="FAPLX" property="faplx" />
+                    <result column="HANSJINE" property="hansjine" />
+                    <result column="KAIPRQ" property="kaiprq" />
+                    <result column="KAIPXMM" property="kaipxmm" />
+                    <result column="PICH" property="pich" />
+                    <result column="QIC" property="qic" />
+                    <result column="SHUIE" property="shuie" />
+                    <result column="YEWLY" property="yewly" />
+                    <result column="SHANGPMC" property="shangpmc" />
+                    <result column="BEIZ2" property="beiz2" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            ID, BEIZ, CANKZD1, CANKZD2, CANKZD3, CANKZD4, CANKZD5, CAOZR, CAOZRQ, CHUANGJRQ, CONTRACTNO, DANJH, DUQZT, FAPDM, FAPDZPATH, FAPHM, FAPLX, HANSJINE, KAIPRQ, KAIPXMM, PICH, QIC, SHUIE, YEWLY, SHANGPMC, BEIZ2
+        </sql>
+</mapper>
+

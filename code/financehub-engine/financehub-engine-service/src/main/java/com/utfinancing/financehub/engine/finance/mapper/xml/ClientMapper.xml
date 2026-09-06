@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ClientMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ClientEntity">
+                    <id column="id" property="id" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="province_city" property="provinceCity" />
+                    <result column="industry" property="industry" />
+                    <result column="client_type" property="clientType" />
+                    <result column="client_attribute" property="clientAttribute" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, client_code, client_name, province_city, industry, client_type, client_attribute, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+    <select id="selectClientCodeByName" resultType="java.lang.String">
+        select
+        ec.client_code
+        from
+        eg_client ec
+        where
+        1 = 1
+        and ec.del_flag='0'
+        and ec.client_name = #{clientName}
+        order by
+        id desc
+        limit 1
+    </select>
+</mapper>
+

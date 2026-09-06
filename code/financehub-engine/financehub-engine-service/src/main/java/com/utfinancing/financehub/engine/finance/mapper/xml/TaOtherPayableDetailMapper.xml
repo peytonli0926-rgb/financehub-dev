@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.TaOtherPayableDetailMapper">
+
+    <sql id="tempSql">
+        with enccac as(
+        SELECT
+        collection_accounts_bank as bank_org_id,
+        ebank_serial_number as ebank_batch_no,
+        system_code,
+        business_ebank_number as ebank_serial_number,
+        business_happen_date as account_date,
+        account_age_class
+        FROM (
+        SELECT
+        collection_accounts_bank,
+        ebank_serial_number,
+        system_code,
+        business_ebank_number,
+        business_happen_date,
+        account_age_class,
+        ROW_NUMBER() OVER (PARTITION BY collection_accounts_bank,ebank_serial_number ORDER BY id DESC) AS rn
+        FROM eg_non_confirm_collection_account_checking enccac
+        where enccac.del_flag='0'
+        ) AS subquery
+        WHERE rn = 1
+        )
+    </sql>
+    <select id="selectByMapper"
+            resultType="com.utfinancing.financehub.engine.finance.entity.TaOtherPayableDetailEntity">
+        <include refid="tempSql"/>
+        select
+        etopd.*,
+        enccac.system_code,
+        enccac.ebank_serial_number,
+        enccac.account_date,
+        enccac.account_age_class
+        <!--   	todo 缺账龄，付款客户-->
+        from eg_ta_other_payable_detail etopd
+        left join enccac on etopd.bank_org_id =enccac.bank_org_id and etopd.ebank_batch_no =enccac.ebank_batch_no
+        where etopd.del_flag ='0'
+        <if test="queryDTO.systemCode!=null and queryDTO.systemCode!=''">
+            and enccac.system_code = #{queryDTO.systemCode}
+        </if>
+        <if test="queryDTO.ebankSerialNumber!=null and queryDTO.ebankSerialNumber!=''">
+            and enccac.ebank_serial_number = #{queryDTO.ebankSerialNumber}
+        </if>
+        <if test="queryDTO.ebankBatchNo!=null and queryDTO.ebankBatchNo!=''">
+            and etopd.ebank_batch_no = #{queryDTO.ebankBatchNo}
+        </if>
+        <if test="queryDTO.reclassificationMonth!=null ">
+            and to_char(etopd.reclassification_month,'YYYY-MM') = to_char(to_date(#{queryDTO.reclassificationMonth},'yyyy-MM'),'YYYY-MM')
+        </if>
+        <if test="queryDTO.accountAgeClass!=null and queryDTO.accountAgeClass!=''">
+            and enccac.account_age_class = #{queryDTO.accountAgeClass}
+        </if>
+        <if test="queryDTO.taOtherPayableIdList != null and queryDTO.taOtherPayableIdList.size > 0">
+            and etopd.ta_other_payable_id in
+            <foreach item="item" index="index" collection="queryDTO.taOtherPayableIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+    <select id="selectDetailInfo" resultType="com.utfinancing.financehub.engine.finance.entity.TaOtherPayableDetailEntity">
+        select
+            etopd.id,
+            etopd.reclassification_month,
+            etopd.bank_org_id,
+--	etopd.system_code,
+--	etopd.ebank_serial_number,
+--             etopd.ebank_batch_no,
+            etopd.financial_primary_classic,
+            etopd.confirm_account_property,
+            etopd.reclassification_amount,
+            etopd.account_code,
+            etopd.account_name,
+--	etopd.account_date,
+--             etopd.account_age,
+--	etopd.account_age_class,
+--             etopd.pay_client_name,
+            etopd.process_status,
+            etopd.process_instance_id,
+            etopd.is_generate_voucher,
+            etopd.voucher_id,
+            etopd.error_info,
+            etopd.del_flag,
+            etopd.create_by,
+            etopd.create_time,
+            etopd.update_by,
+            etopd.update_time,
+            etopd.ta_other_payable_id,
+
+            enccac.system_code system_code,
+            enccac.ebank_serial_number ebank_serial_number,
+            enccac.business_happen_date account_date,
+            enccac.account_age_class,
+            enccac.account_age,
+            enccac.business_ebank_number ebank_batch_no,
+            enccs.client_name pay_client_name
+        from eg_ta_other_payable_detail etopd
+             left join eg_non_confirm_collection_account_checking enccac
+               on etopd.bank_org_id = enccac.collection_accounts_bank_code and etopd.ebank_batch_no = enccac.ebank_serial_number
+             left join eg_non_confirm_collection_sum enccs
+               on etopd.ebank_batch_no = enccs.ebank_serial_number
+        where ta_other_payable_id = #{taId}
+    </select>
+</mapper>
+

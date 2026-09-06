@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.invoicingpaper.mapper.TaxicIiInvoicePaperMapper">
+    <select id="selectByCondition" resultType="com.utfinancing.financehub.etl.financial.model.vo.InvoiceClaimVO">
+        select
+            t2.danjh documentNum,--单据号
+            t2.qiybh enterpriseNum,--企业编号
+            t2.xiaofsbh sellerTaxCode,--销方税号
+            t2.fapdm invoicePointCode,--发票代码
+--             t2.faplx invoiceType,--发票类型
+            case t2.faplx when '222' then '收据' when '004' then '专用发票' when '007' then '普通发票' when '008' then '数电专票' when '009' then '数电普票' else null end AS invoiceType, --发票类型
+--             to_date(t2.djrq,'yyyyMMddHH24MISS') documentDate,--单据日期
+            to_date(t2.kaiprq,'yyyyMMddHH24MISS') documentDate,--单据日期
+            t2.jiashj taxAmount,--价税合计
+            t1.shuil taxRate,--税率
+            t2.jine noTaxAmount,--不含税金额
+            t2.shuie taxValue,--税额
+            t2.goufsbh purchaserTaxCode, --购方税号
+            t2.goufmc purchaserName,--购方名称
+            t2.goufdz purchaserDress,--购方地址电话
+            t2.goufyh purchaserBankName,--购方银行账号
+            t1.guigxh periodNum,--期数
+            t1.shangpmc productName,--商品名称
+            t1.danw unit,--单位
+            t1.shul quantity,--数量
+            '*'||t3.spbmjc||'*'||shangpmc mainCategory,--系统大类
+            t2.xiaofmc purchaserName,--销方名称
+            t2.xiaofdz purchaserDress,--销方地址电话
+            t2.xiaofyh purchaserBankName,--销方银行账号
+            t2.beiz comments,--备注
+            t1.jine backTaxAmount,
+            t1.shuie backTaxValue,
+            t2.faphm invoiceNumber,--发票号码
+            t1.cank2 contractCode,--合同编号
+            t1.shuisbm,--税收分类编码
+            '3' as sourceFrom,kaiprq,
+            t1.id systemInvoiceId
+        from tcd.TAXIC_OI_DOC_DETAIL t1 left join tcd.taxic_oi_doc t2 on t1.docID=t2.id
+                                        left join tcd.TAXIC_OI_GOODS_SWBM t3 on t1.shuisbm=t3.hbbm
+        where (t1.shangpmc like '%房屋租赁款%' or t1.shangpbh like '%车位租金%' )
+        and to_date(kaiprq,'yyyyMMddHH24MISS') &gt;= to_date(#{queryDTO.queryDate}, 'yyyy-MM-dd')
+
+    </select>
+<!--    to_date(#{queryDTO.queryDate}, 'yyyy-MM-dd')-->
+</mapper>
+

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.verification.mapper.VerificationMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.verification.entity.VerificationEntity">
+                    <id column="id" property="id" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="org_id" property="orgId" />
+                    <result column="verification_status" property="verificationStatus" />
+                    <result column="financial_expense_amount" property="financialExpenseAmount" />
+                    <result column="compensation_provision_amount" property="compensationProvisionAmount" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, account_date, org_id, verification_status, financial_expense_amount, compensation_provision_amount, process_status, is_generate_voucher, process_instance_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="getMaxAccountDate" resultType="java.time.LocalDateTime">
+        select
+        max(ev.account_date)
+        from
+        eg_verification ev
+        inner join eg_verification_details evd
+        on
+        ev.id = evd.verification_id
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and evd.del_flag = '0'
+        and ev.process_status in ('2', '3', '4')
+        and evd.contract_code = #{contractCode}
+        and evd.org_id = #{orgId}
+    </select>
+    <select id="getMaxDepreciationReserves" resultType="java.math.BigDecimal">
+        select
+        max(evd.financial_expense_amount)
+        from
+        eg_verification ev
+        inner join eg_verification_details evd
+        on
+        ev.id = evd.verification_id
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and evd.del_flag = '0'
+        and ev.process_status in ('2', '3', '4')
+        and evd.contract_code = #{contractCode}
+        and evd.org_id = #{orgId}
+    </select>
+    <select id="getMaxDepreciationReservesByPeriodCode" resultType="java.math.BigDecimal">
+        select
+            max(evd.financial_expense_amount)
+        from
+            eg_verification ev
+                inner join eg_verification_details evd
+                           on
+                               ev.id = evd.verification_id
+        where
+            1 = 1
+          and ev.del_flag = '0'
+          and evd.del_flag = '0'
+          and ev.process_status in ('2', '3', '4')
+          and evd.contract_code = #{contractCode}
+          and evd.org_id = #{orgId}
+          and evd.period_code = #{periodCode}
+    </select>
+</mapper>
+

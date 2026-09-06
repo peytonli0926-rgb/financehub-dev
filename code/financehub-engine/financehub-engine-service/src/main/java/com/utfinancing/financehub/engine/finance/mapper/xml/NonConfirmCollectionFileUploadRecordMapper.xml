@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.NonConfirmCollectionFileUploadRecordMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.NonConfirmCollectionFileUploadRecordEntity">
+                    <id column="id" property="id" />
+                    <result column="upload_time" property="uploadTime" />
+                    <result column="uploader" property="uploader" />
+                    <result column="file_name" property="fileName" />
+                    <result column="total_records" property="totalRecords" />
+                    <result column="error_file_url" property="errorFileUrl" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+            <result column="org_batch_ids" property="orgBatchIds" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, upload_time, uploader, file_name, total_records, error_file_url, create_by, create_time, update_by, update_time, del_flag, orgBatchIds
+        </sql>
+</mapper>
+

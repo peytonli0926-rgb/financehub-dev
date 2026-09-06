@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractEntity">
+        <id column="id" property="id"/>
+        <result column="contract_code" property="contractCode"/>
+        <result column="contract_name" property="contractName"/>
+        <result column="client_code" property="clientCode"/>
+        <result column="client_name" property="clientName"/>
+        <result column="org_id" property="orgId"/>
+        <result column="client_type" property="clientType"/>
+        <result column="lease_date_start" property="leaseDateStart"/>
+        <result column="lease_date_end" property="leaseDateEnd"/>
+        <result column="business_code" property="businessCode"/>
+        <result column="business_name" property="businessName"/>
+        <result column="invoice_type" property="invoiceType"/>
+        <result column="industry" property="industry"/>
+        <result column="lease_type" property="leaseType"/>
+        <result column="contract_status" property="contractStatus"/>
+        <result column="interest_rate_type" property="interestRateType"/>
+        <result column="classification_five" property="classificationFive"/>
+        <result column="provision_type" property="provisionType"/>
+        <result column="return_type" property="returnType"/>
+        <result column="domestic_entrance" property="domesticEntrance"/>
+        <result column="project_differentiate" property="projectDifferentiate"/>
+        <result column="business_plate" property="businessPlate"/>
+        <result column="province_city" property="provinceCity"/>
+        <result column="currency_type" property="currencyType"/>
+        <result column="contract_amount" property="contractAmount"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="lease_interest_rate_year" property="leaseInterestRateYear"/>
+        <result column="special_flag" property="specialFlag"/>
+        <result column="financial_contract_status_update_time" property="financialContractStatusUpdateTime"/>
+        <result column="financial_contract_status" property="financialContractStatus"/>
+        <result column="transfer_org_id" property="transferOrgId"/>
+        <result column="transfer_contract_code" property="transferContractCode"/>
+        <result column="transfer_contract_status" property="transferContractStatus"/>
+        <result column="business_type_label" property="businessTypeLabel"/>
+        <result column="outtax_balance" property="outtaxBalance"/>
+        <result column="lease_revenue_balance" property="leaseRevenueBalance"/>
+        <result column="depreciation_loss_balance" property="depreciationLossBalance"/>
+        <result column="pay_method" property="payMethod"/>
+        <result column="contract_code_m" property="contractCodeM"/>
+        <result column="payable_procedure_cost" property="payableProcedureCost"/>
+        <result column="postal_savings_project_type" property="postalSavingsProjectType"/>
+        <result column="financial_contract_status_imputation" property="financialContractStatusImputation" />
+        <result column="gps_unit_price" property="gpsUnitPrice"/>
+        <result column="payable_service" property="payableService"/>
+        <result column="province" property="province"/>
+        <result column="city" property="city"/>
+        <result column="rent_contract_total" property="rentContractTotal"/>
+        <result column="last_cost" property="lastCost"/>
+        <result column="lease_before_recevied_amount" property="leaseBeforeReceviedAmount"/>
+        <result column="is_change_repayment" property="isChangeRepayment"/>
+        <result column="paid_handling_fees" property="paidHandlingFees"/>
+        <result column="other_income" property="otherIncome"/>
+        <result column="payable_device_amount" property="payableDeviceAmount"/>
+        <result column="receivable_vendor_procedure_amount" property="receivableVendorProcedureAmount"/>
+        <result column="payable_insurance_amount" property="payableInsuranceAmount"/>
+        <result column="deduction_device_amount" property="deductionDeviceAmount"/>
+        <result column="procedure801" property="procedure801"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, contract_code, contract_name, client_code, client_name, org_id, client_type, lease_date_start,
+        lease_date_end, business_code, business_name, invoice_type, industry, lease_type, contract_status,
+        interest_rate_type, classification_five, provision_type, return_type, domestic_entrance, project_differentiate,
+        business_plate, province_city, currency_type, contract_amount, create_by, create_time, update_by, update_time,
+        del_flag, lease_interest_rate_year,outtax_balance, lease_revenue_balance, depreciation_loss_balance,
+        payable_service,rent_contract_total,last_cost, lease_before_recevied_amount, is_change_repayment,
+        paid_handling_fees, other_income, payable_device_amount, receivable_vendor_procedure_amount,
+        payable_insurance_amount, deduction_device_amount, procedure801
+    </sql>
+    <update id="updateContractById">
+        update eg_contract set
+            <if test="param.payableDeviceAmount!=null">
+                payable_device_amount = #{param.payableDeviceAmount},
+            </if>
+            <if test="param.receivableServiceAmount!=null">
+                receivable_service_amount = #{param.receivableServiceAmount},
+            </if>
+            <if test="param.actualServiceAmount!=null">
+                actual_service_amount = actual_service_amount + #{param.actualServiceAmount},
+            </if>
+            account_date = #{param.accountDate},
+            depreciation_reserves_amount_kp = #{param.depreciationReservesAmountKp},
+            depreciation_reserves_amount_sk = #{param.depreciationReservesAmountSk},
+            outtax_amount = #{param.outtaxAmount},
+            lease_revenue_amount = #{param.leaseRevenueAmount},
+            tax_amount = #{param.taxAmount},
+            receivable_vendor_procedure_amount = #{param.receivableVendorProcedureAmount}
+        where id = #{param.id}
+    </update>
+
+    <select id="selectContractInfo"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractEntity">
+        select *
+        from eg_contract a
+        where
+        1 = 1
+        <if test="param.financialContractStatusUpdateTime != null ">
+            and to_char(financial_contract_status_update_time,'YYYY-MM') =
+            to_char(to_date(#{param.financialContractStatusUpdateTime},'YYYY-MM-DD'),'YYYY-MM')
+        </if>
+    </select>
+
+    <select id="selectContractInfoByTempTable" resultType="com.utfinancing.financehub.engine.finance.entity.ContractEntity">
+        select
+            a.id, a.contract_code, a.contract_name, a.client_code, a.client_name, a.org_id, a.client_type, a.lease_date_start,
+            lease_date_end, a.business_code, a.business_name, a.invoice_type, a.industry, a.lease_type, a.contract_status,
+            interest_rate_type, a.classification_five, a.provision_type, a.return_type, a.domestic_entrance, a.project_differentiate,
+            business_plate, a.province_city, a.currency_type, a.contract_amount, a.create_by, a.create_time, a.update_by, a.update_time,
+            del_flag, a.lease_interest_rate_year,outtax_balance, a.lease_revenue_balance, a.depreciation_loss_balance, a.payable_service
+        from
+            eg_contract a
+        inner join sys_dict_data dict
+            on a.org_id = dict.dict_value and dict.dict_type ='company'
+        inner join eg_contract_status_record_temp b
+            on a.contract_code = b.contract_code and dict.dict_label = b.org_id
+        where a.del_flag ='0'
+    </select>
+    <select id="selectAllContractPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractVO">
+        select
+            ec.contract_code,
+            ec.contract_name
+        from
+            eg_contract ec
+        where
+            1 = 1
+          and ec.del_flag = '0'
+          <if test="param.contractCode!=null and param.contractCode!=''">
+              and ec.contract_code like concat('%', #{param.contractCode}::text, '%')
+          </if>
+        <if test="param.contractName!=null and param.contractName!=''">
+            and ec.contract_name like concat('%', #{param.contractName}::text, '%')
+        </if>
+        <if test="param.searchKey!=null and param.searchKey!=''">
+            and ec.contract_name like concat('%', #{param.searchKey}::text, '%')
+            or ec.contract_code like concat('%', #{param.searchKey}::text, '%')
+        </if>
+        union all
+        select
+            eoc.contract_code,
+            eoc.contract_name
+        from
+            eg_offline_contract eoc
+        where
+            1 = 1
+        and eoc.del_flag = '0'
+        and eoc.process_status in ('3','4')
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and eoc.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.contractName!=null and param.contractName!=''">
+            and eoc.contract_name like concat('%', #{param.contractName}::text, '%')
+        </if>
+        <if test="param.searchKey!=null and param.searchKey!=''">
+            and eoc.contract_name like concat('%', #{param.searchKey}::text, '%')
+            or eoc.contract_code like concat('%', #{param.searchKey}::text, '%')
+        </if>
+    </select>
+    <select id="selectAllContract" resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractVO">
+        select
+        ec.contract_code,
+        ec.contract_name,
+        ec.org_id,
+        ec.business_code,
+        ec.client_code
+        from
+        eg_contract ec
+        where
+        1 = 1
+        and ec.del_flag = '0'
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and ec.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIds != null and param.orgIds.size > 0">
+            and ec.org_id in
+            <foreach item="item" index="index" collection="param.orgIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        union all
+        select
+        eoc.contract_code,
+        eoc.contract_name,
+        eoc.org_id,
+        'ZLYW' as business_code,
+        eoc.client_code
+        from
+        eg_offline_contract eoc
+        where
+        1 = 1
+        and eoc.del_flag = '0'
+        and eoc.process_status in ('3','4')
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and eoc.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIds != null and param.orgIds.size > 0">
+            and eoc.org_id in
+            <foreach item="item" index="index" collection="param.orgIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectContract" resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractVO">
+        select
+        ec.contract_code,
+        ec.client_code,
+        ec.org_id,
+        ec.client_type,
+        ec.lease_date_start,
+        ec.lease_date_end,
+        ec.business_code,
+        ec.business_name,
+        ec.invoice_type,
+        ec.industry,
+        ec.lease_type,
+        ec.contract_status,
+        ec.system_code,
+        sdd.dict_label as system_code_name,
+        ec2.client_name,
+        eoc.org_name as org_id_name
+        from
+        eg_contract ec
+        left join eg_client ec2 on
+        ec.client_code = ec2.client_code
+        and ec2.del_flag = '0'
+        left join eg_org_company eoc on
+        ec.org_id = eoc.org_id
+        and eoc.del_flag = '0'
+        left join sys_dict_data sdd on
+        ec.system_code = sdd.dict_value
+        and sdd.dict_type = 'sys_form_source'
+        where
+        1 = 1
+        and ec.del_flag = '0'
+        and (ec.contract_code_m IS NULL OR ec.contract_code_m ='' OR ec.contract_code = ec.contract_code_m)
+        <if test="param.systemCodeList != null and param.systemCodeList.size > 0">
+            and ec.system_code in
+            <foreach item="item" index="index" collection="param.systemCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and ec.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.clientName!=null and param.clientName!=''">
+            and ec2.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        <if test="param.orgIds != null and param.orgIds.size > 0">
+            and ec.org_id in
+            <foreach item="item" index="index" collection="param.orgIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractStatuses != null and param.contractStatuses.size > 0">
+            and ec.contract_status in
+            <foreach item="item" index="index" collection="param.contractStatuses" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractStatuses != null and param.contractStatuses.size > 0">
+            and ec.contract_status in
+            <foreach item="item" index="index" collection="param.contractStatuses" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.financialContractStatuses != null and param.financialContractStatuses.size > 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatuses" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(ec.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+
+        <if test="param.businessDateEnd!=null">
+            and to_char(ec.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+
+        <if test="param.leaseDateStart!=null">
+            and to_char(ec.lease_date_start,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.leaseDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.leaseDateEnd!=null">
+            and to_char(ec.lease_date_end,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.leaseDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.leaseDateStartDate!=null">
+            and to_char(ec.lease_date_start,'YYYY-MM-DD') <![CDATA[>=]]> to_char(to_date(#{param.leaseDateStartDate},'yyyy-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.leaseDateStartEndDate!=null">
+            and to_char(ec.lease_date_start,'YYYY-MM-DD') <![CDATA[<=]]> to_char(to_date(#{param.leaseDateStartEndDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.leaseDateEndStartDate!=null">
+            and to_char(ec.lease_date_end,'YYYY-MM-DD') <![CDATA[>=]]> to_char(to_date(#{param.leaseDateEndStartDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.leaseDateEndEndDate!=null">
+            and to_char(ec.lease_date_end,'YYYY-MM-DD') <![CDATA[<=]]> to_char(to_date(#{param.leaseDateEndEndDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        order by ec.lease_date_start desc nulls last
+    </select>
+    
+    <select id="selectContractByPage" resultMap="BaseResultMap" parameterType="com.utfinancing.financehub.engine.finance.model.vo.SelectContractByPageVO">
+        select
+            <include refid="Base_Column_List"/>
+        from eg_contract
+        where del_flag = '0'
+        and to_char(lease_date_start,'YYYY-MM-DD') <![CDATA[>=]]> #{param.leaseDateStart}
+        order by contract_code, org_id
+        limit #{param.pageSize} offset #{param.offset}
+    </select>
+    <select id="getClientCode" resultType="java.lang.String">
+        select
+        ec.client_code
+        from
+        eg_contract ec
+        where
+        1 = 1
+        and ec.del_flag = '0'
+        and ec.contract_code = #{contractCode}
+        and ec.client_name = #{clientName}
+        order by ec.client_code
+        limit 1
+    </select>
+    <select id="listClientInfoByCodeList"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractEntity">
+        select *
+        from (select org_id,
+                     contract_code,
+                     client_code,
+                     client_name,
+                     row_number() over (partition by org_id,contract_code,client_code order by org_id,contract_code,client_code desc) as rn
+              from eg_contract
+              where del_flag='0' and contract_code in (
+                <foreach collection="contractCodes" item="contractCode" separator=",">
+                    #{contractCode}
+                </foreach>
+                  )
+             ) contract
+        where contract.rn = 1
+    </select>
+    <select id="listClientInfoByOrgContractCodeMap"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractEntity">
+        select *
+        from (select org_id,
+                     contract_code,
+                     contract_name,
+                     client_code,
+                     client_name,
+                     row_number() over (partition by org_id,contract_code,client_code order by org_id,contract_code,client_code desc) as rn
+              from eg_contract
+              where del_flag='0' and (
+                <foreach collection="orgContractCodeMap" item="contractCodes" index="orgId" separator="or">
+                    (
+                        org_id = #{orgId} and contract_code in (
+                        <foreach collection="contractCodes" item="contractCode" separator=",">
+                            #{contractCode}
+                        </foreach>
+                        )
+                    )
+                </foreach>
+                  )
+             ) contract
+        where contract.rn = 1
+    </select>
+
+    <update id="updateBatchByContractCode">
+        UPDATE eg_contract_month
+        SET sharing_service_fee_flag = #{sharingServiceFeeFlag},
+            end_sharing_service_fee_flag = #{endSharingServiceFeeFlag},
+            special_status_adjustment_flag = #{specialStatusAdjustmentFlag}
+        WHERE contract_code = #{contractCode}
+    </update>
+
+</mapper>
+

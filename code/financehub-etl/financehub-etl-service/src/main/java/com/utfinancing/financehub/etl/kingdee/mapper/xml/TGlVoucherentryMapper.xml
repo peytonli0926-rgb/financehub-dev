@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TGlVoucherentryMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TGlVoucherentryEntity">
+        <id column="FID" property="fid"/>
+        <result column="FSEQ" property="fseq"/>
+        <result column="FBILLID" property="fbillid"/>
+        <result column="FCOMPANYID" property="fcompanyid"/>
+        <result column="FPERIODID" property="fperiodid"/>
+        <result column="FACCOUNTID" property="faccountid"/>
+        <result column="FCAA" property="fcaa"/>
+        <result column="FCURRENCYID" property="fcurrencyid"/>
+        <result column="FMEASUREUNITID" property="fmeasureunitid"/>
+        <result column="FENTRYDC" property="fentrydc"/>
+        <result column="FORIGINALAMOUNT" property="foriginalamount"/>
+        <result column="FLOCALAMOUNT" property="flocalamount"/>
+        <result column="FREPORTINGAMOUNT" property="freportingamount"/>
+        <result column="FLOCALEXCHANGERATE" property="flocalexchangerate"/>
+        <result column="FREPORTINGEXCHANGERATE" property="freportingexchangerate"/>
+        <result column="FPRICE" property="fprice"/>
+        <result column="FQUANTITY" property="fquantity"/>
+        <result column="FSTANDARDQUANTITY" property="fstandardquantity"/>
+        <result column="FDESCRIPTION" property="fdescription"/>
+        <result column="FISVERIFY" property="fisverify"/>
+        <result column="FISCUSSENT" property="fiscussent"/>
+        <result column="FISCHECK" property="fischeck"/>
+        <result column="FCASHIERID" property="fcashierid"/>
+        <result column="FMACTRLAMOUNT" property="fmactrlamount"/>
+        <result column="FCUSTOMERID" property="fcustomerid"/>
+        <result column="FMAHOLDAMOUNT" property="fmaholdamount"/>
+        <result column="FISHAND" property="fishand"/>
+        <result column="FPROFITCENTERID" property="fprofitcenterid"/>
+        <result column="FCHECKDATE" property="fcheckdate"/>
+        <result column="FASSGRP" property="fassgrp"/>
+        <result column="FPRIMARYITEMID" property="fprimaryitemid"/>
+        <result column="FSUPPLEMENTARYITEMID" property="fsupplementaryitemid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        FID, FSEQ, FBILLID, FCOMPANYID, FPERIODID, FACCOUNTID, FCAA, FCURRENCYID, FMEASUREUNITID, FENTRYDC,
+        FORIGINALAMOUNT, FLOCALAMOUNT, FREPORTINGAMOUNT, FLOCALEXCHANGERATE, FREPORTINGEXCHANGERATE, FPRICE, FQUANTITY,
+        FSTANDARDQUANTITY, FDESCRIPTION, FISVERIFY, FISCUSSENT, FISCHECK, FCASHIERID, FMACTRLAMOUNT, FCUSTOMERID,
+        FMAHOLDAMOUNT, FISHAND, FPROFITCENTERID, FCHECKDATE, FASSGRP, FPRIMARYITEMID, FSUPPLEMENTARYITEMID
+    </sql>
+</mapper>
+

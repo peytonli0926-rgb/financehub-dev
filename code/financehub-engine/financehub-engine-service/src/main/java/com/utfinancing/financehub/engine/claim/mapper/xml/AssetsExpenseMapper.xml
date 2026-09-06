@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.claim.mapper.AssetsExpenseMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.claim.entity.AssetsExpenseEntity">
+                    <id column="id" property="id" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="expense_type" property="expenseType" />
+                    <result column="supplier" property="supplier" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_org_id" property="contractOrgId" />
+                    <result column="expense_period" property="expensePeriod" />
+                    <result column="assets_transfer_flag" property="assetsTransferFlag" />
+                    <result column="brief_and_execution_fee" property="briefAndExecutionFee" />
+                    <result column="basic_counsel_fee" property="basicCounselFee" />
+                    <result column="risk_counsel_service_fee" property="riskCounselServiceFee" />
+                    <result column="received_amount" property="receivedAmount" />
+                    <result column="entrust_subject_matter_amount" property="entrustSubjectMatterAmount" />
+                    <result column="debt_to_batch_no" property="debtToBatchNo" />
+                    <result column="service_fee_rate" property="serviceFeeRate" />
+                    <result column="service_fee_amount" property="serviceFeeAmount" />
+                    <result column="overdue_days" property="overdueDays" />
+                    <result column="account_age" property="accountAge" />
+                    <result column="fee_rate_version" property="feeRateVersion" />
+                    <result column="haul_distance" property="haulDistance" />
+                    <result column="haul_amount" property="haulAmount" />
+                    <result column="maintenance_amount" property="maintenanceAmount" />
+                    <result column="expense_total_amount" property="expenseTotalAmount" />
+                    <result column="storage_days" property="storageDays" />
+                    <result column="storage_serivce_fee" property="storageSerivceFee" />
+                    <result column="assess_amount" property="assessAmount" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, create_by, create_time, update_by, update_time, del_flag, expense_type, supplier, contract_code, contract_org_id, expense_period, assets_transfer_flag, brief_and_execution_fee, basic_counsel_fee, risk_counsel_service_fee, received_amount, entrust_subject_matter_amount, debt_to_batch_no, service_fee_rate, service_fee_amount, overdue_days, account_age, fee_rate_version, haul_distance, haul_amount, maintenance_amount, expense_total_amount, storage_days, storage_serivce_fee, assess_amount
+        </sql>
+</mapper>
+

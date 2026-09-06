@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ServiceFeePlanMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ServiceFeePlanEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="service_fee_no" property="serviceFeeNo" />
+                    <result column="service_org_id" property="serviceOrgId" />
+                    <result column="service_fee_amortization_rate" property="serviceFeeAmortizationRate" />
+                    <result column="actual_accrued_amount" property="actualAccruedAmount" />
+                    <result column="adjust_amount" property="adjustAmount" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, org_id, service_fee_no, service_org_id, service_fee_amortization_rate, actual_accrued_amount, adjust_amount, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <delete id="physicalDeleteByContractCode">
+        delete from eg_service_fee_plan
+        where contract_code=#{contractCode}
+    </delete>
+    <select id="getExportData"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeePlanVO">
+        select s.*,
+               c.lease_date_start,
+               c.lease_date_end,
+               case
+                   when c.end_sharing_service_fee_flag then '是'
+                   else '否' end             end_sharing_service_fee_flag_str,
+               case
+                   when c.sharing_service_fee_flag then '是'
+                   else '否' end             sharing_service_fee_flag_str,
+               case
+                   when c.special_status_adjustment_flag then '是'
+                   else '否' end             special_status_adjustment_flag_str,
+               c.client_name,
+               o1.org_name,
+               o2.org_name                   service_org_name,
+               case
+                   when s.org_id = s.service_org_id then '租赁收入分摊'
+                   else '服务费收入分摊' end allocation_method,
+               c.business_name,
+               case
+                   when sf.is_generate_voucher = '1' then '是'
+                   else '否' end             voucher_status
+        from eg_service_fee_plan s
+                 inner join
+             eg_contract_month c on
+                 s.org_id = c.org_id
+                     and s.contract_code = c.contract_code
+                 left join eg_org_company o1 on s.org_id = o1.org_id
+                 left join eg_org_company o2 on s.service_org_id = o2.org_id
+                 left join eg_service_fee_details sf on s.service_org_id = sf.service_org_id and s.service_fee_no = sf.service_fee_no and s.periods = sf.periods and sf.del_flag = '0'
+        where s.del_flag = '0'
+          and c.del_flag = '0'
+          <if test="contractCode != null and contractCode != ''">
+            and s.contract_code = #{contractCode}
+          </if>
+        order by s.contract_code, s.plan_date
+    </select>
+    <select id="selectServiceFeeAllocationExcelList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeeAllocationExcelVo">
+        select esfp.plan_date,
+            esfp.contract_code,
+            esfp.org_id,
+            esfp.service_fee_no,
+            esfp.service_org_id,
+            esfp.service_fee_amortization_rate allocation_ratio,
+            esfp.plan_amount,
+            case
+                when esfd.this_month_adjustment_amount_no_tax is not null
+                then esfd.this_month_adjustment_amount_no_tax
+                else esfp.actual_accrued_amount end actual_accrued_amount,
+            ecm.lease_date_start,
+            ecm.lease_date_end,
+            ecm.client_name                    lessee_name,
+            ecm.payable_device_amount,
+            d.dec_feiybl service_fee_ratio
+        from eg_service_fee_plan esfp
+            left join eg_service_fee_details esfd
+            on esfp.service_fee_no = esfd.service_fee_no and esfp.periods = esfd.periods
+            left join eg_contract_month ecm
+            on esfp.contract_code = ecm.contract_code and esfp.org_id = ecm.org_id
+            left join dws_bz_hetjyjgfyx_d d
+            on d.vc_hetbh = esfp.contract_code and d.vc_feiylx = '120'
+        where esfp.del_flag = '0'
+        and esfp.contract_code in
+        <foreach collection="contractCodes" index="key" item="contractCode" open="(" separator="," close=")">
+            #{contractCode}
+        </foreach>
+    </select>
+</mapper>
+

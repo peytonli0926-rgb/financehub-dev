@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.HyFullOnlineBankBatchNoMappingMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.HyFullOnlineBankBatchNoMappingEntity">
+                    <id column="id" property="id" />
+                    <result column="online_bank_no" property="onlineBankNo" />
+                    <result column="deduct_batch_no" property="deductBatchNo" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="deduct_category" property="deductCategory" />
+                    <result column="business_line" property="businessLine" />
+                    <result column="bank_receipt_no" property="bankReceiptNo" />
+                    <result column="collect_amount_time" property="collectAmountTime" />
+                    <result column="collect_amount" property="collectAmount" />
+                    <result column="collect_bank" property="collectBank" />
+                    <result column="collect_bank_account" property="collectBankAccount" />
+                    <result column="comments" property="comments" />
+                    <result column="pay_bank_account_name" property="payBankAccountName" />
+                    <result column="pay_bank" property="payBank" />
+                    <result column="pay_bank_account" property="payBankAccount" />
+                    <result column="can_charge_off_amount" property="canChargeOffAmount" />
+                    <result column="already_charge_off_amount" property="alreadyChargeOffAmount" />
+                    <result column="dec_dongjje" property="decDongjje" />
+                    <result column="refund_amount" property="refundAmount" />
+                    <result column="collect_amount_account_name" property="collectAmountAccountName" />
+                    <result column="refund_flag" property="refundFlag" />
+                    <result column="online_bank_belong" property="onlineBankBelong" />
+            <result column="sum_id" property="sumId" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, online_bank_no, deduct_batch_no, create_by, create_time, update_by, update_time, del_flag, deduct_category, business_line, bank_receipt_no, collect_amount_time, collect_amount, collect_bank, collect_bank_account, comments, pay_bank_account_name, pay_bank, pay_bank_account, can_charge_off_amount, already_charge_off_amount, dec_dongjje, refund_amount, collect_amount_account_name, refund_flag, online_bank_belong, sum_id
+        </sql>
+</mapper>
+

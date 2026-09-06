@@ -1,0 +1,1 @@
+CREATE INDEX eg_tail_difference_adjustment_detail_tail_difference_adjustment_id_idx ON eg_tail_difference_adjustment_detail (tail_difference_adjustment_id);

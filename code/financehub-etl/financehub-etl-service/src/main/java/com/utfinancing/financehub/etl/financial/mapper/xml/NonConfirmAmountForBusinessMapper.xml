@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.NonConfirmAmountForBusinessMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.NonConfirmAmountForBusinessEntity">
+                    <id column="id" property="id" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="account_checking_month" property="accountCheckingMonth" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="ebank_serial_number" property="ebankSerialNumber" />
+                    <result column="system_amount" property="systemAmount" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, create_by, create_time, update_by, update_time, del_flag, account_checking_month, system_code, ebank_serial_number, system_amount
+        </sql>
+</mapper>
+

@@ -1,0 +1,57 @@
+package com.utfinancing.financehub.engine.verification.model.dto;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * @Author : bruyang
+ * @Date : Create in 2023-10-23
+ * @Description : 诉讼费转费用详情表DTO对象
+ * @Modified :
+ */
+@Data
+public class CourtCostDetailsDTO implements Serializable{
+    private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty(value = "ID")
+    private Long id;
+
+    @ApiModelProperty(value = "诉讼费转费用id")
+    private Long courtCostId;
+
+    @ApiModelProperty(value = "签约主体")
+    private String orgId;
+
+    @ApiModelProperty(value = "合同编号")
+    private String contractCode;
+
+    @ApiModelProperty(value = "记账日期")
+    private LocalDateTime accountDate;
+
+    @ApiModelProperty(value = "转费用金额")
+    private BigDecimal transgerCostAmount;
+
+    @ApiModelProperty(value = "成本中心")
+    private String costCenter;
+
+    @ApiModelProperty(value = "是否删除（0-否，1-是）")
+    private String delFlag;
+
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    @ApiModelProperty(value = "创建时间")
+    private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "更新人")
+    private String updateBy;
+
+    @ApiModelProperty(value = "更新时间")
+    private LocalDateTime updateTime;
+
+    @ApiModelProperty(value = "凭证id")
+    private String voucherId;
+
+}

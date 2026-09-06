@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.AssetAbsTransferPaymentMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.AssetAbsTransferPaymentEntity">
+                    <id column="id" property="id" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="loan_contract_code" property="loanContractCode" />
+                    <result column="periods" property="periods" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="approve_error_info" property="approveErrorInfo" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, business_date, account_date, loan_contract_code, periods, process_instance_id, process_status, is_generate_voucher, period_code, approve_error_info, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectPageByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.AssetAbsTransferPaymentVO">
+        select
+        x.id,
+        x.business_date,
+        x.account_date ,
+        x.loan_contract_code,
+        x.periods,
+        x.process_instance_id,
+        x.is_generate_voucher,
+        x.approve_error_info,
+        x.period_code,
+        x.process_status,
+        eaatpd.asset_abs_transfer_payment_id,
+        sum(coalesce(eaatpd.actual_principal_amount,0)+coalesce(eaatpd.actual_interest_amount,0)) as receivablesRentalAmount,
+        sum(coalesce(eaatpd.actual_retention_purchase_amount,0)) as actual_retention_purchase_amount,
+        sum(coalesce(eaatpd.actual_penalty_interest_amount,0)) as actual_penalty_interest_amount
+        from eg_asset_abs_transfer_payment x
+        inner join eg_asset_abs_transfer_payment_detail eaatpd
+        on x.id = eaatpd.asset_abs_transfer_payment_id
+        where
+        1 = 1
+        <if test="param.loanContractCodeList != null and param.loanContractCodeList.size > 0">
+            and x.loan_contract_code in
+            <foreach item="item" index="index" collection="param.loanContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.periodsList != null and param.periodsList.size > 0">
+            and x.periods in
+            <foreach item="item" index="index" collection="param.periodsList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startAccountDate!=null">
+            and to_char(x.account_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{param.startAccountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endAccountDate!=null">
+            and to_char(x.account_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{param.endAccountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.id!=null">
+            and x.id = #{param.id}
+        </if>
+
+        group by
+        x.id,
+        x.business_date,
+        x.account_date,
+        x.loan_contract_code,
+        x.periods,
+        x.process_instance_id,
+        x.is_generate_voucher,
+        x.approve_error_info,
+        x.period_code,
+        x.process_status,
+        eaatpd.asset_abs_transfer_payment_id
+    </select>
+    <select id="selectListByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.AssetAbsTransferPaymentDetailVO">
+        select
+        *
+        from
+        eg_asset_abs_transfer_payment_detail eaatpd
+        inner join eg_asset_abs_transfer_payment eaatp on
+        eaatpd.asset_abs_transfer_payment_id = eaatp.id
+        where
+        1 = 1
+        and eaatpd.del_flag = '0'
+        and eaatp.del_flag = '0'
+        <if test="param.contractCode!='' and param.contractCode!=null">
+            and eaatpd.contract_code = #{param.contractCode}
+        </if>
+        <if test="param.loanContractCode!='' and param.loanContractCode!=null">
+            and eaatp.loan_contract_code = #{param.loanContractCode}
+        </if>
+        <if test="param.periods!='' and param.periods!=null">
+            and eaatp.periods = #{param.periods}
+        </if>
+    </select>
+    <select id="selectPaymentList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.AssetAbsTransferPaymentVO">
+        select
+        x.id,
+        x.business_date,
+        x.account_date ,
+        x.loan_contract_code,
+        x.periods,
+        x.process_instance_id,
+        x.is_generate_voucher,
+        x.approve_error_info,
+        x.period_code,
+        x.process_status,
+        eaatpd.asset_abs_transfer_payment_id,
+        sum(coalesce(eaatpd.actual_principal_amount,0)+coalesce(eaatpd.actual_interest_amount,0)) as receivablesRentalAmount,
+        sum(coalesce(eaatpd.actual_retention_purchase_amount,0)) as actual_retention_purchase_amount,
+        sum(coalesce(eaatpd.actual_penalty_interest_amount,0)) as actual_penalty_interest_amount
+        from eg_asset_abs_transfer_payment x
+        inner join eg_asset_abs_transfer_payment_detail eaatpd
+        on x.id = eaatpd.asset_abs_transfer_payment_id
+        where
+        1 = 1
+        <if test="param.idList != null and param.idList.size > 0">
+            and x.id in
+            <foreach item="item" index="index" collection="param.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.loanContractCodeList != null and param.loanContractCodeList.size > 0">
+            and x.loan_contract_code in
+            <foreach item="item" index="index" collection="param.loanContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.periodsList != null and param.periodsList.size > 0">
+            and x.periods in
+            <foreach item="item" index="index" collection="param.periodsList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startAccountDate!=null">
+            and to_char(x.account_date,'YYYY-MM-DD') &gt;= to_char(to_date(#{param.startAccountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.endAccountDate!=null">
+            and to_char(x.account_date,'YYYY-MM-DD') &lt;= to_char(to_date(#{param.endAccountDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        </if>
+        <if test="param.id!=null">
+            and x.id = #{param.id}
+        </if>
+        group by
+        x.id,
+        x.business_date,
+        x.account_date,
+        x.loan_contract_code,
+        x.periods,
+        x.process_instance_id,
+        x.is_generate_voucher,
+        x.approve_error_info,
+        x.period_code,
+        x.process_status,
+        eaatpd.asset_abs_transfer_payment_id
+    </select>
+</mapper>
+

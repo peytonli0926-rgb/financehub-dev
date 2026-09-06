@@ -1,0 +1,11 @@
+package com.utfinancing.financehub.engine.finance.service.impl;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.utfinancing.financehub.engine.finance.entity.ConvertTransferThirdPartPaymentDetailEntity;
+import com.utfinancing.financehub.engine.finance.mapper.ConvertTransferThirdPartPaymentDetailMapper;
+import com.utfinancing.financehub.engine.finance.service.IConvertTransferThirdPartPaymentDetailService;
+import org.springframework.stereotype.Service;
+
+@Service
+public class ConvertTransferThirdPartPaymentDetailServiceImpl extends ServiceImpl<ConvertTransferThirdPartPaymentDetailMapper, ConvertTransferThirdPartPaymentDetailEntity> implements IConvertTransferThirdPartPaymentDetailService {
+}

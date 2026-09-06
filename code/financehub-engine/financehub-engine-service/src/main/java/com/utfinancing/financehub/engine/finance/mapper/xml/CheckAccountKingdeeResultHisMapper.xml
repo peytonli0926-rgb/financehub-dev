@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.CheckAccountKingdeeResultHisMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.CheckAccountKingdeeResultHisEntity">
+                    <id column="id" property="id" />
+                    <result column="record_id" property="recordId" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_remain_balance" property="accountRemainBalance" />
+                    <result column="kingdee_remain_balance" property="kingdeeRemainBalance" />
+                    <result column="diff_flag" property="diffFlag" />
+                    <result column="diff_balance" property="diffBalance" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, record_id, period_code, currency_type, org_id, account_code, account_remain_balance, kingdee_remain_balance, diff_flag, diff_balance, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+        <insert id="queryAndSaveCheckKingdee">
+            insert into eg_check_account_kingdee_result_his (record_id, period_code, org_id, account_code, currency_type, account_remain_balance,
+                                                         kingdee_remain_balance, diff_balance, diff_flag, del_flag, create_by, create_time, update_by, update_time)
+            select ${param.recordId},tmp.period_code, tmp.org_id, tmp.account_code, tmp.currency_type, COALESCE(tmp.account_remain_balance,'0'),
+                   case when ea.debit_credit_type = 'DR' then coalesce(ecakt.fend_balance_for,0)
+                        when ea.debit_credit_type = 'CR' then coalesce(ecakt.fend_balance_for,0)*(-1)
+                        else 0 end kingdee_remain_balance,
+                   case when ea.debit_credit_type = 'DR' then coalesce(ecakt.fend_balance_for,0)-tmp.account_remain_balance
+                        when ea.debit_credit_type = 'CR' then coalesce(ecakt.fend_balance_for,0)*(-1)-tmp.account_remain_balance
+                        else 0 end diff_balance,
+                   case when ea.debit_credit_type = 'DR' and coalesce(ecakt.fend_balance_for,0) = tmp.account_remain_balance then '0'
+                        when ea.debit_credit_type = 'CR' and coalesce(ecakt.fend_balance_for,0)*(-1) = tmp.account_remain_balance then '0'
+                        else '1' end diff_flag, '0', ${param.createBy}, now(), ${param.updateBy}, now()
+            from (
+                     select #{param.periodCode}::integer period_code,
+                            coalesce(assist.org_id,voucher.org_id) org_id,
+                            coalesce(assist.account_code,voucher.account_code) account_code,
+                            coalesce(assist.currency_type,voucher.currency) currency_type,
+                            coalesce(assist.account_remain_balance,0)+ coalesce(voucher.account_remain_balance,0) account_remain_balance
+                     from (
+                              select
+                                  eaab.period_code ,
+                                  eaab.org_id ,
+                                  eaab.account_code ,
+                                  eaab.currency_code currency_type,
+                            --	sum(eaab.month_end_debit_balance) account_remain_balance,
+                                  case when ea.debit_credit_type = 'DR' then coalesce(sum(eaab.month_end_debit_balance),0) - coalesce(sum(eaab.month_end_credit_balance),0)
+                                       when ea.debit_credit_type = 'CR' then coalesce(sum(eaab.month_end_credit_balance),0) - coalesce(sum(eaab.month_end_debit_balance),0)
+                                       else 0 end account_remain_balance
+                              from
+                                  eg_account_assist_balance eaab
+                                    join eg_account ea on
+                                    eaab.account_code = ea.account_code
+                              where
+                                  eaab.period_code = #{param.lastPeriodCode}
+                                and eaab.del_flag = '0'
+                                and eaab.org_id in ('01-C0001', '02-C0001', '80001', '30001')
+                                and ea.check_flag = '1'
+                              group by
+                                  eaab.period_code ,
+                                  eaab.org_id ,
+                                  eaab.account_code ,
+                                  eaab.currency_code,
+                                  ea.debit_credit_type
+                          ) assist full outer join (
+                         select ev.period_code, ev.org_id, eve.account_code, ev.currency,
+                                case when ea.debit_credit_type = 'DR' then coalesce(sum(eve.debit_amount),0) - coalesce(sum(eve.credit_amount),0)
+                                     when ea.debit_credit_type = 'CR' then coalesce(sum(eve.credit_amount),0) - coalesce(sum(eve.debit_amount),0)
+                                     else 0 end account_remain_balance
+                         from eg_voucher ev join eg_voucher_entry eve on ev.id = eve.voucher_id
+                                join eg_account ea on eve.account_code = ea.account_code
+                         where ev.period_code = #{param.periodCode} and eve.period_code = #{param.periodCode}
+                           and ev.del_flag = '0'
+                           and ev.org_id in ('01-C0001', '02-C0001', '80001', '30001')
+                           and ea.check_flag = '1'
+                         group by
+                             ev.period_code ,
+                             ev.org_id ,
+                             eve.account_code ,
+                             ev.currency,
+                             ea.debit_credit_type
+                     ) voucher on assist.org_id = voucher.org_id and assist.account_code = voucher.account_code and coalesce(assist.currency_type,'') = coalesce(voucher.currency,'')
+
+                 )tmp join eg_check_account_kingdee_tmp ecakt
+                           on 1=1
+                               and tmp.period_code = ecakt.period_code
+                               and tmp.org_id = ecakt.org_id
+                               and tmp.account_code = ecakt.account_code
+                               and tmp.currency_type = ecakt.currency_type
+                      join eg_account ea
+                           on ecakt.account_code = ea.account_code
+        </insert>
+
+        <insert id="saveResultToHis">
+            INSERT INTO eg_check_account_kingdee_result_his
+            (record_id, period_code, currency_type, org_id, account_code, account_remain_balance,
+             kingdee_remain_balance, diff_flag, diff_balance, del_flag, create_by, create_time, update_by, update_time)
+            SELECT record_id, period_code, currency_type, org_id, account_code, account_remain_balance,
+                   kingdee_remain_balance, diff_flag, diff_balance, del_flag, create_by, create_time, update_by, update_time
+            FROM eg_check_account_kingdee_result;
+        </insert>
+
+        <delete id="clearHisTableData">
+            delete from eg_check_account_kingdee_result_his where period_code = #{periodCode}
+        </delete>
+</mapper>
+

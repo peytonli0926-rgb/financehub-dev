@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RentRegisterDetailMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RentRegisterDetailEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="plan_date" property="planDate" />
+                    <result column="period" property="period" />
+                    <result column="receivable_rent" property="receivableRent" />
+                    <result column="this_month_receivable_rent" property="thisMonthReceivableRent" />
+                    <result column="this_month_tax" property="thisMonthTax" />
+                    <result column="this_month_rent_income" property="thisMonthRentIncome" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, plan_date, period, receivable_rent, this_month_receivable_rent, this_month_tax, this_month_rent_income, voucher_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectPageByMapper"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RentRegisterDetailVO">
+        select errd.*,
+        erp.actual_repayment_date ,
+        COALESCE(erp.actual_repayment_principal_amount, 0) + COALESCE(erp.actual_repayment_interes_amount, 0) as repaymentAmount,
+        eic.document_date as invoiceDate,
+        eic.tax_value as invoiceAmount
+        from eg_rent_register_detail errd
+        left join eg_repayment_plan erp on errd.contract_code =erp.contract_code and errd.plan_date =erp.plan_date and erp.del_flag ='0'
+        left join (select contract_code ,plan_repay_date,max(document_date) as document_date,sum(tax_value) as tax_value
+        from eg_invoice_claim  where del_flag='0' group by contract_code ,plan_repay_date ) eic
+        on errd.contract_code =eic.contract_code and errd.plan_date =eic.plan_repay_date
+        where errd.del_flag ='0'
+        <if test="queryDTO.rentRegisterIdList != null and queryDTO.rentRegisterIdList.size() > 0">
+            and errd.rent_register_id in
+            <foreach collection="queryDTO.rentRegisterIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by errd.contract_code,errd.plan_date
+    </select>
+</mapper>
+

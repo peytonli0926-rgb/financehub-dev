@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.integration.mapper.ExternalVoucherEntryMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.integration.entity.ExternalVoucherEntryEntity">
+                    <id column="id" property="id" />
+                    <result column="external_voucher_id" property="externalVoucherId" />
+                    <result column="entry_seq" property="entrySeq" />
+                    <result column="voucher_abstract" property="voucherAbstract" />
+                    <result column="account_number" property="accountNumber" />
+                    <result column="currency_number" property="currencyNumber" />
+                    <result column="profit_center_number" property="profitCenterNumber" />
+                    <result column="local_rate" property="localRate" />
+                    <result column="entry_d_c" property="entryDC" />
+                    <result column="original_amount" property="originalAmount" />
+                    <result column="qty" property="qty" />
+                    <result column="measurement" property="measurement" />
+                    <result column="price" property="price" />
+                    <result column="debit_amount" property="debitAmount" />
+                    <result column="credit_amount" property="creditAmount" />
+                    <result column="asst_seq" property="asstSeq" />
+                    <result column="biz_number" property="bizNumber" />
+                    <result column="settlement_number" property="settlementNumber" />
+                    <result column="settlement_type" property="settlementType" />
+                    <result column="cussent" property="cussent" />
+                    <result column="asst_act_type1" property="asstActType1" />
+                    <result column="asst_act_number1" property="asstActNumber1" />
+                    <result column="asst_act_name1" property="asstActName1" />
+                    <result column="asst_act_type2" property="asstActType2" />
+                    <result column="asst_act_number2" property="asstActNumber2" />
+                    <result column="asst_act_name2" property="asstActName2" />
+                    <result column="asst_act_type3" property="asstActType3" />
+                    <result column="asst_act_number3" property="asstActNumber3" />
+                    <result column="asst_act_name3" property="asstActName3" />
+                    <result column="asst_act_type4" property="asstActType4" />
+                    <result column="asst_act_number4" property="asstActNumber4" />
+                    <result column="asst_act_name4" property="asstActName4" />
+                    <result column="asst_act_type5" property="asstActType5" />
+                    <result column="asst_act_number5" property="asstActNumber5" />
+                    <result column="asst_act_name5" property="asstActName5" />
+                    <result column="asst_act_type6" property="asstActType6" />
+                    <result column="asst_act_number6" property="asstActNumber6" />
+                    <result column="asst_act_name6" property="asstActName6" />
+                    <result column="asst_act_type7" property="asstActType7" />
+                    <result column="asst_act_number7" property="asstActNumber7" />
+                    <result column="asst_act_name7" property="asstActName7" />
+                    <result column="asst_act_type8" property="asstActType8" />
+                    <result column="asst_act_number8" property="asstActNumber8" />
+                    <result column="asst_act_name8" property="asstActName8" />
+                    <result column="itemflag" property="itemflag" />
+                    <result column="opp_account_seq" property="oppAccountSeq" />
+                    <result column="primary_item" property="primaryItem" />
+                    <result column="supply_item" property="supplyItem" />
+                    <result column="primary_coef" property="primaryCoef" />
+                    <result column="supply_coef" property="supplyCoef" />
+                    <result column="cashflow_amount_original" property="cashflowAmountOriginal" />
+                    <result column="cashflow_amount_local" property="cashflowAmountLocal" />
+                    <result column="cashflow_amount_rpt" property="cashflowAmountRpt" />
+                    <result column="type" property="type" />
+                    <result column="cash_asst_act_type1" property="cashAsstActType1" />
+                    <result column="cash_asst_act_number1" property="cashAsstActNumber1" />
+                    <result column="cash_asst_act_name1" property="cashAsstActName1" />
+                    <result column="cash_asst_act_type2" property="cashAsstActType2" />
+                    <result column="cash_asst_act_number2" property="cashAsstActNumber2" />
+                    <result column="cash_asst_act_name2" property="cashAsstActName2" />
+                    <result column="cash_asst_act_type3" property="cashAsstActType3" />
+                    <result column="cash_asst_act_number3" property="cashAsstActNumber3" />
+                    <result column="cash_asst_act_name3" property="cashAsstActName3" />
+                    <result column="cash_asst_act_type4" property="cashAsstActType4" />
+                    <result column="cash_asst_act_number4" property="cashAsstActNumber4" />
+                    <result column="cash_asst_act_name4" property="cashAsstActName4" />
+                    <result column="cash_asst_act_type5" property="cashAsstActType5" />
+                    <result column="cash_asst_act_number5" property="cashAsstActNumber5" />
+                    <result column="cash_asst_act_name5" property="cashAsstActName5" />
+                    <result column="cash_asst_act_type6" property="cashAsstActType6" />
+                    <result column="cash_asst_act_number6" property="cashAsstActNumber6" />
+                    <result column="cash_asst_act_name6" property="cashAsstActName6" />
+                    <result column="cash_asst_act_type7" property="cashAsstActType7" />
+                    <result column="cash_asst_act_number7" property="cashAsstActNumber7" />
+                    <result column="cash_asst_act_name7" property="cashAsstActName7" />
+                    <result column="cash_asst_act_type8" property="cashAsstActType8" />
+                    <result column="cash_asst_act_number8" property="cashAsstActNumber8" />
+                    <result column="cash_asst_act_name8" property="cashAsstActName8" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, external_voucher_id, entry_seq, voucher_abstract, account_number, currency_number, profit_center_number, local_rate, entry_d_c, original_amount, qty, measurement, price, debit_amount, credit_amount, asst_seq, biz_number, settlement_number, settlement_type, cussent, asst_act_type1, asst_act_number1, asst_act_name1, asst_act_type2, asst_act_number2, asst_act_name2, asst_act_type3, asst_act_number3, asst_act_name3, asst_act_type4, asst_act_number4, asst_act_name4, asst_act_type5, asst_act_number5, asst_act_name5, asst_act_type6, asst_act_number6, asst_act_name6, asst_act_type7, asst_act_number7, asst_act_name7, asst_act_type8, asst_act_number8, asst_act_name8, itemflag, opp_account_seq, primary_item, supply_item, primary_coef, supply_coef, cashflow_amount_original, cashflow_amount_local, cashflow_amount_rpt, type, cash_asst_act_type1, cash_asst_act_number1, cash_asst_act_name1, cash_asst_act_type2, cash_asst_act_number2, cash_asst_act_name2, cash_asst_act_type3, cash_asst_act_number3, cash_asst_act_name3, cash_asst_act_type4, cash_asst_act_number4, cash_asst_act_name4, cash_asst_act_type5, cash_asst_act_number5, cash_asst_act_name5, cash_asst_act_type6, cash_asst_act_number6, cash_asst_act_name6, cash_asst_act_type7, cash_asst_act_number7, cash_asst_act_name7, cash_asst_act_type8, cash_asst_act_number8, cash_asst_act_name8, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

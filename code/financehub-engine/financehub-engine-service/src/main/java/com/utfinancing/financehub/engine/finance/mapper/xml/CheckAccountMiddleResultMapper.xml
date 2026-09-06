@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.CheckAccountMiddleResultMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.CheckAccountMiddleResultEntity">
+                    <id column="id" property="id" />
+                    <result column="record_id" property="recordId" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="bank_account" property="bankAccount" />
+                    <result column="bill_contract_code" property="billContractCode" />
+                    <result column="account_remain_balance" property="accountRemainBalance" />
+                    <result column="kingdee_remain_balance" property="kingdeeRemainBalance" />
+                    <result column="diff_flag" property="diffFlag" />
+                    <result column="diff_balance" property="diffBalance" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, record_id, period_code, currency_type, org_id, account_code, client_code, contract_code, bank_account, bill_contract_code, account_remain_balance, kingdee_remain_balance, diff_flag, diff_balance, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+
+        <insert id="queryAndSaveCheckMiddle">
+            INSERT INTO eg_check_account_middle_result
+            (record_id, period_code, currency_type, org_id, account_code, client_code, contract_code, bank_account,
+             bill_contract_code, account_remain_balance, kingdee_remain_balance, diff_flag, diff_balance,
+             del_flag, create_by, create_time, update_by, update_time)
+            select  ${param.recordId}, tmp.period_code,tmp.currency,tmp.org_id,tmp.account_code,tmp.client_code,tmp.contract_code,
+                    tmp.bank_account,tmp.bill_contract_code,
+--                     tmp.debit_amount,
+                    case when ea.debit_credit_type = 'DR' then coalesce(tmp.debit_amount,0) - coalesce(tmp.credit_amount,0)
+                         when ea.debit_credit_type = 'CR' then coalesce(tmp.credit_amount,0) - coalesce(tmp.debit_amount,0)
+                         else 0 end as account_remain_balance,
+--                     ecamt.debit_amount,
+                    case when ea.debit_credit_type = 'DR' then coalesce(ecamt.debit_amount,0) - coalesce(ecamt.credit_amount,0)
+                         when ea.debit_credit_type = 'CR' then coalesce(ecamt.credit_amount,0) - coalesce(ecamt.debit_amount,0)
+                         else 0 end as kingdee_remain_balance,
+--                     case when ecamt.debit_amount = tmp.debit_amount then '0' else '1' end del_flag,
+                    case when ea.debit_credit_type = 'DR' and coalesce(tmp.debit_amount,0) - coalesce(tmp.credit_amount,0) = coalesce(ecamt.debit_amount,0) - coalesce(ecamt.credit_amount,0) then '0'
+                         when ea.debit_credit_type = 'CR' and coalesce(tmp.credit_amount,0) - coalesce(tmp.debit_amount,0) = coalesce(ecamt.credit_amount,0) - coalesce(ecamt.debit_amount,0) then '0'
+                         else 1 end del_flag,
+--                     coalesce(ecamt.debit_amount,0) - coalesce(tmp.debit_amount,0),
+                    case when ea.debit_credit_type = 'DR' then coalesce(tmp.debit_amount,0) - coalesce(tmp.credit_amount,0) - (coalesce(ecamt.debit_amount,0) - coalesce(ecamt.credit_amount,0))
+                         when ea.debit_credit_type = 'CR' then coalesce(tmp.credit_amount,0) - coalesce(tmp.debit_amount,0) - (coalesce(ecamt.credit_amount,0) - coalesce(ecamt.debit_amount,0))
+                         else 0 end diff_balance,
+                    '0', ${param.createBy}, now(), ${param.updateBy}, now()
+            from (
+                     select
+                         ev.period_code,
+                         to_char(ev.business_date, 'yyyy-mm-dd') business_date,
+                         to_char(ev.voucher_date, 'yyyy-mm-dd') voucher_date,
+                         ev.system_code ,
+                         ev.org_id ,
+                         eve.contract_code ,
+                         ec.eas_code,
+                         eve.client_code ,
+                         eve.bank_account ,
+                         eve.bill_contract_code ,
+                         eve.account_code ,
+                         ev.currency ,
+                         sum(eve.debit_amount) debit_amount,
+                         sum(eve.credit_amount) credit_amount
+                     from
+                         eg_voucher_entry eve join
+                         eg_voucher ev
+                         on eve.voucher_id = ev.id
+                         left join eg_currency ec
+                         on ev.currency = ec.currency_code
+--                          join eg_account ea on eve.account_code = ea.account_code
+--                          and ea.check_flag = '1'
+                     where 1=1 --to_char(ev.create_time,'YYYY-MM-DD')='2024-03-02'
+                       and ev.period_code = #{param.periodCode}
+                     group by to_char(ev.business_date, 'yyyy-mm-dd'),to_char(ev.voucher_date, 'yyyy-mm-dd'),
+                              ev.system_code ,
+                              ev.org_id ,
+                              eve.contract_code ,
+                              eve.client_code ,
+                              eve.bank_account ,
+                              eve.bill_contract_code ,
+                              eve.account_code ,
+                              ev.currency,
+                              ec.eas_code,
+                              ev.period_code
+                 ) tmp join eg_check_account_middle_tmp ecamt
+                 on tmp.org_id = ecamt.org_id
+                     and tmp.contract_code = ecamt.contract_code
+                     and tmp.eas_code = ecamt.currency_type
+                     and tmp.client_code = ecamt.client_code
+                     and tmp.account_code = ecamt.account_code
+                     and coalesce(tmp.bank_account,'') = coalesce(ecamt.bank_account,'')
+                     and coalesce(tmp.bill_contract_code,'') = coalesce(ecamt.bill_contract_code,'')
+--                      and tmp.bank_account = ecamt.bank_account
+--                      and tmp.bill_contract_code = ecamt.bill_contract_code
+                     and tmp.period_code = ecamt.period_code
+                       join eg_account ea on ecamt.account_code = ea.account_code
+                            and ea.check_flag = '1'
+        </insert>
+
+        <delete id="clearTableData">
+            truncate table eg_check_account_middle_result
+        </delete>
+</mapper>
+

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.TransferRegisterMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.TransferRegisterEntity">
+                    <id column="id" property="id" />
+                    <result column="asset_number" property="assetNumber" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="property_address" property="propertyAddress" />
+                    <result column="debt_asset_value" property="debtAssetValue" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, asset_number, org_id, account_date, contract_code, property_address, debt_asset_value, process_status, process_instance_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+</mapper>
+

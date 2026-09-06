@@ -1,0 +1,429 @@
+import { h } from 'vue'
+import { ElTag } from 'element-plus'
+import { dictMappingToArray, toThousands, dictMappingLabel } from '@/utils'
+export default {
+  hidden: false,
+  title: '凭证汇总',
+  icon: '',
+  name: 'voucherSummary'
+}
+export const optionsConfig = (router, dictData = {}) => ({
+  isIndex: true, // 是否需要序号
+  isIndexFixed: true,
+  isSelection: false, // 是否需要多选
+  isPagination: true, // 是否需要翻页
+  isBorder: true,
+  isOperateHeader: true, // 是否需要table头部操作区域，
+  rowKey: 'id', // 表格唯一id
+  leftCardName: '',
+  isShowSummary: true, // 合并计算表格
+  span: 8,
+  addBtn: {
+    isShow: false
+  },
+  delBtn: {
+    isShow: false
+  },
+  editBtn: {
+    isShow: true,
+    condition: ({ editFlag }) => {
+      return editFlag === '1'
+    }
+  },
+  request: {
+    // 请求参数
+    list: {
+      url: '/engine/finance/voucher/summaryByPage',
+      method: 'post'
+    }
+  },
+
+  columns: [
+    {
+      prop: 'orgIdList',
+      label: '签约主体',
+      type: 'select',
+      search: true,
+      tooltip: true,
+      display: false,
+      hide: true,
+      minWidth: 300,
+      attrs: {
+        filterable: true,
+        multiple: true,
+        'collapse-tags': true,
+        'collapse-tags-tooltip': true
+      },
+      option: dictMappingToArray(dictData, 'company')
+    },
+    {
+      prop: 'orgId',
+      label: '签约主体',
+      type: 'select',
+      tooltip: true,
+      display: false,
+      minWidth: 300,
+      attrs: {
+        filterable: true
+      },
+      option: dictMappingToArray(dictData, 'company'),
+      render: (row) => {
+        return dictMappingLabel(dictData, 'company', row.orgId)
+      }
+    },
+    {
+      prop: 'periodCode',
+      label: '会计期间',
+      search: true,
+      type: 'select',
+      display: false,
+      width: 100,
+      isDefaultvalue: true,
+      attrs: {
+        filterable: true
+      },
+      request: {
+        // 请求参数
+        url: '/engine/scene/account-period/queryAll',
+        method: 'post'
+      },
+      keyValue: {
+        label: 'periodName',
+        value: 'periodCode'
+      }
+    },
+
+    {
+      prop: 'businessDate',
+      label: '业务日期',
+      search: true,
+      display: false,
+      type: 'date',
+      cover: ['businessDateStart', 'businessDateEnd'],
+      width: 110,
+      attrs: {
+        type: 'daterange',
+        'range-separator': '-',
+        'start-placeholder': '开始时间',
+        'end-placeholder': '结束时间',
+        format: 'YYYY-MM-DD',
+        'value-format': 'YYYY-MM-DD'
+      }
+    },
+    {
+      prop: 'voucherDate',
+      label: '记账日期',
+      search: true,
+      display: false,
+      type: 'date',
+      cover: ['voucherDateStart', 'voucherDateEnd'],
+      width: 110,
+      attrs: {
+        type: 'daterange',
+        'range-separator': '-',
+        'start-placeholder': '开始时间',
+        'end-placeholder': '结束时间',
+        format: 'YYYY-MM-DD',
+        'value-format': 'YYYY-MM-DD'
+      }
+    },
+
+    {
+      prop: 'voucherTypeList',
+      label: '凭证类型',
+      search: true,
+      type: 'select',
+      hide: true,
+      display: false,
+      width: 120,
+      attrs: {
+        filterable: true,
+        multiple: true,
+        'collapse-tags': true,
+        'collapse-tags-tooltip': true
+      },
+      option: dictMappingToArray(dictData, 'sys_voucher_type')
+    },
+
+    {
+      prop: 'voucherType',
+      label: '凭证类型',
+      type: 'select',
+      display: false,
+      width: 120,
+      option: dictMappingToArray(dictData, 'sys_voucher_type'),
+      render: (row) => {
+        return (
+          (row.voucherType &&
+            h(ElTag, () => dictMappingLabel(dictData, 'sys_voucher_type', row.voucherType))) ||
+          ''
+        )
+      }
+    },
+
+    {
+      prop: 'voucherNumList',
+      label: '凭证号',
+      search: true,
+      type: 'select-pagination',
+      display: false,
+      hide: true,
+      width: 100,
+      attrs: {
+        multiple: true
+      },
+      request: {
+        // 请求参数
+        url: '/engine/finance/voucher/voucherNumberPage',
+        method: 'post',
+        formKey: 'periodCode'
+      },
+      keyValue: {
+        label: 'voucherNum',
+        value: 'voucherNum'
+      }
+    },
+    {
+      prop: 'voucherNum',
+      label: '凭证号',
+      display: false,
+      width: 100
+    },
+
+    {
+      prop: 'sceneCodeList',
+      label: '业务场景',
+      search: true,
+      type: 'select',
+      display: false,
+      hide: true,
+      attrs: {
+        filterable: true,
+        multiple: true,
+        'collapse-tags': true,
+        'collapse-tags-tooltip': true
+      },
+      request: {
+        url: '/engine/scene/list',
+        method: 'post'
+      },
+      keyValue: {
+        label: 'sceneName',
+        value: 'sceneCode'
+      }
+    },
+    {
+      prop: 'sceneName',
+      label: '业务场景',
+      display: false,
+      width: 200
+    },
+
+    {
+      prop: 'subSceneTypeList',
+      label: '细分场景',
+      width: 200,
+      display: false,
+      type: 'select',
+      search: true,
+      hide: true,
+      attrs: {
+        filterable: true,
+        multiple: true,
+        'collapse-tags': true,
+        'collapse-tags-tooltip': true
+      },
+      option: dictMappingToArray(dictData, 'sys_sub_scene_type')
+    },
+    {
+      prop: 'subSceneType',
+      label: '细分场景',
+      width: 200,
+      display: false,
+      type: 'select',
+      option: dictMappingToArray(dictData, 'sys_sub_scene_type'),
+      render: (row) => {
+        return (
+          (row.subSceneType &&
+            h(ElTag, () => dictMappingLabel(dictData, 'sys_sub_scene_type', row.subSceneType))) ||
+          ''
+        )
+      }
+    },
+
+    {
+      prop: 'voucherSummary',
+      label: '凭证头摘要',
+      display: false,
+      search: true,
+      width: 200
+    },
+
+    {
+      prop: 'accountCodeList',
+      label: '科目代码',
+      search: true,
+      type: 'select',
+      hide: true,
+      attrs: {
+        filterable: true,
+        multiple: true,
+        'collapse-tags': true,
+        'collapse-tags-tooltip': true
+      },
+      request: { url: '/engine/scene/account/listAll', method: 'post' },
+      keyValue: {
+        label: 'accountCode',
+        value: 'accountCode',
+        formatLable: ['accountCode', 'accountName']
+      },
+      width: 200
+    },
+    {
+      prop: 'accountCode',
+      label: '科目代码',
+      width: 200
+    },
+
+    // {
+    //   prop: 'accountNameList',
+    //   label: '科目名称',
+    //   search: true,
+    //   type: 'select',
+    //   hide: true,
+    //   display: false,
+    //   attrs: {
+    //     filterable: true,
+    //     multiple: true,
+    //     'collapse-tags': true,
+    //     'collapse-tags-tooltip': true
+    //   },
+    //   width: 200,
+    //   request: { url: '/engine/scene/account/listAll', method: 'post' },
+    //   keyValue: { label: 'accountName', value: 'accountName' }
+    // },
+    {
+      prop: 'accountName',
+      label: '科目名称',
+      tooltip: true,
+      width: 220
+    },
+    {
+      prop: 'currency',
+      label: '币种',
+      search: true,
+      display: false,
+      type: 'select',
+      width: 100,
+      option: dictMappingToArray(dictData, 'sys_currency_type'),
+      render: (row) => {
+        return (
+          (row.currency &&
+            h(ElTag, () => dictMappingLabel(dictData, 'sys_currency_type', row.currency))) ||
+          ''
+        )
+      }
+    },
+    { width: 200, prop: 'taxRate', label: '汇率' },
+    {
+      prop: 'debitAmount',
+      label: '借方发生额',
+      display: false,
+      width: 200,
+      render: (row) => {
+        return toThousands(row.debitAmount)
+      }
+    },
+    {
+      prop: 'creditAmount',
+      label: '贷方发生额',
+      display: false,
+      width: 200,
+      render: (row) => {
+        return toThousands(row.creditAmount)
+      }
+    },
+
+    {
+      // 展示数据
+      prop: 'createUserNameList',
+      label: '制单人',
+      search: true,
+      type: 'select-pagination',
+      hide: true,
+      width: 200,
+      request: {
+        url: '/admin/sys-internal-user/page',
+        method: 'post'
+      },
+      attrs: {
+        multiple: true
+      },
+      searchName: 'userName',
+      keyValue: {
+        label: 'userName',
+        value: 'userCode',
+        formatLabel: ['userName', 'userCode']
+      }
+    },
+
+    {
+      prop: 'createUserName',
+      label: '制单人',
+      display: false,
+      width: 200
+    },
+    {
+      prop: 'recheckUserName',
+      label: '复核人',
+      display: false,
+      search: true,
+      width: 200
+    },
+    {
+      prop: 'processStatusList',
+      label: '处理状态',
+      display: false,
+      width: 100,
+      search: true,
+      hide: true,
+      type: 'select',
+      attrs: {
+        multiple: true,
+        'collapse-tags': true,
+        'collapse-tags-tooltip': true
+      },
+      option: dictMappingToArray(dictData, 'process_status')
+    },
+    {
+      prop: 'voucherStatus',
+      label: '处理状态',
+      display: false,
+      width: 100,
+      render: (row) => {
+        return (
+          (row.voucherStatus &&
+            h(ElTag, () => dictMappingLabel(dictData, 'process_status', row.voucherStatus))) ||
+          ''
+        )
+      }
+    },
+    {
+      label: '是否涉及其他客户及辅助账',
+      prop: ' isRelatedOtherCustomer',
+      width: 200,
+      search: true,
+      type: 'select',
+      option: dictMappingToArray(dictData, 'is_sys_bool'),
+      render: (row) => {
+        return (
+          (row.isRelatedOtherCustomer &&
+            h(ElTag, () =>
+              dictMappingLabel(dictData, 'is_sys_bool', row.isRelatedOtherCustomer)
+            )) ||
+          ''
+        )
+      }
+    }
+  ]
+})

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.AssetAbsRedeemMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.AssetAbsRedeemEntity">
+                    <id column="id" property="id" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="loan_contract_code" property="loanContractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="periods" property="periods" />
+                    <result column="start_date" property="startDate" />
+                    <result column="actual_date" property="actualDate" />
+                    <result column="process_instance_id" property="processInstanceId" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="period_code" property="periodCode" />
+                    <result column="approve_error_info" property="approveErrorInfo" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, business_date, account_date, loan_contract_code, org_id, periods, start_date, actual_date, process_instance_id, process_status, is_generate_voucher, period_code, approve_error_info, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.AssetAbsRedeemDetailVO">
+        select
+        eaar.loan_contract_code,
+        eaar.business_date,
+        eaar.org_id,
+        eaar.periods,
+        eaard.*
+        from
+        eg_asset_abs_redeem eaar
+        inner join eg_asset_abs_redeem_detail eaard
+        on
+        eaar.id = eaard.asset_abs_redeem_id
+        where
+        1 = 1 and eaar.del_flag ='0' and eaard.del_flag ='0'
+        <if test="param.loanContractCode!=null and param.loanContractCode!=''">
+            and eaar.loan_contract_code = #{param.loanContractCode}
+        </if>
+        <if test="param.businessDate!=null">
+            and to_char(eaar.business_date,'YYYY-MM-DD') = to_char(#{param.businessDate},'YYYY-MM-DD')
+        </if>
+        <if test="param.orgId!=null and param.orgId!=''">
+            and eaar.org_id = #{param.orgId}
+        </if>
+        <if test="param.periods!=null and param.periods!=''">
+            and eaar.periods = #{param.periods}
+        </if>
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and eaard.contract_code = #{param.contractCode}
+        </if>
+    </select>
+</mapper>
+

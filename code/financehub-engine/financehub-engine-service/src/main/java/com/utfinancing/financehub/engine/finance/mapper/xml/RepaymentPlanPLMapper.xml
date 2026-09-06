@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RepaymentPlanPLMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanPLEntity">
+        <id column="id" property="id" />
+        <result column="client_code" property="clientCode" />
+        <result column="client_name" property="clientName" />
+        <result column="contract_code" property="contractCode" />
+        <result column="contract_name" property="contractName" />
+        <result column="plan_date" property="planDate" />
+        <result column="rent_amount" property="rentAmount" />
+        <result column="principal_amount" property="principalAmount" />
+        <result column="interest_amount" property="interestAmount" />
+        <result column="principal_tax" property="principalTax" />
+        <result column="interest_tax" property="interestTax" />
+        <result column="outflow_amount" property="outflowAmount" />
+        <result column="planned_interest" property="plannedInterest" />
+        <result column="planned_principal" property="plannedPrincipal" />
+        <result column="cash_flow" property="cashFlow" />
+        <result column="opening_amortized_cost" property="openingAmortizedCost" />
+        <result column="ending_amortized_cost" property="endingAmortizedCost" />
+        <result column="actual_daily_rate" property="actualDailyRate" />
+        <result column="rental_income" property="rentalIncome" />
+        <result column="service_fee_amortization_rate" property="serviceFeeAmortizationRate" />
+        <result column="service_fee_amortization_income" property="serviceFeeAmortizationIncome" />
+        <result column="xirr_rate" property="xirrRate" />
+        <result column="actual_repayment_date" property="actualRepaymentDate" />
+        <result column="actual_repayment_principal_balance" property="actualRepaymentPrincipalBalance" />
+        <result column="actual_repayment_principal_amount" property="actualRepaymentPrincipalAmount" />
+        <result column="actual_repayment_interes_balance" property="actualRepaymentInteresBalance" />
+        <result column="actual_repayment_interes_amount" property="actualRepaymentInteresAmount" />
+        <result column="recapture_status" property="recaptureStatus" />
+        <result column="overdue_earnings" property="overdueEarnings" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+        <result column="message_id" property="messageId" />
+        <result column="system_code" property="systemCode" />
+        <result column="periods" property="periods" />
+        <result column="org_id" property="orgId" />
+        <result column="accrued" property="accrued" />
+        <result column="income_provision_method" property="incomeProvisionMethod" />
+        <result column="amortized" property="amortized" />
+        <result column="source_irr_rate" property="sourceIrrRate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, client_code, client_name, contract_code, contract_name, plan_date, rent_amount, principal_amount, interest_amount,
+        principal_tax, interest_tax, outflow_amount, planned_interest, planned_principal, cash_flow, opening_amortized_cost,
+        ending_amortized_cost, actual_daily_rate, rental_income, service_fee_amortization_rate, service_fee_amortization_income,
+        xirr_rate, actual_repayment_date, actual_repayment_principal_balance, actual_repayment_principal_amount, actual_repayment_interes_balance,
+        actual_repayment_interes_amount, recapture_status, overdue_earnings, create_by, create_time, update_by, update_time, del_flag, message_id, system_code,
+        periods, org_id, accrued, income_provision_method, amortized, comment, source_irr_rate
+    </sql>
+
+    <select id="getDataCount" resultType="java.lang.Integer">
+        select count(1) from (
+            select contract_code
+            from eg_repayment_plan_pl
+            where del_flag = '0' and periods=-1
+            group by contract_code
+        ) a
+    </select>
+
+    <select id="selectHyInitDataByPage" parameterType="com.utfinancing.financehub.engine.finance.model.dto.GetProcessDataDTO" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from eg_repayment_plan_pl
+        where
+            del_flag = '0'
+            and contract_code in (
+                select contract_code from eg_repayment_plan_pl erph
+                where del_flag = '0' and periods=-1
+                group by contract_code
+                order by contract_code
+                limit #{pageSize} offset #{pageNum}
+            )
+        order by contract_code , plan_date
+    </select>
+
+    <delete id="outstandingAmountInitCashFlowDel">
+        delete from eg_repayment_plan_pl where periods=-1
+    </delete>
+
+    <select id="outstandingAmountCashFlowSum" parameterType="com.utfinancing.financehub.engine.finance.model.dto.OutstandingAmountCashFlowSumInputDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.OutstandingAmountCashFlowSumDTO">
+
+        select
+            oai.contract_code as contractCode ,
+            coalesce(pl.cashFlowSum,0) as cashFlowSum,
+            (coalesce(pl.cashFlowSum,0) + (coalesce(oai.end_balance_for, 0) + coalesce(na.service_no_amortization_amout, 0))) * -1 as cashflowInit
+        from (
+            select
+                contract_code contractCode,
+                sum(cash_flow) cashFlowSum
+            from eg_repayment_plan_pl pl
+            where
+                del_flag ='0' and plan_date <![CDATA[>]]> #{params.initDate}
+            group by contract_code
+            order by contract_code
+        ) pl
+        right join (
+            select contract_code, account_number, sum(end_balance_for) end_balance_for  from eg_outstanding_amount_init
+            where account_number in ('1532.01', '1505.03.02') and coalesce(end_balance_for, 0) != 0
+            group by contract_code , account_number
+        ) oai on pl.contractCode = oai.contract_code
+        left join eg_service_no_amortization na on na.contract_code = pl.contractCode
+        where oai.contract_code is not null
+        <if test="params.contractCode != '' and params.contractCode != null">
+            and  oai.contract_code = #{params.contractCode}
+        </if>
+        <!--left join (
+            select contract_code, account_number, sum(end_balance_for) end_balance_for  from eg_outstanding_amount_init
+            where account_number = '1531.01.03'
+            group by contract_code , account_number
+        ) oaia on pl.contractCode = oaia.contract_code and oaia.account_number = '1531.01.03'-->
+    </select>
+
+    <select id="selectMaxDateDateByInitDate" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+            t1.id, t1.client_code, t1.client_name, t1.contract_code, t1.contract_name, t1.plan_date, t1.rent_amount, t1.principal_amount, t1.interest_amount,
+            t1.principal_tax, t1.interest_tax, t1.outflow_amount, t1.planned_interest, t1.planned_principal, t1.cash_flow, t1.opening_amortized_cost,
+            t1.ending_amortized_cost, t1.actual_daily_rate, t1.rental_income, t1.service_fee_amortization_rate, t1.service_fee_amortization_income,
+            t1.xirr_rate, t1.actual_repayment_date, t1.actual_repayment_principal_balance, t1.actual_repayment_principal_amount, t1.actual_repayment_interes_balance,
+            t1.actual_repayment_interes_amount, t1.recapture_status, t1.overdue_earnings, t1.create_by, t1.create_time, t1.update_by, t1.update_time, t1.del_flag, t1.message_id, t1.system_code,
+            t1.periods, t1.org_id, t1.accrued, t1.income_provision_method, t1.amortized, t1.comment, t1.source_irr_rate
+        from eg_repayment_plan_pl t1
+        inner join (
+            select contract_code , max(plan_date) plan_date
+            from eg_repayment_plan_pl
+            where del_flag='0'
+                and plan_date <![CDATA[<=]]> #{initDate}
+                group by contract_code
+        ) t2 on t1.contract_code = t2.contract_code and t1.plan_date = t2.plan_date
+        where del_flag ='0'
+        order by t1.contract_code, t1.plan_date desc
+    </select>
+
+
+    <insert id="saveExpirationOfContractData">
+        insert into eg_repayment_plan
+        select * from eg_repayment_plan_pl
+        where exception_type='合同最后期数小于2023-01-01'
+    </insert>
+
+
+    <update id="updNoVliadData">
+        with t1 as (
+            select max(plan_date) plan_date,contract_code
+            from eg_repayment_plan_pl
+            where rent_amount != 0 or principal_amount != 0 or interest_amount != 0
+            group by contract_code
+        )
+        update eg_repayment_plan_pl a set del_flag ='1'
+        from t1
+        where t1.contract_code = a.contract_code
+            and a.del_flag ='0' and a.cash_flow = 0
+            and a.rent_amount  = 0
+            and a.interest_amount = 0
+            and a.principal_amount = 0
+            and a.plan_date > t1.plan_date
+    </update>
+</mapper>

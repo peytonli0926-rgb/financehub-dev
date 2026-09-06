@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.kingdee.mapper.TGLAssistBalanceMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.kingdee.entity.TGLAssistBalanceEntity">
+        <result column="contractCode" property="contractCode"/>
+        <result column="clientCode" property="clientCode"/>
+        <result column="currency" property="currency"/>
+        <result column="accountNumber" property="accountNumber"/>
+        <result column="accountName" property="accountName"/>
+        <result column="orgId" property="orgId"/>
+        <result column="endBalanceFor" property="endBalanceFor"/>
+        <result column="beginBalanceFor" property="beginBalanceFor"/>
+        <result column="period" property="period"/>
+    </resultMap>
+
+    <select id="selectOutstandingData" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+            tbm.fnumber contractCode,
+            tbc1.FNUMBER clientCode,
+            tbc.FNAME_L2 currency,
+            ga.FNUMBER accountNumber,
+            ga.FNAME_L2 accountName,
+            gba.FENDBALANCEFOR endBalanceFor,
+            gba.FBEGINBALANCEFOR beginBalanceFor,
+            toc.FNUMBER orgId,
+            gba.FPERIOD period
+        FROM HXORACLE.T_GL_AssistBalance_5F GBA
+        LEFT OUTER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =gba.FORGUNITID
+        LEFT OUTER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA ON GBA.FACCOUNTID = GA.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CURRENCY tbc ON gba.FCURRENCYID =tbc.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_ASSISTANTHG GS ON GBA.FASSISTGRPID =GS.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON GS.FMATERIALID =TBM.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON GS.FCUSTOMERID =TBC1.FID
+        WHERE GBA.FPERIOD = #{period} -- AND toc.FNUMBER IN ('01-C0001')
+            AND GA.FNUMBER IN ('1532.01','1531.01.03')
+            -- AND tbm.FNUMBER ='L21B108610'
+    </select>
+
+    <select id="selectVoucherDataInit" parameterType="com.utfinancing.financehub.etl.kingdee.model.dto.TGLVoucherInitDTO" resultType="com.utfinancing.financehub.etl.kingdee.model.dto.TGLVoucherInitDTO">
+        SELECT
+            gv.FID fid,toc.FNUMBER orgId,tbp.FNUMBER period,
+            tbm.fnumber contractCode,tbc1.FNUMBER clientCode ,
+            --ga.FASSGRPID ,tbc.FNAME_L2 "CurrencyNAME" ,
+            ga1.FNUMBER accountNumber,ga1.FNAME_L2 accountName,
+            gv.FABSTRACT fabStract,
+            NULLIF(DECODE(GE.FENTRYDC, '1', COALESCE(GA.FLOCALAMOUNT,GE.FLOCALAMOUNT), '0'), 0) dtAmount,--凭证分录借方金额
+            NULLIF(DECODE(GE.FENTRYDC, '0', COALESCE(GA.FLOCALAMOUNT,GE.FLOCALAMOUNT), '0'), 0) crAmount --凭证分录贷方金额
+            --toc.FNUMBER "ORGID",GV.FTOC.FNAME_L2 "ORGNAME",tbp.FNUMBER "PeriodName" ,GE.*,GV.*
+        FROM HXORACLE.T_GL_VOUCHER GV
+        INNER JOIN HXORACLE.T_ORG_COMPANY toc ON toc.FID =gv.FCOMPANYID
+        INNER JOIN HXORACLE.T_BD_PERIOD TBP ON TBP.FID =gv.FPERIODID
+        INNER JOIN HXORACLE.T_GL_VOUCHERENTRY GE ON GV.FID = GE.FBILLID
+        INNER JOIN HXORACLE.T_BD_CURRENCY tbc ON GE.FCURRENCYID =tbc.FID
+        LEFT JOIN HXORACLE.T_GL_VOUCHERASSISTRECORD GA ON GE.FID =GA.FENTRYID
+        LEFT JOIN HXORACLE.T_BD_ASSISTANTHG HG ON HG.FID =GA.FASSGRPID
+        INNER JOIN HXORACLE.T_BD_ACCOUNTVIEW GA1 ON GE.FACCOUNTID =GA1.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_MATERIAL tbm ON HG.FMATERIALID =TBM.FID
+        LEFT OUTER JOIN HXORACLE.T_BD_CUSTOMER tbc1 ON HG.FCUSTOMERID =TBC1.FID
+        WHERE tbp.FNUMBER BETWEEN #{startPeriod} AND #{endPeriod}
+            and gv.FBIZSTATUS =5
+            AND tbm.fnumber = #{contractCode}
+            AND (gv.FABSTRACT LIKE '确认%收益' or gv.FABSTRACT LIKE '计提%收益')
+            AND ga1.FNUMBER in ('1532.01', '1505.03.02')
+    </select>
+    
+</mapper>
+

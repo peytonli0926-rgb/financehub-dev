@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.financial.mapper.OutstandingAmountInitMapper">
+
+        <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.financial.entity.OutstandingAmountInitEntity">
+        <id column="id" property="id" />
+        <result column="contract_code" property="contractCode" />
+        <result column="account_number" property="accountNumber" />
+        <result column="account_name" property="accountName" />
+        <result column="client_code" property="clientCode" />
+        <result column="org_id" property="orgId" />
+        <result column="end_balance_for" property="endBalanceFor" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, contract_code, account_number, account_name, client_code, org_id, end_balance_for
+    </sql>
+
+</mapper>
+

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.CostChannelFeeMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.CostChannelFeeEntity">
+                    <id column="id" property="id" />
+                    <result column="channel_type" property="channelType" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="channel_code" property="channelCode" />
+                    <result column="channel_name" property="channelName" />
+                    <result column="host_factory" property="hostFactory" />
+                    <result column="actual_amount" property="actualAmount" />
+                    <result column="no_tax_transaction_amount" property="noTaxTransactionAmount" />
+                    <result column="structure_type" property="structureType" />
+                    <result column="voucher_ids" property="voucherIds" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="is_contract_status" property="isContractStatus"/>
+                    <result column="is_contract_status" property="isContractStatus"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, channel_type, contract_code, channel_code, channel_name, host_factory, actual_amount, no_tax_transaction_amount, structure_type, voucher_ids, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+    <select id="selectPageByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.CostChannelFeeVO">
+        select
+            x.*,
+            ec.contract_name,
+            ec.contract_status,
+            ec.financial_contract_status
+        from
+            eg_cost_channel_fee x
+                left join eg_contract ec on
+                x.contract_code = ec.contract_code
+        where
+            1 = 1
+          and x.del_flag = '0'
+          and ec.del_flag = '0'
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and x.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.channelType!=null and param.channelType!=''">
+            and x.channel_type = #{param.channelType}
+        </if>
+        <if test="param.contractName!=null and param.contractName!=''">
+            and ec.contract_name like concat('%', #{param.contractName}::text, '%')
+        </if>
+        <if test="param.contractStatusList != null and param.contractStatusList.size > 0">
+            and ec.contract_status in
+            <foreach item="item" index="index" collection="param.contractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and x.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startBusinessDate!=null">
+            and to_char(x.business_date,'yyyy-MM-dd') >= to_char(to_date(#{param.startBusinessDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endBusinessDate!=null">
+            and to_char(x.business_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.endBusinessDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.startFinancialDate!=null">
+            and to_char(x.financial_date,'yyyy-MM-dd') >= to_char(to_date(#{param.startFinancialDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endFinancialDate!=null">
+            and to_char(x.financial_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.endFinancialDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.expenseMainCategoryType!=null and param.expenseMainCategoryType!=''">
+            and x.expense_main_category_type = #{param.expenseMainCategoryType}
+        </if>
+        <if test="param.id!=null">
+            and x.id = #{param.id}
+        </if>
+    </select>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.CostChannelFeeVO">
+        select
+        x.*,
+        ec.contract_name,
+        ec.contract_status,
+        ec.financial_contract_status,
+        eoc.org_name as org_id_name
+        from
+        eg_cost_channel_fee x
+        left join eg_contract ec on
+        x.contract_code = ec.contract_code
+        and x.org_id = ec.org_id
+        and ec.del_flag = '0'
+        left join eg_org_company eoc on
+        x.org_id = eoc.org_id
+        and eoc.del_flag = '0'
+        where
+        1 = 1
+        and x.del_flag = '0'
+        <if test="param.channelType!=null and param.channelType!=''">
+            and x.channel_type = #{param.channelType}
+        </if>
+        <if test="param.expenseMainCategoryType!=null and param.expenseMainCategoryType!=''">
+            and x.expense_main_category_type = #{param.expenseMainCategoryType}
+        </if>
+        <if test="param.contractCode!=null and param.contractCode!=''">
+            and x.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.contractName!=null and param.contractName!=''">
+            and ec.contract_name like concat('%', #{param.contractName}::text, '%')
+        </if>
+        <if test="param.contractStatusList != null and param.contractStatusList.size > 0">
+            and ec.contract_status in
+            <foreach item="item" index="index" collection="param.contractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and x.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.startBusinessDate!=null">
+            and to_char(x.business_date,'yyyy-MM-dd') >= to_char(to_date(#{param.startBusinessDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.endBusinessDate!=null">
+            and to_char(x.business_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.endBusinessDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="param.idList != null and param.idList.size > 0">
+            and x.id in
+            <foreach item="item" index="index" collection="param.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>
+

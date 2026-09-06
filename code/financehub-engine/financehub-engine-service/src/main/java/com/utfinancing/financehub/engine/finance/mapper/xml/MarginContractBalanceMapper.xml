@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.MarginContractBalanceMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.MarginContractBalanceEntity">
+                    <id column="id" property="id" />
+                    <result column="balance_date" property="balanceDate" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="entry_date" property="entryDate" />
+                    <result column="finance_date" property="financeDate" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="account_period" property="accountPeriod" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="account_name" property="accountName" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="contract_balance" property="contractBalance" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="within_one_year" property="withinOneYear" />
+                    <result column="within_one_year_deposit" property="withinOneYearDeposit" />
+                    <result column="deposit_interest_expense" property="depositInterestExpense" />
+                    <result column="deposit_interest_income" property="depositInterestIncome" />
+                    <result column="lpr" property="lpr" />
+                    <result column="pv" property="pv" />
+                    <result column="principal_amount" property="principalAmount" />
+                    <result column="current_enter_pl" property="currentEnterPl" />
+                    <result column="margin_status" property="marginStatus" />
+                    <result column="submit_by" property="submitBy" />
+                    <result column="margin_type" property="marginType" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, contract_name, account_period, client_code, client_name, org_id, account_code, account_name, lease_date_start, lease_date_end,
+            business_code, business_name, account_category, currency_type, contract_balance, create_by, create_time, update_by, update_time, del_flag, submit_by
+        </sql>
+
+    <sql id="eg_contract_balance_uni_eg_contract_balance_month">
+        select t.contract_code,
+               t.client_code,
+               t.org_id,
+               t.bill_contract_code,
+               max(id) id,
+               sum(t.supplier_margin_amount) supplier_margin_balance,
+               sum(t.payable_margin_amount)  payable_margin_balance,
+               sum(t.other_margin_amount)    other_margin_balance,
+               sum(t.lessee_margin_amount)   lessee_margin_balance
+        from (select id
+                   , contract_code
+                   , client_code
+                   , org_id
+                   , bill_contract_code
+                   , supplier_margin_amount
+                   , other_margin_amount
+                   , payable_margin_amount
+                   , lessee_margin_amount
+              from eg_contract_balance
+              where period_code = #{param.periodCode}
+              union all
+              select null id,
+                     contract_code,
+                     client_code,
+                     org_id,
+                     bill_contract_code,
+                     supplier_margin_balance supplier_margin_amount,
+                     payable_margin_balance  other_margin_amount,
+                     other_margin_balance    payable_margin_amount,
+                     lessee_margin_balance   lessee_margin_amount
+              from eg_contract_balance_month
+              where period_code = #{param.lastPeriodCode}) t
+        group by t.contract_code, t.client_code, t.org_id, t.bill_contract_code
+    </sql>
+    <insert id="initLastMonthBalance">
+        insert
+        into
+        eg_margin_contract_balance_temp ( contract_code, org_id, client_code,bill_contract_code, business_code, contract_name , lease_date_start , lease_date_end , business_name , currency_type , client_name, supplier_margin_balance, payable_margin_balance, other_margin_balance, lessee_margin_balance )
+        select
+        t.contract_code,
+        t.org_id,
+        case when t.client_code is null then '0' else t.client_code end as client_code,
+        case when t.bill_contract_code is null then '0' else t.bill_contract_code end as bill_contract_code,
+        case
+        when ec.business_code is null then 'ZLYW'
+        else ec.business_code
+        end as business_code,
+        ec.contract_name ,
+        ec.lease_date_start ,
+        ec.lease_date_end ,
+        ec.business_name ,
+        ec.currency_type ,
+        '' as client_name,
+        coalesce(t.supplier_margin_balance, 0) as supplier_margin_balance,
+        coalesce(t.payable_margin_balance, 0) as payable_margin_balance,
+        coalesce(t.other_margin_balance, 0) as other_margin_balance,
+        coalesce(t.lessee_margin_balance, 0) as lessee_margin_balance
+        from
+        (
+        select
+        a.contract_code, a.org_id,a.client_code,a.bill_contract_code,sum(coalesce(a.supplier_margin_balance, 0)) as supplier_margin_balance, sum(coalesce(a.payable_margin_balance, 0)) as payable_margin_balance, sum(coalesce(a.other_margin_balance, 0)) as other_margin_balance, sum(coalesce(a.lessee_margin_balance, 0)) as lessee_margin_balance
+        from
+        (
+        select
+        *
+        from
+        eg_contract_balance_month
+        where
+        1 = 1
+        and (supplier_margin_balance != 0
+        or payable_margin_balance != 0
+        or other_margin_balance != 0
+        or lessee_margin_balance != 0)
+        and period_code = #{param.lastPeriodCode}
+        and org_id in ('01-C0001','02-C0001','30001','80001')
+        <if test="param.orgId != null and param.orgId != ''">
+            and org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.businessCodeList != null and param.businessCodeList.size > 0">
+            and business_code in
+            <foreach item="item" index="index" collection="param.businessCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by
+        contract_code, org_id,client_code, bill_contract_code ) a
+        where
+        1 = 1
+        group by
+        a.contract_code, a.org_id,a.client_code, a.bill_contract_code) t
+        left join (select org_id,
+            contract_code,
+            max(business_code)    business_code,
+            max(contract_name)    contract_name,
+            min(lease_date_start) lease_date_start,
+            max(lease_date_end)   lease_date_end,
+            max(business_name)    business_name,
+            max(currency_type)    currency_type
+            from eg_contract_month
+            group by org_id, contract_code) ec on
+        ec.contract_code = t.contract_code
+        and ec.org_id = t.org_id
+        where
+        1 = 1
+        and (t.supplier_margin_balance != 0
+        or t.payable_margin_balance != 0
+        or t.other_margin_balance != 0
+        or t.lessee_margin_balance != 0)
+    </insert>
+    <insert id="initContractBalance">
+        insert
+        into
+        eg_margin_contract_balance_temp (
+        contract_code,
+        org_id,
+        client_code,
+        bill_contract_code,
+        business_code,
+        contract_name ,
+        lease_date_start ,
+        lease_date_end ,
+        business_name ,
+        currency_type ,
+        client_name,
+        supplier_margin_balance,
+        payable_margin_balance,
+        other_margin_balance,
+        lessee_margin_balance
+        )
+        select
+        distinct on(t.contract_code,
+        t.org_id,t.client_code,t.bill_contract_code)
+        t.contract_code,
+        t.org_id,
+        case when t.client_code is null then '0' else t.client_code end as client_code,
+        case when t.bill_contract_code is null then '0' else t.bill_contract_code end as bill_contract_code,
+        case
+        when ec.business_code is null then 'ZLYW'
+        else ec.business_code
+        end as business_code,
+        ec.contract_name ,
+        ec.lease_date_start ,
+        ec.lease_date_end ,
+        ec.business_name ,
+        ec.currency_type ,
+        '' as client_name,
+        t.supplier_margin_balance,
+        t.payable_margin_balance,
+        t.other_margin_balance,
+        t.lessee_margin_balance
+        from
+        (
+        select
+        a.contract_code,
+        a.org_id,
+        a.client_code,
+        a.bill_contract_code,
+        sum(coalesce(a.supplier_margin_balance,0)) as supplier_margin_balance,
+        sum(coalesce(a.payable_margin_balance,0)) as payable_margin_balance,
+        sum(coalesce(a.other_margin_balance,0)) as other_margin_balance,
+        sum(coalesce(a.lessee_margin_balance,0)) as lessee_margin_balance
+        from
+        (<include refid="eg_contract_balance_uni_eg_contract_balance_month"/>) a
+        inner join (
+        select
+        contract_code,
+        org_id,
+        client_code,
+        bill_contract_code,
+        max(id) id
+        from
+        eg_contract_balance
+        where
+        period_code = #{param.periodCode}
+        and org_id in ('01-C0001','02-C0001','30001','80001')
+        <if test="param.orgId != null and param.orgId != ''">
+            and org_id = #{param.orgId}
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.businessCodeList != null and param.businessCodeList.size > 0">
+            and business_code in
+            <foreach item="item" index="index" collection="param.businessCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and del_flag = '0'
+        and contract_code is not null
+        and org_id is not null
+        group by
+        contract_code,
+        org_id,
+        client_code,
+        bill_contract_code
+        ) b on
+        a.id = b.id
+        where 1=1
+        group by
+        a.contract_code,
+        a.org_id,
+        a.client_code,
+        a.bill_contract_code
+        ) t
+        left join (select org_id,
+            contract_code,
+            max(business_code)    business_code,
+            max(contract_name)    contract_name,
+            min(lease_date_start) lease_date_start,
+            max(lease_date_end)   lease_date_end,
+            max(business_name)    business_name,
+            max(currency_type)    currency_type
+            from eg_contract_month
+            group by org_id, contract_code) ec on
+        t.contract_code = ec.contract_code
+        and ec.org_id = t.org_id
+        where 1=1
+        on
+        conflict (contract_code,
+        org_id,client_code,bill_contract_code) do
+        update
+        set
+        supplier_margin_balance = excluded.supplier_margin_balance,
+        lessee_margin_balance = excluded.lessee_margin_balance,
+        payable_margin_balance = excluded.payable_margin_balance,
+        other_margin_balance =excluded.other_margin_balance
+    </insert>
+    <update id="updateSpecialContractBalance">
+
+        update eg_margin_contract_balance_temp
+            set business_code = #{businessCode}
+        WHERE contract_code in
+        <foreach collection="list" index="index" item="contractCode" open="(" separator="," close=")">
+            #{contractCode}
+        </foreach>
+    </update>
+    <delete id="clearMarginTemp">
+        truncate table eg_margin_contract_balance_temp
+    </delete>
+    <select id="selectSummaryInfo"
+            resultType="com.utfinancing.financehub.engine.finance.entity.MarginContractBalanceEntity">
+        select b.batch_id
+        , a.org_id
+        , a.balance_date
+        , a.margin_type
+        , a.account_code
+        , a.account_name
+        , a.business_date
+        , a.finance_date
+        , a.margin_status
+        , a.is_generate_voucher
+        , b.within_one_year_deposit
+        , b.deposit_interest_expense
+        , b.deposit_interest_income
+        from eg_margin_contract_balance a,
+        (select max(id) as id
+        , batch_id
+        , sum(within_one_year_deposit) within_one_year_deposit
+        , sum(deposit_interest_expense) deposit_interest_expense
+        , sum(deposit_interest_income) deposit_interest_income
+        from eg_margin_contract_balance
+        where
+        del_flag = '0' and margin_type is not null
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+            and account_code in
+            <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.batchId !=null">
+            and batch_id = #{param.batchId}
+        </if>
+        <if test="param.balanceDate!=null">
+            and balance_date = #{param.balanceDate}
+        </if>
+        <if test="param.marginType!=null and param.marginType!=''">
+            and margin_type = #{param.marginType}
+        </if>
+        group by batch_id) b
+        where a.id = b.id
+        and a.batch_id = b.batch_id
+    </select>
+    <select id="getLastMonth"
+            resultType="com.utfinancing.financehub.engine.finance.entity.MarginContractBalanceEntity">
+        select b.batch_id
+        , a.org_id
+        , a.balance_date
+        , a.margin_type
+        , a.account_code
+        , a.account_name
+        , a.business_date
+        , a.finance_date
+        , a.margin_status
+        , a.is_generate_voucher
+        , b.within_one_year_deposit
+        , b.deposit_interest_expense
+        , b.deposit_interest_income
+        from eg_margin_contract_balance a,
+        (select max(id) as id
+        , batch_id
+        , sum(within_one_year_deposit) within_one_year_deposit
+        , sum(deposit_interest_expense) deposit_interest_expense
+        , sum(deposit_interest_income) deposit_interest_income
+        from eg_margin_contract_balance
+        where
+        del_flag = '0' and margin_type is not null
+        and margin_status in ('2','3','4')
+        and org_id = #{param.orgId}
+        and account_code = #{param.accountCode}
+        and to_char(business_date,'YYYY-MM') = #{param.businessDateMonth}
+        and margin_type = #{param.marginType}
+        group by batch_id) b
+        where a.id = b.id
+        and a.batch_id = b.batch_id
+        limit 1
+    </select>
+    <select id="selectMarginContractTemp" resultType="java.util.Map">
+        select
+        t.contract_code,
+        t.org_id,
+        t.business_code,
+        t.contract_name,
+        t.lease_date_start,
+        t.lease_date_end,
+        t.business_name,
+        t.currency_type,
+        sum(t.supplier_margin_balance) as supplier_margin_balance,
+        sum(t.payable_margin_balance) as payable_margin_balance,
+        sum(t.other_margin_balance) as other_margin_balance,
+        sum(t.lessee_margin_balance) as lessee_margin_balance
+        from
+        eg_margin_contract_balance_temp t
+        where
+        1 = 1
+        group by
+        t.contract_code,
+        t.org_id,
+        t.business_code,
+        t.contract_name,
+        t.lease_date_start,
+        t.lease_date_end,
+        t.business_name,
+        t.currency_type
+    </select>
+</mapper>

@@ -1,0 +1,2 @@
+ALTER TABLE eg_non_confirm_collection_account_checking ADD operate_history_comments varchar(2000) NULL;
+COMMENT ON COLUMN eg_non_confirm_collection_account_checking.operate_history_comments IS '运营部历史备注';

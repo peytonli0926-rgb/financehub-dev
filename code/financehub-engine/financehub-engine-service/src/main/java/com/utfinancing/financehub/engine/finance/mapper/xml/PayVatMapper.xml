@@ -1,0 +1,723 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.PayVatMapper">
+
+    <sql id="tempSql">
+        with eccd as (select
+        a.execute_date,
+        a.contract_code,
+        a.org_id,
+        coalesce (a.amount::numeric , 0) amount
+        from
+        ( select
+        execute_date,
+        query_field::json ->>'CONTRACT_CODE' as contract_code,
+        query_field::json ->>'ORG_ID' as org_id,
+        query_field::json ->>'AMOUNT' as amount
+        from
+        eg_check_common_data
+        where del_flag='0'
+        and business_type = 'ysxxs'
+        and to_char(execute_date, 'yyyy-MM-dd')=(
+        select
+        max(to_char(execute_date, 'yyyy-MM-dd'))
+        from
+        eg_check_common_data
+        where
+        business_type = 'ysxxs') ) a)
+        , ec_t AS (
+        SELECT
+        contract_code,
+        lease_type
+        FROM (
+        SELECT
+        lease_type,
+        contract_code,
+        ROW_NUMBER() OVER (PARTITION BY contract_code ORDER BY id DESC) AS rn
+        FROM eg_contract
+        ) AS subquery
+        WHERE rn = 1
+        )
+        , erp as (select erp.contract_code,erp.org_id,sum(coalesce(rent_amount, 0)) as rent_amount
+        from (select * from eg_repayment_plan erp order by erp.contract_code, erp.org_id) erp
+        where del_flag='0' group by erp.contract_code,erp.org_id)
+
+        , tgr as (
+            select
+                tax_rate/100 as tax_rate
+            from eg_tax_rate
+            where
+                fund_type ='tax_general'
+                and lease_type = '回租'
+                and business_code ='ZLYW'
+                and enable_flag ='1'
+                and del_flag ='0'
+        ),
+        rc as (
+            select
+                tax_rate/100 as tax_rate
+            from eg_tax_rate
+            where
+                fund_type ='receivable_commission'
+                and lease_type = '回租'
+                and business_code ='ZLYW'
+                and enable_flag ='1'
+                and del_flag ='0'
+        ),
+        ri as (
+            select
+                tax_rate/100 as tax_rate
+            from eg_tax_rate
+            where
+                fund_type ='receivable_insurance'
+                and lease_type = '回租'
+                and business_code ='ZLYW'
+                and enable_flag ='1'
+                and del_flag ='0'
+        ),
+
+        tgr1 as (
+            select
+                tax_rate/100 as tax_rate
+            from eg_tax_rate
+            where
+                fund_type ='tax_general'
+                and lease_type = '直租'
+                and business_code ='ZLYW'
+                and enable_flag ='1'
+                and del_flag ='0'
+        ),
+        rc1 as (
+            select
+                tax_rate/100 as tax_rate
+            from eg_tax_rate
+            where
+                fund_type ='receivable_commission'
+                and lease_type = '直租'
+                and business_code ='ZLYW'
+                and enable_flag ='1'
+                and del_flag ='0'
+        ),
+        ri1 as (
+            select
+                tax_rate/100 as tax_rate
+            from eg_tax_rate
+            where
+                fund_type ='receivable_insurance'
+                and lease_type = '直租'
+                and business_code ='ZLYW'
+                and enable_flag ='1'
+                and del_flag ='0'
+        )
+        , tp as (
+            select
+                ec.contract_code ,
+                ec.org_id ,
+                case when ec.lease_type = '回租' and ec.system_code not in ('CYCXT', 'SYCXT') then
+                    (coalesce (erp.rent_amount,0) + coalesce (receivable_first_amount, 0)+ coalesce (retained_price, 0)
+                    -coalesce (payable_device_amount, 0))/(1+tgr.tax_rate)*tgr.tax_rate
+                    +coalesce (receivable_procedure_amount, 0)/(1+rc.tax_rate)+rc.tax_rate
+                    +coalesce (receivable_insurance_amount, 0)/(1+ri.tax_rate)+ri.tax_rate
+                when ec.lease_type = '回租' and ec.system_code in ('CYCXT', 'SYCXT') then
+                    (coalesce (erp.rent_amount,0) + coalesce (receivable_first_amount, 0)+ coalesce (retained_price, 0)
+                    -coalesce (payable_device_amount, 0))/(1+tgr.tax_rate)*tgr.tax_rate
+                    +coalesce (receivable_procedure_amount, 0)/(1+rc.tax_rate)+rc.tax_rate
+                when ec.lease_type = '直租' and ec.system_code not in ('CYCXT', 'SYCXT') then
+                    (coalesce (erp.rent_amount,0) + coalesce (receivable_first_amount, 0)
+                    + coalesce (retained_price, 0))/(1+tgr1.tax_rate)*tgr1.tax_rate
+                    +coalesce (receivable_procedure_amount, 0)/(1+rc1.tax_rate)+rc1.tax_rate
+                    +coalesce (receivable_insurance_amount, 0)/(1+ri1.tax_rate)+ri1.tax_rate
+                when ec.lease_type = '直租' and ec.system_code in ('CYCXT', 'SYCXT') then
+                    (coalesce (erp.rent_amount,0) + coalesce (receivable_first_amount, 0)
+                    + coalesce (retained_price, 0))/(1+tgr1.tax_rate)*tgr1.tax_rate
+                    +coalesce (receivable_procedure_amount, 0)/(1+rc1.tax_rate)+rc1.tax_rate
+                else 0
+                end tax_payable
+            from eg_contract ec
+            left join erp on erp.contract_code = ec.contract_code and erp.org_id = ec.org_id
+            left join tgr on 1=1
+            left join rc on 1=1
+            left join ri on 1=1
+            left join tgr1 on 1=1
+            left join rc1 on 1=1
+            left join ri1 on 1=1
+        )
+        , erp_t AS (
+        SELECT
+        contract_code,
+        org_id,
+        service_fee_received,
+        actual_repayment_date
+        FROM (
+        SELECT
+        service_fee_received,
+        actual_repayment_date::TIMESTAMP,
+        contract_code,
+        org_id,
+        ROW_NUMBER() OVER (PARTITION BY contract_code,org_id ORDER BY id DESC) AS rn
+        FROM eg_repayment_plan
+        ) AS t
+        WHERE rn = 1
+        )
+    </sql>
+
+    <!--<select id="payVatGetContract" resultType="com.utfinancing.financehub.engine.finance.model.dto.PayVatDTO">
+        <include refid="tempSql"/>
+        select
+        a.*,
+        a.taxPayable-a.taxAccrued-a.taxInvoiced as actualTaxBalance
+        from (
+        select
+        epv.id,
+        ec.*,
+        eic.tax_value as taxAccrued,
+        easd.real_accrual_tax_amount as taxInvoiced,
+        coalesce(case when ec.contract_type = '租赁' then ecbl.receivable_outtax_balance
+        when ec.contract_type = '服务费' then ecbl.receivable_service_outtax_balance
+        else 0 end,0) as accountBalance,
+        round(coalesce(eccd.amount,0),2) as reportBalance,
+        case when ec.contract_type = '服务费' then erp_t.service_fee_received
+        end as serviceFeeReceived,
+        case when ec.contract_type = '服务费' then erp_t.actual_repayment_date
+        end as serviceFeeReceivedDate,
+        coalesce(ecbl.receivable_residual_value_balance,0) as retainedPriceBalance
+        from (
+        select
+        ec.id as contract_id,
+        ec.contract_code,
+        case
+        when (ec.contract_code_m is not null
+        and ec.contract_code_m != '' and ec.contract_code_m!=ec.contract_code_m) then '服务费'
+        else '租赁'
+        end contract_type,
+        ec_t.lease_type,
+        ec.client_code ,
+        ec.client_name ,
+        ec.invoicing_flag,
+        ec.contract_status,
+        ec.financial_contract_status,
+        ec.org_id ,
+        ec.special_flag,
+        ec.contract_code_m,
+        ec.lease_date_start ,
+        ec.lease_date_end,
+        tp.tax_payable as taxPayable
+        from
+        eg_contract ec
+        left join ec_t on ec.contract_code=ec_t.contract_code
+        left join erp on erp.contract_code=ec.contract_code and erp.org_id=ec.org_id
+        left join tp on tp.contract_code = ec.contract_code and tp.org_id = ec.org_id
+        where
+        ec.del_flag = '0'
+        and ec.contract_code is not null
+        and ec.org_id is not null
+        and ec.business_code ='ZLYW'
+        )ec
+        left join (
+            select contract_code , org_id , sum(coalesce(receivable_outtax_balance, 0)) receivable_outtax_balance,
+                    sum(coalesce(receivable_service_outtax_balance, 0)) receivable_service_outtax_balance,
+                    sum(coalesce(receivable_residual_value_balance, 0)) receivable_residual_value_balance
+            from eg_contract_balance_latest
+            where del_flag = '0' group by contract_code , org_id
+        ) ecbl on ecbl.contract_code=ec.contract_code and ecbl.org_id=ec.org_id
+        left join eccd on eccd.contract_code=ec.contract_code and eccd.org_id=ec.org_id
+        left join erp_t on erp_t.contract_code=ec.contract_code and erp_t.org_id=ec.org_id
+        left join eg_pay_vat epv on epv.contract_code=ec.contract_code and epv.org_id=ec.org_id
+        and (epv.client_code=ec.client_code or (epv.client_code is null and ec.client_code is null))
+        and epv.contract_type=ec.contract_type and epv.del_flag='0' and epv.process_status='0'
+        left join (select sum(tax_value) tax_value, contract_code, org_id from eg_invoice_claim where del_flag = '0' group by contract_code, org_id)
+        eic on ec.contract_code = eic.contract_code and ec.org_id = eic.org_id
+        left join (select sum(real_accrual_tax_amount) real_accrual_tax_amount, contract_code, invoice_org_id from eg_accrual_situation_data where del_flag = '0' group by contract_code, invoice_org_id)
+        easd on ec.contract_code = easd.contract_code and ec.org_id = easd.invoice_org_id
+        ) a
+        &lt;!&ndash;  过滤数据 1.财务合同状态为为给定值任一个，且科目余额为0的数据；
+                2.合同状态为“合同结束”，且报表余额为0，且科目余额为0的数据     &ndash;&gt;
+        where not ((a.accountBalance =0 and a.reportBalance =0 and a.contract_status in ('合同结束','处置结清','结清','买断结清','提前结清','亏损结清','已结束','正常结清'))
+        or (a.financial_contract_status in ('资产出表（ABS）', '资产处置结束（保理出表）', '资产处置结束（第三方转让）',
+        '资产处置结束（第三方转让）、服务费核销','财务入库','亏损结清','亏损结清、服务费核销','入库后处置','债务重组','正常核销','正常核销、资产处置结束（第三方转让）'
+        ,'正常核销、资产处置结束（第三方转让）、服务费核销','资产处置结束（资产交易）','亏损结清、资产处置结束（第三方转让）','亏损结清、服务费核销、资产处置结束（第三方转让）')
+        and a.accountBalance =0))
+
+    </select>-->
+
+    <select id="payVatGetContract" resultType="com.utfinancing.financehub.engine.finance.model.dto.PayVatDTO">
+        with contract as (
+            select
+                ec.contract_code,ec.contract_code_m ,'租赁' as contract_type,
+                ec.org_id, ecm.lease_date_start ,ec.lease_type, ec.tax_rate, ec.client_code ,
+                ec.client_name, ec.invoicing_flag, ecm.contract_status, ec.financial_contract_status,
+                ec.actual_service_amount, ecm.lease_date_end
+            from
+                eg_contract ec
+            left join eg_contract_month ecm on ec.id = ecm.id
+            where
+                ec.del_flag = '0'
+                and (ec.contract_code = ec.contract_code_m or ec.contract_code_m is null or ec.contract_code_m = '')
+            union all
+            select
+                ec.contract_code,ec.contract_code_m ,'服务费' as contract_type,
+                ec.org_id, ecm.lease_date_start ,ec.lease_type, ec.tax_rate, ec.client_code ,
+                ec.client_name, ec.invoicing_flag, ecm.contract_status, ec.financial_contract_status,
+                ec.actual_service_amount, ecm.lease_date_end
+            from
+                eg_contract ec
+            left join eg_contract_month ecm on ec.id = ecm.id
+            where
+                ec.del_flag = '0'
+                and (ec.contract_code_m is not null or ec.contract_code_m = '')
+        ),
+        tax as (
+            select
+                coalesce (tr.tax_rate, contract.tax_rate)/100 as taxRate,
+                tr.lease_type,
+                contract.contract_code,
+                contract.org_id,
+                contract.contract_type
+            from eg_tax_rate tr
+            inner join contract on contract.lease_type = tr.lease_type
+            where
+                tr.del_flag = '0'
+                and tr.business_code='ZLYW'
+                and tr.fund_type='tax_general'
+        ),
+        rp as (
+            select
+                repayment.contract_code,
+                repayment.org_id,
+                repayment.amount / (1+coalesce(tax.taxRate, 0)) * coalesce(tax.taxRate, 1) as rpAmount
+            from (
+                select
+                    erp.contract_code,
+                    erp.org_id,
+                    sum(coalesce(rent_amount, 0)) - sum(coalesce(actual_repayment_principal_amount, 0))
+                    - sum(coalesce(actual_repayment_interes_amount, 0)) as amount
+                from eg_repayment_plan erp
+                group by erp.contract_code ,
+                    erp.org_id
+            ) repayment
+            left join tax on repayment.contract_code = tax.contract_code and repayment.org_id = tax.org_id and tax.contract_type='租赁'
+        ),
+        cbm as (
+            select
+                contract_code ,
+                org_id ,
+                sum(coalesce (receivable_outtax_balance, 0)) as  receivable_outtax_balance_sum,
+                sum(coalesce (receive_sum_outtax_balance, 0)) as receive_sum_outtax_balance_sum,
+                sum(coalesce(receivable_service_outtax_balance, 0)) as receivable_service_outtax_balance_sum
+            from eg_contract_balance_month
+            where period_code = '202502'
+                group by contract_code ,
+                org_id
+        ),
+        ve1 as (
+            select
+                eve.contract_code ,
+                ev.org_id ,
+                sum(coalesce (credit_amount, 0)) as camount
+            from eg_voucher_entry eve
+            inner join eg_voucher ev on ev.id = eve.voucher_id and eve.del_flag ='0'
+            where eve.period_code<![CDATA[>]]>202502
+                and eve.period_code<![CDATA[<=]]>#{queryPeriodCode}
+                and ev.scene_code in ('HTQZ','HTCX','JYJGBG','ZLSK','SGPZ', 'RKSH', 'CWRK')
+                and ev.valid_flag='1' and ev.voucher_status in('2','3','4')
+                and eve.del_flag ='0'
+                and eve.account_code = '1122.07'
+            group by
+                eve.contract_code ,
+                ev.org_id
+        ),
+        ve2 as (
+            select
+                eve.contract_code ,
+                ev.org_id ,
+                sum(coalesce (credit_amount, 0)) as camount
+            from eg_voucher_entry eve
+            inner join eg_voucher ev on ev.id = eve.voucher_id and eve.del_flag ='0'
+            where eve.period_code<![CDATA[>]]>202502
+                and eve.period_code<![CDATA[<=]]>#{queryPeriodCode}
+                and ev.scene_code in ('HTQZ','HTCX','JYJGBG','ZLSK','SGPZ', 'RKSH',  'CWRK')
+                and ev.valid_flag='1' and ev.voucher_status in('2','3','4')
+                and eve.del_flag ='0'
+                and eve.account_code in ('1531.01.09','1505.03.03')
+            group by
+                eve.contract_code ,
+                ev.org_id
+        ),
+        ve3 as (
+            select
+                eve.contract_code ,
+                ev.org_id ,
+                sum(coalesce (debit_amount, 0)) as camount
+            from eg_voucher_entry eve
+            inner join eg_voucher ev on ev.id = eve.voucher_id and eve.del_flag ='0'
+            where eve.period_code <![CDATA[>]]> 202502
+              and eve.period_code<![CDATA[<=]]>#{queryPeriodCode}
+                and ev.scene_code in ('ZLSK','WCTZ','SGPZ')
+                and ev.valid_flag='1' and ev.voucher_status in('2','3','4')
+                and eve.del_flag ='0'
+                and eve.account_code = '1122.07'
+            group by
+                eve.contract_code ,
+                ev.org_id
+        ),
+        ve4 as (
+            select
+                eve.contract_code ,
+                ev.org_id ,
+                sum(coalesce (debit_amount, 0)) as camount
+            from eg_voucher_entry eve
+            inner join eg_voucher ev on ev.id = eve.voucher_id and eve.del_flag ='0'
+            where eve.period_code <![CDATA[>]]> 202502
+              and eve.period_code<![CDATA[<=]]>#{queryPeriodCode}
+                and ev.scene_code in ('ZLSK','WCTZ', 'SGPZ')
+                and ev.valid_flag='1' and ev.voucher_status in('2','3','4')
+                and eve.del_flag ='0'
+                and eve.account_code in ('1531.01.09','1505.03.03')
+            group by
+                eve.contract_code ,
+                ev.org_id
+        ),
+        ve5 as (
+            select
+                eve.contract_code ,
+                ev.org_id ,
+                sum(coalesce (debit_amount, 0)) as camount
+            from eg_voucher_entry eve
+            inner join eg_voucher ev on ev.id = eve.voucher_id and eve.del_flag ='0'
+            where eve.period_code <![CDATA[>]]> 202502
+              and eve.period_code<![CDATA[<=]]>#{queryPeriodCode}
+                and ev.scene_code ='KJFP'
+                and ev.valid_flag='1' and ev.voucher_status in('2','3','4')
+                and eve.del_flag ='0'
+                and eve.account_code = '1122.07'
+            group by
+                eve.contract_code ,
+                ev.org_id
+        ),
+        ve6 as (
+            select
+                eve.contract_code ,
+                ev.org_id ,
+                sum(coalesce (debit_amount, 0)) as camount
+            from eg_voucher_entry eve
+            inner join eg_voucher ev on ev.id = eve.voucher_id and eve.del_flag ='0'
+            where eve.period_code <![CDATA[>]]> 202502
+              and eve.period_code<![CDATA[<=]]> #{queryPeriodCode}
+                and ev.scene_code ='KJFP'
+                and ev.valid_flag='1' and ev.voucher_status in('2','3','4')
+                and eve.del_flag ='0'
+                and eve.account_code in ('1531.01.09','1505.03.03')
+            group by
+                eve.contract_code ,
+                ev.org_id
+        ),
+        ro as (
+            select t.contract_code,
+                   t.org_id,
+                   sum(coalesce(t.receivable_service_outtax_balance_sum, 0)) as receivable_service_outtax_balance_sum,
+                   sum(coalesce(t.receivable_outtax_balance_sum, 0))         as receivable_outtax_balance_sum,
+                   sum(coalesce(t.receive_sum_outtax_balance_sum, 0))        as receive_sum_outtax_balance_sum,
+                   sum(coalesce(t.receivable_residual_value_balance_sum, 0)) as receivable_residual_value_balance_sum
+            from (select contract_code,
+                         org_id,
+                         coalesce(receivable_service_outtax_amount, 0) as receivable_service_outtax_balance_sum,
+                         coalesce(receivable_outtax_amount, 0)         as receivable_outtax_balance_sum,
+                         coalesce(receive_sum_outtax_amount, 0)        as receive_sum_outtax_balance_sum,
+                         coalesce(receivable_residual_value_amount, 0) as receivable_residual_value_balance_sum
+                  from eg_contract_balance
+                  where period_code =  #{queryPeriodCode}
+                    and del_flag = '0'
+                  union all
+                  select contract_code,
+                         org_id,
+                         coalesce(receivable_service_outtax_balance, 0) as receivable_service_outtax_balance_sum,
+                         coalesce(receivable_outtax_balance, 0)         as receivable_outtax_balance_sum,
+                         coalesce(receive_sum_outtax_balance, 0)        as receive_sum_outtax_balance_sum,
+                         coalesce(receivable_residual_value_balance, 0) as receivable_residual_value_balance_sum
+                  from eg_contract_balance_month
+                  where period_code = #{queryPeriodCode} -1
+                    and del_flag = '0') t
+            group by t.contract_code,
+                     t.org_id
+        ),
+        rbl as (
+            select
+                contract_code,
+                org_id,
+                coalesce(report_balance, 0) as report_balance,
+                amount_type
+            from eg_report_balance
+            where
+                contract_code is not null
+                and contract_code != ''
+                and to_char(invoicing_date, 'yyyy-mm-dd') = #{reportDate}
+        ),
+        tp as (
+            select
+                contract.contract_code,
+                contract.org_id,
+                contract.contract_type,
+                tax.taxRate,
+                case when contract.lease_date_start <![CDATA[<=]]>  '2025-02-28' and contract.contract_type ='租赁'
+                        then coalesce(cbm.receivable_outtax_balance_sum,0) * -1 + coalesce(cbm.receive_sum_outtax_balance_sum,0) + coalesce (ve2.camount,0)
+                    when contract.lease_date_start <![CDATA[<=]]> '2025-02-28' and contract.contract_type ='服务费'
+                        then coalesce(cbm.receivable_service_outtax_balance_sum,0) * -1 + coalesce (ve1.camount,0)
+                    when contract.lease_date_start <![CDATA[>]]> '2025-02-28' and contract.contract_type ='服务费'
+                        then coalesce(ve1.camount,0)
+                    when contract.lease_date_start <![CDATA[>]]> '2025-02-28' and contract.contract_type ='租赁'
+                        then coalesce(ve2.camount,0)
+                end as taxPayable,
+                case when contract.contract_type ='服务费'
+                        then ve3.camount
+                    when contract.contract_type ='租赁'
+                        then ve4.camount
+                end as taxAccrued,
+                case when contract.contract_type ='服务费'
+                        then ve5.camount
+                    when contract.contract_type ='租赁'
+                        then ve6.camount
+                end as taxInvoiced,
+                case when contract.contract_type ='服务费'
+                        then 0
+                    when contract.contract_type ='租赁'
+                        then rp.rpAmount
+                end as shouldTaxBalance,
+                case when contract.contract_type ='服务费'
+                        then ro.receivable_service_outtax_balance_sum
+                    when contract.contract_type ='租赁'
+                        then ro.receivable_outtax_balance_sum + ro.receive_sum_outtax_balance_sum
+                end as accountBalance,
+                case when contract.contract_type ='服务费'
+                        then actual_service_amount
+                    when contract.contract_type ='租赁'
+                        then 0
+                end as serviceFeeReceived,
+                case when contract.contract_type ='服务费'
+                        then 0
+                    when contract.contract_type ='租赁'
+                        then ro.receivable_residual_value_balance_sum
+                end as retainedPriceBalance,
+                rbl.report_balance
+            from contract
+            left join cbm on contract.contract_code = cbm.contract_code and contract.org_id = cbm.org_id
+            left join ve1 on contract.contract_code = ve1.contract_code and contract.org_id = ve1.org_id
+            left join ve2 on contract.contract_code = ve2.contract_code and contract.org_id = ve2.org_id
+            left join ve3 on contract.contract_code = ve3.contract_code and contract.org_id = ve3.org_id
+            left join ve4 on contract.contract_code = ve4.contract_code and contract.org_id = ve4.org_id
+            left join ve5 on contract.contract_code = ve5.contract_code and contract.org_id = ve5.org_id
+            left join ve6 on contract.contract_code = ve6.contract_code and contract.org_id = ve6.org_id
+            left join rp on contract.contract_code = rp.contract_code and contract.org_id = rp.org_id
+            left join ro on contract.contract_code = ro.contract_code and contract.org_id = ro.org_id
+            left join tax on contract.contract_code = tax.contract_code and contract.org_id = tax.org_id and tax.contract_type=contract.contract_type
+            left join rbl on contract.contract_code = rbl.contract_code and contract.org_id = rbl.org_id and rbl.amount_type=contract.contract_type
+        )
+        select
+            contract.contract_code ,
+            contract.org_id,
+            contract.contract_type,
+            contract.lease_type,
+            tp.taxRate,
+            contract.client_code,
+            contract.client_name,
+            contract.invoicing_flag,
+            contract.contract_status,
+            cm.financial_contract_status,
+            tp.taxPayable,
+            tp.taxAccrued,
+            tp.taxInvoiced,
+            coalesce (tp.taxPayable, 0)-coalesce (tp.taxAccrued, 0)-coalesce (tp.taxInvoiced,0) as actualTaxBalance,
+            tp.shouldTaxBalance,
+            tp.accountBalance,
+            contract.contract_code_m,
+            tp.serviceFeeReceived,
+            tp.retainedPriceBalance,
+            contract.lease_date_start,
+            contract.lease_date_end,
+            coalesce (tp.report_balance, 0) as reportBalance
+        from contract
+        left join tp on contract.contract_code = tp.contract_code and contract.org_id = tp.org_Id and contract.contract_type = tp.contract_type
+        left join eg_contract_month cm on cm.contract_code = contract.contract_code and cm.org_Id = contract.org_id and cm.del_flag = '0'
+        where
+            NOT (tp.accountBalance = 0 and coalesce (tp.report_balance,0)=0 AND contract.contract_status IN (
+            '合同结束', '处置结清', '结清', '买断结清', '提前结清', '亏损结清', '已结束', '正常结清'))
+            AND NOT (tp.accountBalance = 0 AND contract.financial_contract_status IN (
+            '财务入库', '亏损结清', '亏损结清、服务费核销', '入库后处置', '债务重组', '正常核销',
+            '正常核销、资产处置结束（第三方转让）', '正常核销、资产处置结束（第三方转让）、服务费核销',
+            '资产处置结束（资产交易）', '亏损结清、资产处置结束（第三方转让）',
+            '亏损结清、服务费核销、资产处置结束（第三方转让）', '资产出表（ABS）',
+            '资产处置结束（保理出表）', '资产处置结束（第三方转让）',
+            '资产处置结束（第三方转让）、服务费核销', '资产处置结束（内部转让）') AND contract.financial_contract_status is not null AND contract.financial_contract_status !='')
+            and not (coalesce (tp.taxPayable,0)=0 and coalesce (tp.taxaccrued,0)=0 and coalesce (tp.taxinvoiced,0)=0 and coalesce (tp.accountbalance,0)=0 and
+            coalesce (tp.servicefeereceived,0)=0 and coalesce (tp.retainedpricebalance,0)=0 and coalesce (tp.report_balance,0)=0)
+            and contract.contract_code not like '%-1'and contract.contract_code not in ('VL05Z0001')
+    </select>
+
+    <select id="selectPageByMapper" resultType="com.utfinancing.financehub.engine.finance.model.vo.PayVatVO">
+        select
+        epv.*,
+        eoc.org_name
+        from
+        eg_pay_vat epv
+        left join eg_org_company eoc on
+        epv.org_id = eoc.org_id
+        and eoc.del_flag = '0'
+        where
+        epv.del_flag = '0'
+        and epv.contract_code not like '%-1'
+        <if test="queryDTO.contractCode != '' and queryDTO.contractCode != null">
+            and epv.contract_code like concat('%', #{queryDTO.contractCode}::text, '%')
+        </if>
+        <if test="queryDTO.contractType != '' and queryDTO.contractType != null">
+            and epv.contract_type = #{queryDTO.contractType}::text
+        </if>
+        <if test="queryDTO.clientCode != '' and queryDTO.clientCode != null">
+            and epv.client_code like concat('%', #{queryDTO.clientCode}::text, '%')
+        </if>
+        <if test="queryDTO.invoicingFlag != '' and queryDTO.invoicingFlag != null">
+            and epv.invoicing_flag = #{queryDTO.invoicingFlag}::text
+        </if>
+        <if test="queryDTO.contractStatus != '' and queryDTO.contractStatus != null">
+            and epv.contract_status = #{queryDTO.contractStatus}::text
+        </if>
+        <if test="queryDTO.financialContractStatus != '' and queryDTO.financialContractStatus != null">
+            and epv.financial_contract_status = #{queryDTO.financialContractStatus}::text
+        </if>
+        <if test="queryDTO.orgId != '' and queryDTO.orgId != null">
+            and epv.org_id = #{queryDTO.orgId}::text
+        </if>
+        <if test="queryDTO.contractCodeM != '' and queryDTO.contractCodeM != null">
+            and epv.contract_code_m like concat('%', #{queryDTO.contractCodeM}::text, '%')
+        </if>
+        <if test="queryDTO.idList != null and queryDTO.idList.size > 0">
+            and epv.id in
+            <foreach item="item" index="index" collection="queryDTO.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.processStatusList != null and queryDTO.processStatusList.size > 0">
+            and epv.process_status in
+            <foreach item="item" index="index" collection="queryDTO.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.exclusionScopeTaxList != null and queryDTO.exclusionScopeTaxList.size > 0">
+            and
+            <foreach item="item" index="index" collection="queryDTO.exclusionScopeTaxList" open="(" separator=" or " close=")">
+                <choose>
+                    <!-- 1 科目余额不为0或报表系统不为0 -->
+                    <when test="item == '1'.toString">
+                         (epv.account_balance != 0 or epv.report_balance != 0)
+                    </when>
+                    <!-- 2 科目余额不为0或实际剩余不为0 -->
+                    <when test="item == '2'.toString">
+                         (epv.account_balance != 0 or epv.actual_tax_balance != 0)
+                    </when>
+                </choose>
+            </foreach>
+        </if>
+        order by epv.id desc
+    </select>
+    <select id="selectContractBalanceByContractCodeAndOrgId"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractBalanceVO">
+        select
+        ecb.id,
+        ecb.contract_code ,
+        ecb.org_id,
+        ecb.create_time ,
+        ecb.receivable_outtax_balance ,
+        ecb.receivable_service_outtax_balance
+        from
+        eg_contract_balance ecb
+        inner join eg_pay_vat epv on
+        epv.contract_code = ecb.contract_code
+        and epv.org_id = ecb.org_id
+        and epv.del_flag = '0'
+        where
+        ecb.del_flag ='0'
+        <if test="payVatIdList != null and payVatIdList.size > 0">
+            and epv.id in
+            <foreach item="item" index="index" collection="payVatIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectContractBalanceLatestByContractCodeAndOrgId"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractBalanceLatestVO">
+        select
+        ecbl.id,
+        ecbl.contract_code ,
+        ecbl.org_id,
+        ecbl.create_time ,
+        ecbl.receivable_residual_value_balance,
+        ecbl.receivable_outtax_balance ,
+        ecbl.receivable_service_outtax_balance
+        from
+        eg_contract_balance_latest ecbl
+        inner join eg_pay_vat epv on
+        epv.contract_code = ecbl.contract_code
+        and epv.org_id = ecbl.org_id
+        and epv.del_flag = '0'
+        where
+        ecbl.del_flag ='0'
+        <if test="payVatIdList != null and payVatIdList.size > 0">
+            and epv.id in
+            <foreach item="item" index="index" collection="payVatIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectRepaymentPlanByContractCodeAndOrgId"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RepaymentPlanVO">
+        select
+        erp.id,
+        erp.contract_code ,
+        erp.org_id,
+        erp.create_time ,
+        erp.service_fee_received,
+        erp.actual_repayment_date
+        from
+        eg_repayment_plan erp
+        inner join eg_pay_vat epv on
+        epv.contract_code = erp.contract_code
+        and epv.org_id = erp.org_id
+        and epv.del_flag = '0'
+        where
+        erp.del_flag ='0'
+        <if test="payVatIdList != null and payVatIdList.size > 0">
+            and epv.id in
+            <foreach item="item" index="index" collection="payVatIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectCheckData"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.PayVatCheckDataVO">
+        select
+        a.execute_date,
+        a.contract_code,
+        a.org_id,
+        coalesce (a.amount::numeric  ,0) amount
+        from (
+        select
+        execute_date,
+        query_field::json ->>'CONTRACT_CODE' as contract_code,
+        query_field::json ->>'ORG_ID' as org_id,
+        query_field::json ->>'AMOUNT' as amount
+        from eg_check_common_data
+        where business_type ='ysxxs'
+        <if test="contractCodeList != null and contractCodeList.size > 0">
+            and query_field::json ->>'CONTRACT_CODE' in
+            <foreach item="item" index="index" collection="contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="orgIdList != null and orgIdList.size > 0">
+            and query_field::json ->>'ORG_ID' in
+            <foreach item="item" index="index" collection="orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) a
+    </select>
+</mapper>
+

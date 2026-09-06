@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ServiceFeeMapper">
+
+
+    <select id="selectRepaymentPlanByContractCode"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeePlanVO">
+        select s.*,
+        c.lease_date_start,
+        c.lease_date_end,
+        case
+        when c.end_sharing_service_fee_flag then '是'
+        else '否' end             end_sharing_service_fee_flag_str,
+        case
+        when c.sharing_service_fee_flag then '是'
+        else '否' end             sharing_service_fee_flag_str,
+        case
+        when c.special_status_adjustment_flag then '是'
+        else '否' end             special_status_adjustment_flag_str,
+        c.client_name,
+        o1.org_name,
+        o2.org_name                   service_org_name,
+        case
+        when s.org_id = s.service_org_id then '租赁收入分摊'
+        else '服务费收入分摊' end allocation_method,
+        c.business_code,
+        c.business_name,
+        case
+        when sf.is_generate_voucher = '1' then '已生成'
+        else '未生成' end             voucher_status,
+        case
+            when sf.this_month_adjustment_amount_no_tax is not null
+            then sf.this_month_adjustment_amount_no_tax
+            else s.actual_accrued_amount end this_month_adjustment_amount_no_tax
+        from eg_service_fee_plan s
+        inner join
+        eg_contract_month c on
+        s.org_id = c.org_id
+        and s.contract_code = c.contract_code
+        left join eg_org_company o1 on s.org_id = o1.org_id
+        left join eg_org_company o2 on s.service_org_id = o2.org_id
+        left join eg_service_fee_details sf on s.service_org_id = sf.service_org_id and s.service_fee_no = sf.service_fee_no and s.periods = sf.periods and sf.del_flag = '0'
+        where s.del_flag = '0'
+        and c.del_flag = '0'
+        <if test="contractCode != null">
+            and s.contract_code = #{contractCode}
+        </if>
+        <if test="serviceFeeNo != null">
+            and s.service_fee_no = #{serviceFeeNo}
+        </if>
+        order by s.contract_code, s.plan_date
+
+    </select>
+</mapper>
+

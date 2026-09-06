@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractMonthMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractMonthEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="client_type" property="clientType" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="invoice_type" property="invoiceType" />
+                    <result column="industry" property="industry" />
+                    <result column="lease_type" property="leaseType" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="interest_rate_type" property="interestRateType" />
+                    <result column="classification_five" property="classificationFive" />
+                    <result column="provision_type" property="provisionType" />
+                    <result column="return_type" property="returnType" />
+                    <result column="domestic_entrance" property="domesticEntrance" />
+                    <result column="project_differentiate" property="projectDifferentiate" />
+                    <result column="business_plate" property="businessPlate" />
+                    <result column="province_city" property="provinceCity" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="contract_amount" property="contractAmount" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="lease_interest_rate_year" property="leaseInterestRateYear" />
+                    <result column="financial_contract_status_update_time" property="financialContractStatusUpdateTime" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="system_label" property="systemLabel" />
+                    <result column="transfer_org_id" property="transferOrgId" />
+                    <result column="transfer_contract_code" property="transferContractCode" />
+                    <result column="transfer_contract_status" property="transferContractStatus" />
+                    <result column="special_flag" property="specialFlag" />
+                    <result column="business_type_label" property="businessTypeLabel" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="income_calculate" property="incomeCalculate" />
+                    <result column="income_provision_method" property="incomeProvisionMethod" />
+                    <result column="invoicing_flag" property="invoicingFlag" />
+                    <result column="payable_device_amount" property="payableDeviceAmount" />
+                    <result column="receivable_first_amount" property="receivableFirstAmount" />
+                    <result column="lessor_insurance_amount" property="lessorInsuranceAmount" />
+                    <result column="receivable_margin_amount" property="receivableMarginAmount" />
+                    <result column="channel_fees" property="channelFees" />
+                    <result column="payable_channel_expense" property="payableChannelExpense" />
+                    <result column="payable_inner_expense" property="payableInnerExpense" />
+                    <result column="receivable_procedure_amount" property="receivableProcedureAmount" />
+                    <result column="lessor_other_costs" property="lessorOtherCosts" />
+                    <result column="payable_other_amount" property="payableOtherAmount" />
+                    <result column="estimate_g_p_s_expense" property="estimateGPSExpense" />
+                    <result column="payable_introduce" property="payableIntroduce" />
+                    <result column="payable_law_amount" property="payableLawAmount" />
+                    <result column="receivable_firm_rebate" property="receivableFirmRebate" />
+                    <result column="receivable_insurance_amount" property="receivableInsuranceAmount" />
+                    <result column="retained_price" property="retainedPrice" />
+                    <result column="receivable_other" property="receivableOther" />
+                    <result column="receivable_service_amount" property="receivableServiceAmount" />
+                    <result column="vendor_margin_amount" property="vendorMarginAmount" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="contract_create_dept" property="contractCreateDept" />
+                    <result column="outtax_balance" property="outtaxBalance" />
+                    <result column="lease_revenue_balance" property="leaseRevenueBalance" />
+                    <result column="depreciation_loss_balance" property="depreciationLossBalance" />
+                    <result column="pay_method" property="payMethod" />
+                    <result column="contract_code_m" property="contractCodeM" />
+                    <result column="payable_procedure_cost" property="payableProcedureCost" />
+                    <result column="postal_savings_project_type" property="postalSavingsProjectType" />
+                    <result column="financial_contract_status_imputation" property="financialContractStatusImputation" />
+                    <result column="gps_unit_price" property="gpsUnitPrice" />
+                    <result column="payable_service" property="payableService" />
+                    <result column="payable_recycle_car_amount" property="payableRecycleCarAmount" />
+                    <result column="payable_bracelet_cost" property="payableBraceletCost" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="manual_lease_flag" property="manualLeaseFlag" />
+                    <result column="business_category" property="businessCategory" />
+                    <result column="province" property="province" />
+                    <result column="city" property="city" />
+                    <result column="report_flag" property="reportFlag" />
+                    <result column="is_dzzc" property="isDzzc" />
+                    <result column="rent_contract_total" property="rentContractTotal" />
+                    <result column="last_cost" property="lastCost" />
+                    <result column="lease_before_recevied_amount" property="leaseBeforeReceviedAmount" />
+                    <result column="depreciation_reserves_amount_kp" property="depreciationReservesAmountKp" />
+                    <result column="depreciation_reserves_amount_sk" property="depreciationReservesAmountSk" />
+                    <result column="outtax_amount" property="outtaxAmount" />
+                    <result column="lease_revenue_amount" property="leaseRevenueAmount" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="actual_service_amount" property="actualServiceAmount" />
+                    <result column="is_change_repayment" property="isChangeRepayment" />
+                    <result column="paid_handling_fees" property="paidHandlingFees" />
+                    <result column="other_income" property="otherIncome" />
+                    <result column="receivable_rent" property="receivableRent" />
+                    <result column="accrual_amount" property="accrualAmount" />
+                    <result column="tax_amount" property="taxAmount" />
+            <result column="receivable_vendor_procedure_amount" property="receivableVendorProcedureAmount"/>
+            <result column="payable_insurance_amount" property="payableInsuranceAmount"/>
+            <result column="deduction_device_amount" property="deductionDeviceAmount"/>
+            <result column="procedure801" property="procedure801"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, contract_name, client_code, client_name, org_id, client_type, lease_date_start,
+            lease_date_end, business_code, business_name, invoice_type, industry, lease_type, contract_status,
+            interest_rate_type, classification_five, provision_type, return_type, domestic_entrance,
+            project_differentiate, business_plate, province_city, currency_type, contract_amount, create_by,
+            create_time, update_by, update_time, del_flag, lease_interest_rate_year,
+            financial_contract_status_update_time, financial_contract_status, system_label, transfer_org_id,
+            transfer_contract_code, transfer_contract_status, special_flag, business_type_label, tax_rate,
+            income_calculate, income_provision_method, invoicing_flag, payable_device_amount, receivable_first_amount,
+            lessor_insurance_amount, receivable_margin_amount, channel_fees, payable_channel_expense,
+            payable_inner_expense, receivable_procedure_amount, lessor_other_costs, payable_other_amount,
+            estimate_g_p_s_expense, payable_introduce, payable_law_amount, receivable_firm_rebate,
+            receivable_insurance_amount, retained_price, receivable_other, receivable_service_amount,
+            vendor_margin_amount, system_code, contract_create_dept, outtax_balance, lease_revenue_balance,
+            depreciation_loss_balance, pay_method, contract_code_m, payable_procedure_cost, postal_savings_project_type,
+            financial_contract_status_imputation, gps_unit_price, payable_service, payable_recycle_car_amount,
+            payable_bracelet_cost, business_date, manual_lease_flag, business_category, province, city, report_flag,
+            is_dzzc, rent_contract_total, last_cost, lease_before_recevied_amount, depreciation_reserves_amount_kp,
+            depreciation_reserves_amount_sk, outtax_amount, lease_revenue_amount, account_date, actual_service_amount,
+            is_change_repayment, paid_handling_fees, other_income, receivable_rent, accrual_amount, tax_amount,
+            payable_insurance_amount, deduction_device_amount, procedure801
+        </sql>
+
+    <insert id="dataSync">
+        insert into
+            eg_contract_month
+        select
+            id,
+            contract_code,
+            contract_name,
+            client_code,
+            client_name,
+            org_id,
+            client_type,
+            lease_date_start,
+            lease_date_end,
+            business_code,
+            business_name,
+            invoice_type,
+            industry,
+            lease_type,
+            contract_status,
+            interest_rate_type,
+            classification_five,
+            provision_type,
+            return_type,
+            domestic_entrance,
+            project_differentiate,
+            business_plate,
+            province_city,
+            currency_type,
+            contract_amount,
+            create_by,
+            create_time,
+            update_by,
+            update_time,
+            del_flag,
+            lease_interest_rate_year,
+            financial_contract_status_update_time,
+            financial_contract_status,
+            system_label,
+            transfer_org_id,
+            transfer_contract_code,
+            transfer_contract_status,
+            special_flag,
+            business_type_label,
+            tax_rate,
+            income_calculate,
+            income_provision_method,
+            invoicing_flag,
+            payable_device_amount,
+            receivable_first_amount,
+            lessor_insurance_amount,
+            receivable_margin_amount,
+            channel_fees,
+            payable_channel_expense,
+            payable_inner_expense,
+            receivable_procedure_amount,
+            lessor_other_costs,
+            payable_other_amount,
+            estimate_g_p_s_expense,
+            payable_introduce,
+            payable_law_amount,
+            receivable_firm_rebate,
+            receivable_insurance_amount,
+            retained_price,
+            receivable_other,
+            receivable_service_amount,
+            vendor_margin_amount,
+            system_code,
+            contract_create_dept,
+            outtax_balance,
+            lease_revenue_balance,
+            depreciation_loss_balance,
+            pay_method,
+            contract_code_m,
+            payable_procedure_cost,
+            postal_savings_project_type,
+            financial_contract_status_imputation,
+            gps_unit_price,
+            payable_service,
+            payable_recycle_car_amount,
+            payable_bracelet_cost,
+            business_date,
+            manual_lease_flag,
+            business_category,
+            province,
+            city,
+            report_flag,
+            is_dzzc,
+            rent_contract_total,
+            last_cost,
+            lease_before_recevied_amount,
+            depreciation_reserves_amount_kp,
+            depreciation_reserves_amount_sk,
+            outtax_amount,
+            lease_revenue_amount,
+            account_date,
+            actual_service_amount,
+            is_change_repayment,
+            paid_handling_fees,
+            other_income,
+            receivable_rent,
+            accrual_amount,
+            tax_amount,contract_category,sharing_service_fee_flag,end_sharing_service_fee_flag,set_end_sharing_service_fee_period,
+            special_status_adjustment_flag,service_fee_history_flag,receivable_vendor_procedure_amount
+        from
+            eg_contract
+    </insert>
+
+    <update id="updateColumn">
+        update eg_contract_month a
+        set contract_status = b.vc_hetzt
+            ,lease_date_start = to_date(b.dt_kuaijqzr, 'yyyy-mm-dd')
+            ,lease_date_end  =  coalesce(to_date(b.dt_shijjsr, 'yyyy-mm-dd'), to_date(b.dt_zuihyqdqr, 'yyyy-mm-dd'))
+        from dws_zc_hetqdxx_wd_d b
+            where a.contract_code = b.vc_hetbh
+    </update>
+    <update id="updateBatchByContractCode">
+        UPDATE eg_contract_month
+        SET sharing_service_fee_flag = #{sharingServiceFeeFlag},
+            end_sharing_service_fee_flag = #{endSharingServiceFeeFlag},
+            special_status_adjustment_flag = #{specialStatusAdjustmentFlag}
+        WHERE contract_code = #{contractCode}
+    </update>
+</mapper>
+

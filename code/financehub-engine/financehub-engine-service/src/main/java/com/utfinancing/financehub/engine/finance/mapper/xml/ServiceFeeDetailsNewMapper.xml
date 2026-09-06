@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ServiceFeeDetailsNewMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ServiceFeeDetailsNewEntity">
+                    <id column="id" property="id" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="service_fee_id" property="serviceFeeId" />
+                    <result column="service_fee_plan_id" property="serviceFeePlanId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="org_id" property="orgId" />
+                    <result column="service_org_id" property="serviceOrgId" />
+                    <result column="service_fee_no" property="serviceFeeNo" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="allocation_method" property="allocationMethod" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="received_service_fee_tax_include" property="receivedServiceFeeTaxInclude" />
+                    <result column="received_service_fee_no_tax" property="receivedServiceFeeNoTax" />
+                    <result column="should_apportionment_amount_tax_include" property="shouldApportionmentAmountTaxInclude" />
+                    <result column="should_apportionment_amount_no_tax" property="shouldApportionmentAmountNoTax" />
+                    <result column="plan_amount_tax_include" property="planAmountTaxInclude" />
+                    <result column="plan_amount_no_tax" property="planAmountNoTax" />
+                    <result column="last_month_should_apportionment_amount_tax_include" property="lastMonthShouldApportionmentAmountTaxInclude" />
+                    <result column="last_month_should_apportionment_amount_no_tax" property="lastMonthShouldApportionmentAmountNoTax" />
+                    <result column="this_month_reclassification_adjustment_amount_tax_include" property="thisMonthReclassificationAdjustmentAmountTaxInclude" />
+                    <result column="accrual_type" property="accrualType" />
+                    <result column="accrued_amount" property="accruedAmount" />
+                    <result column="before_accrued_amount" property="beforeAccruedAmount" />
+                    <result column="after_accrued_amount" property="afterAccruedAmount" />
+                    <result column="current_period_plan_amount_tax_include" property="currentPeriodPlanAmountTaxInclude" />
+                    <result column="before_current_period_plan_amount_tax_include" property="beforeCurrentPeriodPlanAmountTaxInclude" />
+                    <result column="after_current_period_plan_amount_tax_include" property="afterCurrentPeriodPlanAmountTaxInclude" />
+                    <result column="allocation_completion_mark" property="allocationCompletionMark" />
+                    <result column="exception_type" property="exceptionType" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="periods" property="periods" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="accrual_year" property="accrualYear" />
+                    <result column="accrual_amount_total_no_tax" property="accrualAmountTotalNoTax" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, account_date, business_date, service_fee_id, service_fee_plan_id, contract_code, org_id, service_org_id, service_fee_no, client_code, client_name, contract_status, allocation_method, business_code, business_name, lease_date_start, lease_date_end, received_service_fee_tax_include, received_service_fee_no_tax, should_apportionment_amount_tax_include, should_apportionment_amount_no_tax, plan_amount_tax_include, plan_amount_no_tax, last_month_should_apportionment_amount_tax_include, last_month_should_apportionment_amount_no_tax, this_month_reclassification_adjustment_amount_tax_include, accrual_type, accrued_amount, before_accrued_amount, after_accrued_amount, current_period_plan_amount_tax_include, before_current_period_plan_amount_tax_include, after_current_period_plan_amount_tax_include, allocation_completion_mark, exception_type, voucher_id, del_flag, create_by, create_time, update_by, update_time, periods, is_generate_voucher, financial_contract_status, accrual_year, accrual_amount_total_no_tax
+        </sql>
+    <select id="selectDetailList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeeDetailsNewVO">
+        select a.*,
+        esf.voucher_status
+        from eg_service_fee_details_new a
+        left join eg_service_fee_new esf on a.service_fee_id = esf.id
+        where
+         a.del_flag = '0'
+        and (a.should_apportionment_amount_no_tax <![CDATA[<>]]> 0 or a.accrued_amount <![CDATA[<>]]> 0)
+        and a.special_status_adjustment_flag = '0'
+        <if test="param.serviceFeeId != null ">
+            and a.service_fee_id = #{param.serviceFeeId}
+        </if>
+        <if test="param.serviceFeeIdList != null and param.serviceFeeIdList.size > 0">
+            and a.service_fee_id in
+            <foreach item="item" index="index" collection="param.serviceFeeIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCode != null ">
+            and a.contract_code like  concat('%', #{param.contractCode}, '%')
+        </if>
+        <if test="param.contractStatus != null ">
+            and a.contract_status = #{param.contractStatus}
+        </if>
+    </select>
+    <select id="selectServiceFeeInfo"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeeDetailsNewVO">
+        select a.*,
+        ec.sharing_service_fee_flag shared_flag,
+        ec.end_sharing_service_fee_flag,
+        ec.special_status_adjustment_flag
+        from eg_service_fee_details_new a
+        left join eg_contract_month ec on a.contract_code = ec.contract_code and a.org_id =ec.org_id
+        left join eg_service_fee_new esf on a.service_fee_id = esf.id
+        where
+        1=1
+        and  a.should_apportionment_amount_no_tax <![CDATA[<>]]> 0
+        and ec.special_status_adjustment_flag = false
+        <if test="param.businessTypeList != null and param.businessTypeList.size > 0">
+            and a.business_code in
+            <foreach item="item" index="index" collection="param.businessTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.allocationMethod != null and param.allocationMethod != ''">
+            and a.allocation_method = #{param.allocationMethod}
+        </if>
+        <if test="param.allocationCompletionMark != null and param.allocationCompletionMark != ''">
+            and a.allocation_completion_mark = #{param.allocationCompletionMark}
+        </if>
+        <if test="param.serviceFeeId != null">
+            and a.service_fee_id = #{param.serviceFeeId}
+        </if>
+        <if test="param.contractStatus != null and param.contractStatus != ''">
+            and ec.contract_status = #{param.contractStatus}
+        </if>
+        <if test="param.financialContractStatus != null and param.financialContractStatus != ''">
+            and ec.financial_contract_status = #{param.financialContractStatus}
+        </if>
+        <if test="param.voucherStatus != null and param.voucherStatus != ''">
+            and a.is_generate_voucher = #{param.voucherStatus}
+        </if>
+        <if test="param.leaseDateStart != null ">
+            and a.lease_date_start &gt;= #{param.leaseDateStart}
+        </if>
+        <if test="param.leaseDateEnd != null ">
+            and a.lease_date_end &lt;= #{param.leaseDateEnd}
+        </if>
+        <if test="param.businessStartDate != null ">
+            and a.business_date &gt;= #{param.businessStartDate}
+        </if>
+        <if test="param.businessEndDate != null ">
+            and a.business_date &lt;= #{param.businessEndDate}
+        </if>
+        <if test="param.contractCode != null and param.contractCode != ''">
+            and a.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and a.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.serviceOrgIdList != null and param.serviceOrgIdList.size > 0">
+            and a.service_org_id in
+            <foreach item="item" index="index" collection="param.serviceOrgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.serviceFeeIdList != null and param.serviceFeeIdList.size > 0">
+            and a.service_fee_id in
+            <foreach item="item" index="index" collection="param.serviceFeeIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.exceptionTypeList != null and param.exceptionTypeList.size > 0">
+            and a.exception_type in
+            <foreach item="item" index="index" collection="param.exceptionTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.systemCodeList != null and param.systemCodeList.size > 0">
+            and ec.system_code in
+            <foreach item="item" index="index" collection="param.systemCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by a.contract_code ,a.service_fee_no ,a.periods
+    </select>
+    <select id="getUnapportionedAndNoPlanData"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ServiceFeeDetailsNewEntity">
+
+        select * from eg_service_fee_details_new
+        where
+        accrual_year = #{preYearValue}
+        and accrual_month = #{preMonthValue}
+        and should_apportionment_amount_no_tax <![CDATA[<>]]> (accrued_amount + before_accrued_amount)
+        <if test="allocateContractCodes != null and allocateContractCodes.size > 0">
+        and contract_code not in
+        <foreach item="item" index="index" collection="allocateContractCodes" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+    </select>
+    <select id="getUnapportionedAndNoPlanData1"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ServiceFeeDetailsNewEntity">
+
+        with t1 as (select service_fee_no, service_org_id
+        from (select p.service_fee_no, p.service_org_id, sum(p.accrued_amount) accrued_amount_sum, max(p.should_apportionment_amount_no_tax) should_apportionment_amount_no_tax_max
+        from eg_service_fee_plan_new p,
+        (select service_fee_no, service_org_id, max(plan_date) max_plan_date from eg_service_fee_plan_new where del_flag = '0' group by service_fee_no, service_org_id) t
+        where p.service_fee_no = t.service_fee_no
+        and p.service_org_id = t.service_org_id
+        and t.max_plan_date <![CDATA[<]]> #{date}
+        group by p.service_fee_no, p.service_org_id) tt
+        where tt.accrued_amount_sum <![CDATA[<>]]> tt.should_apportionment_amount_no_tax_max),
+        t2 as (select d.service_org_id, d.service_fee_no, max(d.business_date) business_date
+        from eg_service_fee_details_new d,
+        t1
+        where d.service_org_id = t1.service_org_id
+        and d.service_fee_no = t1.service_fee_no
+        group by d.service_org_id, d.service_fee_no)
+        select dd.*
+        from eg_service_fee_details_new dd,
+        (SELECT d1.service_org_id, d1.service_fee_no, max(d1.business_date) business_date
+        FROM eg_service_fee_details_new d1,
+        t2
+        where d1.service_org_id = t2.service_org_id
+        and d1.service_fee_no = t2.service_fee_no
+        and d1.del_flag = '0'
+        group by d1.service_org_id, d1.service_fee_no) t3
+        where dd.service_org_id = t3.service_org_id
+        and dd.service_fee_no = t3.service_fee_no
+        and dd.business_date = t3.business_date
+        and dd.del_flag = '0'
+        <if test="allocateContractCodes != null and allocateContractCodes.size > 0">
+            and dd.contract_code not in
+            <foreach item="item" index="index" collection="allocateContractCodes" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>
+

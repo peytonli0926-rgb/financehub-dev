@@ -1,0 +1,3 @@
+# com.utfinancing.financehub.common.swagger.config.SwaggerAutoConfiguration
+# com.utfinancing.financehub.common.swagger.config.SwaggerWebConfiguration
+# com.utfinancing.financehub.common.swagger.config.SwaggerBeanPostProcessor

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.utfinancing.financehub.engine.contractstatusupdate.mapper.SysDictTypeMapper">
+	<!-- ******************** resultMap数据 begin **************************************************************************************************** -->
+	<!-- 字典类型表 -->
+	<resultMap id="SysDictTypeResultMap" type="com.utfinancing.financehub.engine.contractstatusupdate.entity.SysDictTypeEntity">
+		<!-- 字典主键 -->
+		<result column="DICT_ID" property="dictId" />
+		<!-- 字典名称 -->
+		<result column="DICT_NAME" property="dictName" />
+		<!-- 字典类型 -->
+		<result column="DICT_TYPE" property="dictType" />
+		<!-- 状态（0正常 1停用） -->
+		<result column="STATUS" property="status" />
+		<!-- 创建者 -->
+		<result column="CREATE_BY" property="createBy" />
+		<!-- 创建时间 -->
+		<result column="CREATE_TIME" property="createTime" />
+		<!-- 更新者 -->
+		<result column="UPDATE_BY" property="updateBy" />
+		<!-- 更新时间 -->
+		<result column="UPDATE_TIME" property="updateTime" />
+		<!-- 备注 -->
+		<result column="REMARK" property="remark" />
+	</resultMap>
+	<resultMap id="SysDictTypeViewResultMap" type="com.utfinancing.financehub.engine.contractstatusupdate.model.dto.SysDictTypeDTO">
+		<!-- 字典主键 -->
+		<result column="DICT_ID" property="dictId" />
+		<!-- 字典名称 -->
+		<result column="DICT_NAME" property="dictName" />
+		<!-- 字典类型 -->
+		<result column="DICT_TYPE" property="dictType" />
+		<!-- 状态（0正常 1停用） -->
+		<result column="STATUS" property="status" />
+		<!-- 创建者 -->
+		<result column="CREATE_BY" property="createBy" />
+		<!-- 创建时间 -->
+		<result column="CREATE_TIME" property="createTime" />
+		<!-- 更新者 -->
+		<result column="UPDATE_BY" property="updateBy" />
+		<!-- 更新时间 -->
+		<result column="UPDATE_TIME" property="updateTime" />
+		<!-- 备注 -->
+		<result column="REMARK" property="remark" />
+	</resultMap>
+	<!-- ******************** resultMap数据 end **************************************************************************************************** -->
+
+	<!-- ******************** 字段信息  begin **************************************************************************************************** -->
+	<sql id="SysDictTypeColumn"> 
+		dict_id, dict_name, dict_type, status, create_by, create_time, update_by, update_time, remark
+	</sql>
+	<!-- ******************** 字段信息  end **************************************************************************************************** -->
+
+	<!-- ******************** 查询语句  begin **************************************************************************************************** -->
+	<!-- 根据条件精确查询列表数据 -->
+	<select id="selectByMap" parameterType="map" resultMap="SysDictTypeResultMap">
+		SELECT <include refid="SysDictTypeColumn" /> FROM sys_dict_type
+		<where>
+			<if test="dictId != null and dictId != ''"> AND dict_id = #{dictId, jdbcType=} </if>
+			<if test="dictName != null and dictName != ''"> AND dict_name = #{dictName, jdbcType=} </if>
+			<if test="dictType != null and dictType != ''"> AND dict_type = #{dictType, jdbcType=} </if>
+			<if test="status != null and status != ''"> AND status = #{status, jdbcType=} </if>
+			<if test="createBy != null and createBy != ''"> AND create_by = #{createBy, jdbcType=} </if>
+			<if test="createTime != null and createTime != ''"> AND create_time = #{createTime, jdbcType=} </if>
+			<if test="updateBy != null and updateBy != ''"> AND update_by = #{updateBy, jdbcType=} </if>
+			<if test="updateTime != null and updateTime != ''"> AND update_time = #{updateTime, jdbcType=} </if>
+			<if test="remark != null and remark != ''"> AND remark = #{remark, jdbcType=} </if>
+		</where>
+		<if test="orderByCause != null and orderByCause != ''">
+			ORDER BY ${orderByCause}
+		</if>
+	</select>
+
+	<!-- 根据条件模糊查询列表数据 -->
+	<select id="selectPageDataByMap" parameterType="map" resultMap="SysDictTypeViewResultMap">
+		SELECT <include refid="SysDictTypeColumn" /> FROM sys_dict_type
+		<where>
+			<if test="dictId != null and dictId != ''"> AND dict_id LIKE CONCAT(CONCAT('%', #{dictId, jdbcType=}), '%')</if>
+			<if test="dictName != null and dictName != ''"> AND dict_name LIKE CONCAT(CONCAT('%', #{dictName, jdbcType=}), '%')</if>
+			<if test="dictType != null and dictType != ''"> AND dict_type LIKE CONCAT(CONCAT('%', #{dictType, jdbcType=}), '%')</if>
+			<if test="status != null and status != ''"> AND status LIKE CONCAT(CONCAT('%', #{status, jdbcType=}), '%')</if>
+			<if test="createBy != null and createBy != ''"> AND create_by LIKE CONCAT(CONCAT('%', #{createBy, jdbcType=}), '%')</if>
+			<if test="createTime != null and createTime != ''"> AND create_time LIKE CONCAT(CONCAT('%', #{createTime, jdbcType=}), '%')</if>
+			<if test="updateBy != null and updateBy != ''"> AND update_by LIKE CONCAT(CONCAT('%', #{updateBy, jdbcType=}), '%')</if>
+			<if test="updateTime != null and updateTime != ''"> AND update_time LIKE CONCAT(CONCAT('%', #{updateTime, jdbcType=}), '%')</if>
+			<if test="remark != null and remark != ''"> AND remark LIKE CONCAT(CONCAT('%', #{remark, jdbcType=}), '%')</if>
+		</where>
+		<if test="orderByCause != null and orderByCause != ''">
+			ORDER BY ${orderByCause}
+		</if>
+	</select>
+
+	<!-- 根据条件查询列表数据 -->
+	<select id="selectOne" parameterType="com.utfinancing.financehub.engine.contractstatusupdate.entity.SysDictTypeEntity" resultMap="SysDictTypeResultMap">
+		SELECT <include refid="SysDictTypeColumn" /> FROM sys_dict_type
+		<where>
+			<if test="dictId != null and dictId != ''"> AND dict_id = #{dictId, jdbcType=} </if>
+			<if test="dictName != null and dictName != ''"> AND dict_name = #{dictName, jdbcType=} </if>
+			<if test="dictType != null and dictType != ''"> AND dict_type = #{dictType, jdbcType=} </if>
+			<if test="status != null and status != ''"> AND status = #{status, jdbcType=} </if>
+			<if test="createBy != null and createBy != ''"> AND create_by = #{createBy, jdbcType=} </if>
+			<if test="createTime != null and createTime != ''"> AND create_time = #{createTime, jdbcType=} </if>
+			<if test="updateBy != null and updateBy != ''"> AND update_by = #{updateBy, jdbcType=} </if>
+			<if test="updateTime != null and updateTime != ''"> AND update_time = #{updateTime, jdbcType=} </if>
+			<if test="remark != null and remark != ''"> AND remark = #{remark, jdbcType=} </if>
+		</where>
+	</select>
+	<!-- ******************** 查询语句  end **************************************************************************************************** -->
+
+	<!-- ******************** 新增语句  begin **************************************************************************************************** -->
+	<insert id="insert" parameterType="com.utfinancing.financehub.engine.contractstatusupdate.entity.SysDictTypeEntity">
+		INSERT INTO sys_dict_type
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="dictId != null">dict_id,</if>
+			<if test="dictName != null">dict_name,</if>
+			<if test="dictType != null">dict_type,</if>
+			<if test="status != null">status,</if>
+			<if test="createBy != null">create_by,</if>
+			create_time,
+			<if test="updateBy != null">update_by,</if>
+			<if test="updateTime != null">update_time,</if>
+			<if test="remark != null">remark,</if>
+		</trim>
+		<trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+			<if test="dictId != null">#{dictId, jdbcType=},</if>
+			<if test="dictName != null">#{dictName, jdbcType=},</if>
+			<if test="dictType != null">#{dictType, jdbcType=},</if>
+			<if test="status != null">#{status, jdbcType=},</if>
+			<if test="createBy != null">#{createBy, jdbcType=},</if>
+			SYSDATE,
+			<if test="updateBy != null">#{updateBy, jdbcType=},</if>
+			<if test="updateTime != null">#{updateTime, jdbcType=},</if>
+			<if test="remark != null">#{remark, jdbcType=},</if>
+		</trim>
+	</insert>
+	<!-- ******************** 新增语句  end **************************************************************************************************** -->
+
+	<!-- ******************** 批量新增语句  begin **************************************************************************************************** -->
+	<!-- ******************** 批量新增语句  end **************************************************************************************************** -->
+
+	<!-- ******************** 修改语句  begin **************************************************************************************************** -->
+	<update id="update" parameterType="com.utfinancing.financehub.engine.contractstatusupdate.entity.SysDictTypeEntity">
+		UPDATE sys_dict_type
+		<trim prefix="SET " suffixOverrides=",">
+			<if test="dictId != null">dict_id = #{dictId, jdbcType=},</if>
+			<if test="dictName != null">dict_name = #{dictName, jdbcType=},</if>
+			<if test="dictType != null">dict_type = #{dictType, jdbcType=},</if>
+			<if test="status != null">status = #{status, jdbcType=},</if>
+			<if test="createBy != null">create_by = #{createBy, jdbcType=},</if>
+			<if test="updateBy != null">update_by = #{updateBy, jdbcType=},</if>
+			<if test="updateTime != null">update_time = #{updateTime, jdbcType=},</if>
+			<if test="remark != null">remark = #{remark, jdbcType=},</if>
+		</trim>
+		WHERE ID = #{, jdbcType=}
+	</update>
+	<!-- ******************** 修改语句  end **************************************************************************************************** -->
+
+	<!-- ******************** 删除语句  begin **************************************************************************************************** -->
+
+	<delete id="deleteByMap" parameterType="map">
+		DELETE FROM sys_dict_type
+		<where>
+			<if test="dictId != null and dictId != ''"> AND dict_id = #{dictId, jdbcType=} </if>
+			<if test="dictName != null and dictName != ''"> AND dict_name = #{dictName, jdbcType=} </if>
+			<if test="dictType != null and dictType != ''"> AND dict_type = #{dictType, jdbcType=} </if>
+			<if test="status != null and status != ''"> AND status = #{status, jdbcType=} </if>
+			<if test="createBy != null and createBy != ''"> AND create_by = #{createBy, jdbcType=} </if>
+			<if test="createTime != null and createTime != ''"> AND create_time = #{createTime, jdbcType=} </if>
+			<if test="updateBy != null and updateBy != ''"> AND update_by = #{updateBy, jdbcType=} </if>
+			<if test="updateTime != null and updateTime != ''"> AND update_time = #{updateTime, jdbcType=} </if>
+			<if test="remark != null and remark != ''"> AND remark = #{remark, jdbcType=} </if>
+		</where>
+	</delete>
+	<!-- ******************** 删除语句  end **************************************************************************************************** -->
+</mapper>

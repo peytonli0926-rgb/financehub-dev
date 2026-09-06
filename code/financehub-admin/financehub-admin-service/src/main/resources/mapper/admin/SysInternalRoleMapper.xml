@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.admin.mapper.SysInternalRoleMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.admin.entity.SysInternalRoleEntity">
+                    <id column="id" property="id" />
+                    <result column="role_code" property="roleCode" />
+                    <result column="role_name" property="roleName" />
+                    <result column="status" property="status" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, role_code, role_name, status, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectUserRoleList" resultType="com.utfinancing.financehub.admin.model.vo.SysInternalRoleVO">
+        select
+            x.*,
+            u.sys_user_id
+        from
+            sys_internal_role x
+                inner join sys_internal_role_user u on
+                x.id = u.role_id
+        where
+            1 = 1
+          and x.del_flag = '0'
+          and u.del_flag = '0'
+    </select>
+    <select id="orgListByRoleId" resultType="java.lang.String">
+        select
+            siro.org_id
+        from
+            sys_internal_role_org siro
+                inner join sys_internal_role sir on
+                siro.role_id = sir.id
+        where
+            1 = 1
+          and sir.del_flag = '0'
+          and siro.del_flag = '0'
+          and sir.id = #{id}
+    </select>
+    <select id="userListByRoleId" resultType="java.lang.String">
+        select
+            siru.id
+        from
+            sys_internal_role_user siru
+                inner join sys_internal_role sir  on
+                siru.role_id = sir.id
+        where
+            1 = 1
+          and sir.del_flag = '0'
+          and siru.del_flag = '0'
+          and sir.id = #{id}
+    </select>
+
+</mapper>
+

@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.RepaymentPlanHisMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanHisEntity">
+                    <id column="id" property="id" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="periods" property="periods" />
+                    <result column="plan_date" property="planDate" />
+                    <result column="rent_amount" property="rentAmount" />
+                    <result column="principal_amount" property="principalAmount" />
+                    <result column="interest_amount" property="interestAmount" />
+                    <result column="principal_tax" property="principalTax" />
+                    <result column="interest_tax" property="interestTax" />
+                    <result column="outflow_amount" property="outflowAmount" />
+                    <result column="planned_interest" property="plannedInterest" />
+                    <result column="planned_principal" property="plannedPrincipal" />
+                    <result column="cash_flow" property="cashFlow" />
+                    <result column="opening_amortized_cost" property="openingAmortizedCost" />
+                    <result column="ending_amortized_cost" property="endingAmortizedCost" />
+                    <result column="actual_daily_rate" property="actualDailyRate" />
+                    <result column="rental_income" property="rentalIncome" />
+                    <result column="service_fee_amortization_rate" property="serviceFeeAmortizationRate" />
+                    <result column="service_fee_amortization_income" property="serviceFeeAmortizationIncome" />
+                    <result column="xirr_rate" property="xirrRate" />
+                    <result column="actual_repayment_date" property="actualRepaymentDate" />
+                    <result column="actual_repayment_principal_balance" property="actualRepaymentPrincipalBalance" />
+                    <result column="actual_repayment_principal_amount" property="actualRepaymentPrincipalAmount" />
+                    <result column="actual_repayment_interes_balance" property="actualRepaymentInteresBalance" />
+                    <result column="actual_repayment_interes_amount" property="actualRepaymentInteresAmount" />
+                    <result column="recapture_status" property="recaptureStatus" />
+                    <result column="overdue_earnings" property="overdueEarnings" />
+                    <result column="comment" property="comment" />
+                    <result column="overdue_days" property="overdueDays" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="submit_by" property="submitBy" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="source_irr_rate" property="sourceIrrRate" />
+            <result column="adjustment_amount" property="adjustmentAmount" />
+            <result column="change_after_ending_amortized_cost" property="changeAfterEndingAmortizedCost" />
+            <result column="change_after_rental_income" property="changeAfterRentalIncome" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, client_code, client_name, contract_code, contract_name, periods, plan_date, rent_amount, principal_amount, interest_amount, principal_tax, interest_tax, outflow_amount, planned_interest, planned_principal, cash_flow, opening_amortized_cost, ending_amortized_cost, actual_daily_rate, rental_income, service_fee_amortization_rate, service_fee_amortization_income, xirr_rate, actual_repayment_date, actual_repayment_principal_balance, actual_repayment_principal_amount, actual_repayment_interes_balance, actual_repayment_interes_amount, recapture_status, overdue_earnings, comment, overdue_days, process_status, submit_by, create_by, create_time, update_by, update_time, del_flag, source_irr_rate,  adjustment_amount, change_after_ending_amortized_cost, change_after_ending_amortized_cost
+        </sql>
+    <select id="selectGroupByContractCode"
+            resultType="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanHisEntity">
+        select a.*
+        from eg_repayment_plan_his a,
+        (
+        select contract_code, max(version) version
+        from eg_repayment_plan_his
+        where
+        del_flag = '0'
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by contract_code
+        ) b
+        where a.version = b.version
+        and a.contract_code = b.contract_code
+        order by contract_code,plan_date
+    </select>
+
+    <select id="selectThisMonthMaxVersionGroup"
+            resultType="com.utfinancing.financehub.engine.finance.entity.RepaymentPlanHisEntity">
+        select a.*
+        from eg_repayment_plan_his a,
+        (
+        select contract_code, max(version) version
+        from eg_repayment_plan_his
+        where
+        del_flag = '0'
+        and to_char(change_date,'YYYY-MM') = to_char(to_date(#{param},'YYYY-MM-DD'),'YYYY-MM')
+        group by contract_code
+        ) b
+        where a.version = b.version
+        and a.contract_code = b.contract_code
+        order by contract_code,plan_date
+    </select>
+
+    <select id="selectNewVersionByContractCode" resultType="java.lang.Integer">
+        select version
+        from eg_repayment_plan_his
+        where contract_code = #{contractCode}
+        order by id desc
+        limit 1
+    </select>
+    <select id="selectPageByContractCode"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractRepaymentPlanVO">
+        with table1 as (
+            select
+                contract_code , to_char(create_time, 'YYYYMM')::int as periods , sum(ta_amount) ta_amount
+            from eg_contract_ta_amount ecta
+            where 1=1
+            <if test = "param.contractCode!=null and param.contractCode!=''">
+                and contract_code = #{param.contractCode}
+            </if>
+            group by contract_code ,periods
+            order by contract_code
+        ),
+        table2 as (
+            select
+                t1.contract_code, t1.periods, sum(t2.ta_amount) as ta_balance
+            from table1 t1
+            inner join table1 t2 on t1.contract_code=t2.contract_code and t1.periods=t2.periods
+            where 1=1
+            <if test = "param.contractCode!=null and param.contractCode!=''">
+                and t1.contract_code = #{param.contractCode}
+            </if>
+            group by t1.contract_code, t1.periods
+            order by t1.contract_code, t1.periods
+        )
+        select t.* from (
+            select
+            erp.periods,
+            erp.plan_date as plan_date_period,
+            erp.rent_amount,
+            erp.principal_amount as principalAmount,
+            erp.interest_amount as interestAmount,
+            erp.actual_repayment_principal_amount,
+            erp.actual_repayment_interes_amount,
+    <!--        erp.actual_repayment_rent_amount,-->
+            coalesce(erp.actual_repayment_principal_amount,0)+coalesce(erp.actual_repayment_interes_amount,0) as actual_repayment_rent_amount,
+            erp.actual_repayment_date,
+            erp.ebank_serial_number as bankNum,
+            erp.settlement_way as settlementTerms,
+            erp.adjustment_amount,
+            (erp.change_after_ending_amortized_cost-erp.ending_amortized_cost) as ending_amortized_cost_balance,
+            (erp.change_after_rental_income-erp.rental_income) as rental_income_balance,
+            erp.create_time,
+            ta.ta_balance
+        from
+            eg_repayment_plan erp
+        left join table2 ta on erp.contract_code = ta.contract_code and to_char(erp.plan_date, 'YYYYMM')::int=ta.periods
+        where
+        1 = 1
+        and erp.del_flag = '0'
+        <if test = "param.contractCode!=null and param.contractCode!=''">
+            and erp.contract_code = #{param.contractCode}
+        </if>
+        <if test = "param.versionDate!=null">
+            and to_char(erp.create_time, 'yyyy-MM-dd') = to_char(to_date(#{param.versionDate}, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+        </if>
+        union all
+        select
+            erph.periods,
+            erph.plan_date as plan_date_period,
+            erph.rent_amount,
+            erph.principal_amount as principalAmount,
+            erph.interest_amount as interestAmount,
+            erph.actual_repayment_principal_amount,
+            erph.actual_repayment_interes_amount,
+            coalesce(erph.actual_repayment_principal_amount,0)+coalesce(erph.actual_repayment_interes_amount,0) as actual_repayment_rent_amount,
+            erph.actual_repayment_date,
+            erph.ebank_serial_number as bankNum,
+            erph.settlement_way as settlementTerms,
+            erph.adjustment_amount,
+            (erph.change_after_ending_amortized_cost-erph.ending_amortized_cost) as ending_amortized_cost_balance,
+            (erph.change_after_rental_income-erph.rental_income) as rental_income_balance,
+            erph.create_time ,
+            ta.ta_balance
+        from
+            eg_repayment_plan_his erph
+        left join table2 ta on erph.contract_code = ta.contract_code and to_char(erph.plan_date, 'YYYYMM')::int=ta.periods
+        where
+        1 = 1
+        and erph.del_flag = '0'
+        <if test = "param.contractCode!=null and param.contractCode!=''">
+            and erph.contract_code = #{param.contractCode}
+        </if>
+        <if test = "param.versionDate!=null">
+            and to_char(erph.create_time, 'yyyy-MM-dd') = to_char(to_date(#{param.versionDate}, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+        </if>
+        ) t
+        where 1=1 and t.periods is not null
+        order by to_char(t.create_time, 'YYYY-MM-DD') desc,t.periods asc,t.plan_date_period asc
+    </select>
+
+    <select id="selectByContractCode"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ContractRepaymentPlanVO">
+        select t.* from(
+        select
+        erp.periods,
+        erp.plan_date as plan_date_period,
+        erp.rent_amount,
+        erp.principal_amount as principalAmount,
+        erp.interest_amount as interestAmount,
+        erp.actual_repayment_principal_amount,
+        erp.actual_repayment_interes_amount,
+        coalesce(erp.actual_repayment_principal_amount,0)+coalesce(erp.actual_repayment_interes_amount,0) as actual_repayment_rent_amount,
+        erp.actual_repayment_date,
+        erp.ebank_serial_number as bankNum,
+        erp.settlement_way as settlementTerms,
+        erp.create_time
+        from
+        eg_repayment_plan erp
+        where
+        1 = 1
+        and erp.del_flag = '0'
+        <if test = "param.contractCode!=null and param.contractCode!=''">
+            and erp.contract_code = #{param.contractCode}
+        </if>
+        <if test = "param.versionDate!=null">
+            and to_char(erp.create_time, 'yyyy-MM-dd') = to_char(to_date(#{param.versionDate}, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+        </if>
+        union all
+        select
+        erph.periods,
+        erph.plan_date as plan_date_period,
+        erph.rent_amount,
+        erph.principal_amount as principalAmount,
+        erph.interest_amount as interestAmount,
+        erph.actual_repayment_principal_amount,
+        erph.actual_repayment_interes_amount,
+        coalesce(erph.actual_repayment_principal_amount,0)+coalesce(erph.actual_repayment_interes_amount,0) as actual_repayment_rent_amount,
+        erph.actual_repayment_date,
+        erph.ebank_serial_number as bankNum,
+        erph.settlement_way as settlementTerms,
+        erph.create_time
+        from
+        eg_repayment_plan_his erph
+        where
+        1 = 1
+        and erph.del_flag = '0'
+        <if test = "param.contractCode!=null and param.contractCode!=''">
+            and erph.contract_code = #{param.contractCode}
+        </if>
+        <if test = "param.versionDate!=null">
+            and to_char(erph.create_time, 'yyyy-MM-dd') = to_char(to_date(#{param.versionDate}, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+        </if>
+        ) t where 1=1 and t.periods is not null order by t.periods asc,t.plan_date_period asc
+    </select>
+    <select id="selectPlanAmountByCondition"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.RepaymentPlanHisVO">
+        select
+        contract_code,
+        org_id,
+        sum(coalesce(planned_principal, 0)) as planned_principal,
+        sum(coalesce(planned_interest, 0)) as planned_interest
+        from
+        eg_repayment_plan_his
+        where
+        1 = 1
+        and "version" in(
+        select
+        max(t."version")
+        from
+        eg_repayment_plan_his t
+        where
+        1 = 1
+        and t.contract_code = #{param.contractCode}
+        and t.org_id = #{param.orgId}
+        and to_char(change_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.planDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        )
+        and contract_code = #{param.contractCode}
+        and org_id = #{param.orgId}
+        and to_char(change_date,'yyyy-MM-dd') &lt;= to_char(to_date(#{param.planDate},'YYYY-MM-DD'),'YYYY-MM-DD')
+        group by
+        contract_code,
+        org_id
+    </select>
+</mapper>
+

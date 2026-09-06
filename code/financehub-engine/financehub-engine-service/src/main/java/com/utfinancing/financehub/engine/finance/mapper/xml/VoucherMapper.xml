@@ -1,0 +1,1713 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.VoucherMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.VoucherEntity">
+                    <id column="id" property="id" />
+                    <result column="source" property="source" />
+                    <result column="voucher_type" property="voucherType" />
+                    <result column="sign_company" property="signCompany" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="voucher_date" property="voucherDate" />
+                    <result column="currency" property="currency" />
+                    <result column="dept_name" property="deptName" />
+                    <result column="voucher_summary" property="voucherSummary" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="voucher_num" property="voucherNum" />
+                    <result column="voucher_way" property="voucherWay" />
+                    <result column="create_user_no" property="createUserNo" />
+                    <result column="create_user_name" property="createUserName" />
+                    <result column="recheck_user_no" property="recheckUserNo" />
+                    <result column="recheck_user_name" property="recheckUserName" />
+                    <result column="voucher_status" property="voucherStatus" />
+                    <result column="sub_scene_type" property="subSceneType" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, source, voucher_type, sign_company, business_date, voucher_date, currency, dept_name, voucher_summary, create_by, create_time, update_by, update_time, del_flag, voucher_num, voucher_way, create_user_no, create_user_name, recheck_user_no, recheck_user_name, voucher_status,sub_scene_type
+        </sql>
+    <select id="voucherNumberPage" resultType="com.utfinancing.financehub.engine.finance.model.vo.VoucherVO">
+        select distinct ev.voucher_num  from eg_voucher ev
+        where 1=1
+        <if test="param.searchKey!=null and param.searchKey!=''">
+            and CAST(ev.voucher_num AS text) like concat('%', #{param.searchKey}::text, '%')
+        </if>
+        <if test="param.periodCode!=null">
+            and ev.period_code = #{param.periodCode}
+        </if>
+        order by ev.voucher_num asc
+    </select>
+    <select id="voucherManualPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.dto.VoucherDetailDTO">
+        select * from (
+        select
+        t.voucher_num,
+        t.voucher_type,
+        t.org_id,
+        t.business_date,
+        t.voucher_date,
+        t.scene_code,
+        t.scene_name,
+        t.currency,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t.create_user_no,
+        t.create_user_name,
+        t.recheck_user_no,
+        t.recheck_user_name,
+        t.voucher_status,
+        t.batch_id,
+        t.batch_type,
+        t1.id,
+        t1.account_code,
+        t1.account_name,
+        t1.contract_code,
+        t1.client_code,
+        t1.client_name,
+        t1.debit_amount,
+        t1.credit_amount,
+        t1.bank_account,
+        t1.edit_flag,
+        t1.bill_contract_code,
+        t1.cost_centre,
+        t1.voucher_summary as voucherEntrySummary,
+        t.create_time,
+        t1.voucher_id as voucherId,
+        t.period_code,
+        t1.is_related_other_customer,
+        null as tax_rate,
+        t.eas_voucher_number,
+        t.eas_voucher_id,
+        '0' as source_from_type,
+        t.is_write_off
+        from
+        eg_voucher t
+        left join eg_voucher_entry t1 on
+        t1.voucher_id = t.id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        <if test="param.isAccountCodeFlag != null and param.isAccountCodeFlag == '1'.toString()">
+            and t.id in (
+            select eve.voucher_id from eg_voucher_entry eve where 1=1
+            <if test="param.periodCode!=null">
+                and eve.period_code = #{param.periodCode}
+            </if>
+            <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+                and eve.account_code in
+                <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.accountNameList != null and param.accountNameList.size > 0">
+                and eve.account_name in
+                <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and eve.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+                and eve.bill_contract_code in
+                <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.bankAccount != null and param.bankAccount !=''">
+                and eve.bank_account like concat('%', #{param.bankAccount}::text, '%')
+            </if>
+            <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+                and eve.voucher_summary like concat('%', #{param.voucherEntrySummary}::text, '%')
+            </if>
+            )
+        </if>
+        <if test="param.interfaceDataId!=null">
+            and t.interface_data_id = #{param.interfaceDataId}
+        </if>
+        <if test="param.easVoucherNumber!=null and param.easVoucherNumber!=''">
+            and t.eas_voucher_number = #{param.easVoucherNumber}
+        </if>
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.batchId!=null">
+            and t.batch_id = #{param.batchId}
+        </if>
+        <if test="param.batchType!=null and param.batchType!=''">
+            and t.batch_type = #{param.batchType}
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        union all
+        select
+        t.voucher_num,
+        t.voucher_type,
+        t.org_id,
+        t.business_date,
+        t.voucher_date,
+        t.scene_code,
+        t.scene_name,
+        t.currency_code as currency,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t.create_by as create_user_no,
+        t.create_user_name as create_user_name,
+        t.recheck_user_no ,
+        t.recheck_user_name,
+        t.process_status as voucher_status,
+        t.id as batch_id,
+        '' as batch_type,
+        t1.id,
+        t1.account_code ,
+        t1.account_name,
+        t1.contract_code,
+        t1.client_code,
+        t1.client_name,
+        t1.debit_amount,
+        t1.credit_amount,
+        t1.bank_no as bank_account,
+        '' as edit_flag,
+        t1.loans_contract_code as bill_contract_code,
+        t1.cost_centre,
+        t1.subsidiary_account as voucherEntrySummary,
+        t.create_time,
+        t1.manual_id  as voucherId,
+        t.period_code,
+        t1.is_related_other_customer,
+        t.rate as tax_rate,
+        '' as eas_voucher_number,
+        '' as eas_voucher_id,
+        '1' as source_from_type,
+        '0' as is_write_off
+        from
+        eg_manual t
+        left join eg_manual_voucher t1
+        on
+        t.id = t1.manual_id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        and t.process_status in ('1')
+        <if test="param.isAccountCodeFlag != null and param.isAccountCodeFlag == '1'.toString()">
+            and t.id in (
+            select eve.manual_id from eg_manual_voucher eve where 1=1
+            <if test="param.periodCode!=null">
+                and eve.period_code = #{param.periodCode}
+            </if>
+            <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+                and eve.account_code in
+                <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.accountNameList != null and param.accountNameList.size > 0">
+                and eve.account_name in
+                <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and eve.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+                and eve.loans_contract_code in
+                <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.bankAccount != null and param.bankAccount !=''">
+                and eve.bank_no like concat('%', #{param.bankAccount}::text, '%')
+            </if>
+            <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+                and eve.subsidiary_account like concat('%', #{param.voucherEntrySummary}::text, '%')
+            </if>
+            )
+        </if>
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.batchId!=null or param.interfaceDataId!=null or (param.easVoucherNumber!='' and param.easVoucherNumber!=null)">
+            and t.id is null
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency_code like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        ) a order by voucherId,create_time desc
+    </select>
+    <select id="selectAllVoucerDetails"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.VoucherDetailExportDTO">
+        <include refid="selectAllVoucherInfos"/>
+    </select>
+
+    <sql id="selectAllVoucherInfos">
+        select
+        a.voucher_num,
+        a.voucher_type,
+        svoucertype.dict_label as voucher_name,
+        a.org_id,
+        eoc.org_name,
+        a.business_date,
+        a.voucher_date,
+        a.scene_code,
+        a.scene_name,
+        a.currency,
+        ec2.currenct_name,
+        a.sub_scene_type,
+        coalesce(sdd.dict_label,a.sub_scene_type) as sub_scene_type_name,
+        a.voucher_summary,
+        a.create_user_no,
+        a.create_user_name,
+        a.recheck_user_no,
+        a.recheck_user_name,
+        vStatus.dict_label as voucher_status,
+        a.batch_id,
+        a.batch_type,
+        a.id,
+        a.account_code,
+        a.account_name,
+        a.contract_code,
+        a.client_code,
+        a.debit_amount,
+        a.credit_amount,
+        a.bank_account,
+        a.edit_flag,
+        a.bill_contract_code,
+        a.cost_centre,
+        a.voucherEntrySummary,
+        a.create_time,
+        a.voucherId,
+        ec.client_name,
+        a.period_code,
+        a.is_related_other_customer,
+        a.tax_rate,
+        a.eas_voucher_number
+        from (
+        select
+        t.voucher_num,
+        t.voucher_type,
+        t.org_id,
+        t.business_date,
+        t.voucher_date,
+        t.scene_code,
+        t.scene_name,
+        t.currency,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t.create_user_no,
+        t.create_user_name,
+        t.recheck_user_no,
+        t.recheck_user_name,
+        t.voucher_status,
+        t.batch_id,
+        t.batch_type,
+        t1.id,
+        t1.account_code,
+        t1.account_name,
+        t1.contract_code,
+        t1.client_code,
+        t1.client_name,
+        t1.debit_amount,
+        t1.credit_amount,
+        t1.bank_account,
+        t1.edit_flag,
+        t1.bill_contract_code,
+        t1.cost_centre,
+        t1.voucher_summary as voucherEntrySummary,
+        t.create_time,
+        t1.voucher_id as voucherId,
+        t.period_code,
+        t1.is_related_other_customer,
+        null as tax_rate,
+        t.eas_voucher_number
+        from
+        eg_voucher t
+        left join eg_voucher_entry t1 on
+        t1.voucher_id = t.id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        <if test="param.isAccountCodeFlag != null and param.isAccountCodeFlag == '1'.toString()">
+            and t.id in (
+            select eve.voucher_id from eg_voucher_entry eve where 1=1
+            <if test="param.periodCode!=null">
+                and eve.period_code = #{param.periodCode}
+            </if>
+            <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+                and eve.account_code in
+                <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.accountNameList != null and param.accountNameList.size > 0">
+                and eve.account_name in
+                <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and eve.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+                and eve.bill_contract_code in
+                <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.bankAccount != null and param.bankAccount !=''">
+                and eve.bank_account like concat('%', #{param.bankAccount}::text, '%')
+            </if>
+            <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+                and eve.voucher_summary like concat('%', #{param.voucherEntrySummary}::text, '%')
+            </if>
+            )
+        </if>
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.batchId!=null">
+            and t.batch_id = #{param.batchId}
+        </if>
+        <if test="param.batchType!=null and param.batchType!=''">
+            and t.batch_type = #{param.batchType}
+        </if>
+        <if test="param.easVoucherNumber!=null and param.easVoucherNumber!=null">
+            and t.eas_voucher_number = #{param.easVoucherNumber}
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        union all
+        select
+        t.voucher_num,
+        t.voucher_type,
+        t.org_id,
+        t.business_date,
+        t.voucher_date,
+        t.scene_code,
+        t.scene_name,
+        t.currency_code as currency,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t.create_by as create_user_no,
+        t.create_user_name as create_user_name,
+        t.recheck_user_no ,
+        t.recheck_user_name,
+        t.process_status as voucher_status,
+        t.id as batch_id,
+        '' as batch_type,
+        t1.id,
+        t1.account_code ,
+        t1.account_name,
+        t1.contract_code,
+        t1.client_code,
+        t1.client_name,
+        t1.debit_amount,
+        t1.credit_amount,
+        t1.bank_no as bank_account,
+        '' as edit_flag,
+        t1.loans_contract_code as bill_contract_code,
+        t1.cost_centre,
+        t1.subsidiary_account as voucherEntrySummary,
+        t.create_time,
+        t1.manual_id  as voucherId,
+        t.period_code,
+        t1.is_related_other_customer,
+        t.rate as tax_rate,
+        '' as eas_voucher_number
+        from
+        eg_manual t
+        left join eg_manual_voucher t1
+        on
+        t.id = t1.manual_id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        and t.process_status in ('1')
+        <if test="param.isAccountCodeFlag != null and param.isAccountCodeFlag == '1'.toString()">
+            and t.id in (
+            select eve.manual_id from eg_manual_voucher eve where 1=1
+            <if test="param.periodCode!=null">
+                and eve.period_code = #{param.periodCode}
+            </if>
+            <if test="param.accountCodeList != null and param.accountCodeList.size > 0">
+                and eve.account_code in
+                <foreach item="item" index="index" collection="param.accountCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.accountNameList != null and param.accountNameList.size > 0">
+                and eve.account_name in
+                <foreach item="item" index="index" collection="param.accountNameList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+                and eve.contract_code in
+                <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+                and eve.loans_contract_code in
+                <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.bankAccount != null and param.bankAccount !=''">
+                and eve.bank_no like concat('%', #{param.bankAccount}::text, '%')
+            </if>
+            <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+                and eve.subsidiary_account like concat('%', #{param.voucherEntrySummary}::text, '%')
+            </if>
+            )
+        </if>
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.batchId!=null or param.interfaceDataId!=null or (param.easVoucherNumber!='' and param.easVoucherNumber!=null)">
+            and t.id is null
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency_code like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        ) a
+        left join eg_client ec on ec.client_code = a.client_code and ec.del_flag ='0'
+        left join eg_org_company eoc on eoc.org_id = a.org_id and eoc.del_flag ='0'
+        left join sys_dict_data sVoucerType on sVoucerType.dict_value = a.voucher_type and sVoucerType.dict_type ='sys_voucher_type' and sVoucerType.status ='0'
+        left join eg_currency ec2 on ec2.currency_code = a.currency and ec2.del_flag ='0'
+        left join sys_dict_data sdd on sdd.dict_value =a.sub_scene_type and sdd.dict_type ='sys_sub_scene_type' and sdd.status ='0'
+        left join sys_dict_data vStatus on vStatus.dict_value = a.voucher_status and vStatus.dict_type ='process_status' and vStatus.status ='0'
+        order by voucherId,create_time desc
+    </sql>
+
+    <select id="getInsuranceAmount"
+            resultType="com.utfinancing.financehub.engine.finance.model.dto.VoucherDetailDTO">
+        select
+        t.*,
+        ec.financial_contract_status,
+        ec.contract_status,
+        ec.client_name
+        from
+        (
+        select
+        eve.contract_code ,
+        ev.org_id ,
+        eve.client_code,
+        ev.scene_code,
+        eve.debit_amount ,
+        eve.credit_amount
+        from eg_voucher ev
+        left join eg_voucher_entry eve on ev.id=eve.voucher_id and eve.del_flag ='0'
+        where ev.del_flag ='0'
+        <if test="queryDTO.periodCode != null and queryDTO.periodCode !=''">
+            and ev.period_code = #{queryDTO.periodCode}
+        </if>
+        <if test="queryDTO.periodCode != null and queryDTO.periodCode !=''">
+            and eve.period_code = #{queryDTO.periodCode}
+        </if>
+        <if test="queryDTO.accountCode != null and queryDTO.accountCode !=''">
+            and eve.account_code = #{queryDTO.accountCode}
+        </if>
+        <if test="queryDTO.contractCodeList != null and queryDTO.contractCodeList.size > 0">
+            and ev.contract_code in
+            <foreach item="item" index="index" collection="queryDTO.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.orgIdList != null and queryDTO.orgIdList.size > 0">
+            and ev.org_id in
+            <foreach item="item" index="index" collection="queryDTO.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryDTO.sceneCodeList != null and queryDTO.sceneCodeList.size > 0">
+            and ev.scene_code in
+            <foreach item="item" index="index" collection="queryDTO.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) t
+        inner join eg_contract ec
+        on
+        t.org_id = ec.org_id
+        and t.contract_code = ec.contract_code
+    </select>
+    <select id="summaryByPage"
+            resultType="com.utfinancing.financehub.engine.finance.model.dto.VoucherDetailDTO">
+        select
+        org_id,
+        period_code,
+        business_date,
+        voucher_date,
+        voucher_type,
+        scene_code,
+        scene_name,
+        sub_scene_type,
+        currency,
+        voucher_summary,
+        account_code,
+        account_name,
+        currency,
+        tax_rate,
+        create_user_no,
+        create_user_name,
+        recheck_user_no,
+        recheck_user_name,
+        voucher_status,
+        eas_voucher_number,
+        debit_credit_type,
+        sum(coalesce(a.debit_amount, 0)) as debit_amount,
+        sum(coalesce(a.credit_amount, 0)) as credit_amount
+        from (
+        select
+        t.org_id,
+        t.period_code,
+        t.business_date,
+        t.voucher_date,
+        t.voucher_type,
+        t.scene_code,
+        t.scene_name,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t1.account_code,
+        t1.account_name,
+        t.currency,
+        null as tax_rate,
+        t.create_user_no,
+        t.create_user_name,
+        t.recheck_user_no,
+        t.recheck_user_name,
+        t.voucher_status,
+        t.eas_voucher_number,
+        t1.debit_credit_type,
+        coalesce(t1.debit_amount, 0) as debit_amount,
+        coalesce(t1.credit_amount, 0) as credit_amount
+        from
+        eg_voucher t
+        left join eg_voucher_entry t1 on
+        t1.voucher_id = t.id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and t1.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+            and t1.bill_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+            and t1.voucher_summary like concat('%', #{param.voucherEntrySummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.bankAccount != null and param.bankAccount !=''">
+            and t1.bank_account like concat('%', #{param.bankAccount}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        <if test="param.batchId!=null">
+            and t.batch_id = #{param.batchId}
+        </if>
+        <if test="param.batchType!=null and param.batchType!=''">
+            and t.batch_type = #{param.batchType}
+        </if>
+        union all
+        select
+        t.org_id,
+        t.period_code,
+        t.business_date,
+        t.voucher_date,
+        t.voucher_type,
+        t.scene_code,
+        t.scene_name,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t1.account_code,
+        t1.account_name,
+        t.currency_code as currency,
+        t.rate as tax_rate,
+        t.create_by as create_user_no,
+        t.create_user_name as create_user_name,
+        t.recheck_user_no ,
+        t.recheck_user_name,
+        t.process_status as voucher_status,
+        '' as eas_voucher_number,
+        case when coalesce(t1.debit_amount, 0)!=0 then 'DR' else 'CR' end debit_credit_type,
+        coalesce(t1.debit_amount, 0) as debit_amount,
+        coalesce(t1.credit_amount, 0) as credit_amount
+        from
+        eg_manual t
+        left join eg_manual_voucher t1
+        on
+        t.id = t1.manual_id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        and t.process_status in ('1')
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and t1.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+            and t1.loans_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+            and t1.voucher_summary like concat('%', #{param.voucherEntrySummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.bankAccount != null and param.bankAccount !=''">
+            and t1.bank_no like concat('%', #{param.bankAccount}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency_code like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        <if test="param.batchId!=null">
+            and t.id = #{param.batchId}
+        </if>
+        <if test="param.easVoucherNumber!=null and param.easVoucherNumber!=''">
+            and t.id is null
+        </if>
+        ) a
+        group by
+        org_id,
+        period_code,
+        business_date,
+        voucher_date,
+        voucher_type,
+        scene_code,
+        scene_name,
+        sub_scene_type,
+        currency,
+        voucher_summary,
+        account_code,
+        account_name,
+        currency,
+        tax_rate,
+        create_user_no,
+        create_user_name,
+        recheck_user_no,
+        recheck_user_name,
+        voucher_status,
+        eas_voucher_number,
+        debit_credit_type
+        order by period_code desc,org_id asc,voucher_summary desc, debit_credit_type desc
+    </select><select id="summaryExport"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.VoucherExportVo">
+        select
+        org_id,
+        period_code,
+        business_date,
+        voucher_date,
+        voucher_type,
+        scene_code,
+        scene_name,
+        sub_scene_type,
+        currency,
+        voucher_summary,
+        account_code,
+        account_name,
+        currency,
+        tax_rate,
+        create_user_no,
+        create_user_name,
+        recheck_user_no,
+        recheck_user_name,
+        voucher_status,
+        eas_voucher_number,
+        debit_credit_type,
+        sum(coalesce(a.debit_amount, 0)) as debit_amount,
+        sum(coalesce(a.credit_amount, 0)) as credit_amount
+        from (
+        select
+        t.org_id,
+        t.period_code,
+        t.business_date,
+        t.voucher_date,
+        t.voucher_type,
+        t.scene_code,
+        t.scene_name,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t1.account_code,
+        t1.account_name,
+        t.currency,
+        null as tax_rate,
+        t.create_user_no,
+        t.create_user_name,
+        t.recheck_user_no,
+        t.recheck_user_name,
+        t.voucher_status,
+        t.eas_voucher_number,
+        t1.debit_credit_type,
+        coalesce(t1.debit_amount, 0) as debit_amount,
+        coalesce(t1.credit_amount, 0) as credit_amount
+        from
+        eg_voucher t
+        left join eg_voucher_entry t1 on
+        t1.voucher_id = t.id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.voucher_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and t1.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+            and t1.bill_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+            and t1.voucher_summary like concat('%', #{param.voucherEntrySummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.bankAccount != null and param.bankAccount !=''">
+            and t1.bank_account like concat('%', #{param.bankAccount}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        <if test="param.batchId!=null">
+            and t.batch_id = #{param.batchId}
+        </if>
+        <if test="param.batchType!=null and param.batchType!=''">
+            and t.batch_type = #{param.batchType}
+        </if>
+        union all
+        select
+        t.org_id,
+        t.period_code,
+        t.business_date,
+        t.voucher_date,
+        t.voucher_type,
+        t.scene_code,
+        t.scene_name,
+        t.sub_scene_type,
+        t.voucher_summary,
+        t1.account_code,
+        t1.account_name,
+        t.currency_code as currency,
+        t.rate as tax_rate,
+        t.create_by as create_user_no,
+        t.create_user_name as create_user_name,
+        t.recheck_user_no ,
+        t.recheck_user_name,
+        t.process_status as voucher_status,
+        '' as eas_voucher_number,
+        case when coalesce(t1.debit_amount, 0)!=0 then 'DR' else 'CR' end debit_credit_type,
+        coalesce(t1.debit_amount, 0) as debit_amount,
+        coalesce(t1.credit_amount, 0) as credit_amount
+        from
+        eg_manual t
+        left join eg_manual_voucher t1
+        on
+        t.id = t1.manual_id
+        where
+        t.del_flag = '0'
+        and t1.del_flag = '0'
+        and t.process_status in ('1')
+        <if test="param.periodCode!=null">
+            and t.period_code = #{param.periodCode}
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.businessDateStart!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.businessDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.businessDateEnd!=null">
+            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.businessDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateStart!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[>=]]> to_char(#{param.voucherDateStart},'YYYY-MM-DD')
+        </if>
+        <if test="param.voucherDateEnd!=null">
+            and to_char(t.voucher_date,'YYYY-MM-DD') <![CDATA[<=]]> to_char(#{param.voucherDateEnd},'YYYY-MM-DD')
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and t.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherNumList != null and param.voucherNumList.size > 0">
+            and t.voucher_num in
+            <foreach item="item" index="index" collection="param.voucherNumList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherTypeList != null and param.voucherTypeList.size > 0">
+            and t.voucher_type in
+            <foreach item="item" index="index" collection="param.voucherTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and t.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.subSceneTypeList != null and param.subSceneTypeList.size > 0">
+            and t.sub_scene_type in
+            <foreach item="item" index="index" collection="param.subSceneTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sceneCodeList != null and param.sceneCodeList.size > 0">
+            and t.scene_code in
+            <foreach item="item" index="index" collection="param.sceneCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.createUserNameList != null and param.createUserNameList.size > 0">
+            and t.create_user_name in
+            <foreach item="item" index="index" collection="param.createUserNameList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and t1.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.billContractCodeList != null and param.billContractCodeList.size > 0">
+            and t1.loans_contract_code in
+            <foreach item="item" index="index" collection="param.billContractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.costCentreList != null and param.costCentreList.size > 0">
+            and t1.cost_centre in
+            <foreach item="item" index="index" collection="param.costCentreList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.voucherSummary != null and param.voucherSummary !=''">
+            and t.voucher_summary like concat('%', #{param.voucherSummary}::text, '%')
+        </if>
+        <if test="param.voucherEntrySummary != null and param.voucherEntrySummary !=''">
+            and t1.voucher_summary like concat('%', #{param.voucherEntrySummary}::text, '%')
+        </if>
+        <if test="param.recheckUserName != null and param.recheckUserName !=''">
+            and t.recheck_user_name like concat('%', #{param.recheckUserName}::text, '%')
+        </if>
+        <if test="param.bankAccount != null and param.bankAccount !=''">
+            and t1.bank_no like concat('%', #{param.bankAccount}::text, '%')
+        </if>
+        <if test="param.currency != null and param.currency !=''">
+            and t.currency_code like concat('%', #{param.currency}::text, '%')
+        </if>
+        <if test="param.periodCode != null">
+            and t1.period_code = #{param.periodCode}
+        </if>
+        <if test="param.voucherIdList != null and param.voucherIdList.size > 0">
+            and t.id in
+            <foreach item="item" index="index" collection="param.voucherIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.isRelatedOtherCustomer != null and param.isRelatedOtherCustomer !=''">
+            and t1.is_related_other_customer = #{param.isRelatedOtherCustomer}
+        </if>
+        <if test="param.batchId!=null">
+            and t.id = #{param.batchId}
+        </if>
+        <if test="param.easVoucherNumber!=null and param.easVoucherNumber!=''">
+            and t.id is null
+        </if>
+        ) a
+        group by
+        org_id,
+        period_code,
+        business_date,
+        voucher_date,
+        voucher_type,
+        scene_code,
+        scene_name,
+        sub_scene_type,
+        currency,
+        voucher_summary,
+        account_code,
+        account_name,
+        currency,
+        tax_rate,
+        create_user_no,
+        create_user_name,
+        recheck_user_no,
+        recheck_user_name,
+        voucher_status,
+        eas_voucher_number,
+        debit_credit_type
+        order by period_code desc,org_id asc,voucher_summary desc, debit_credit_type desc
+    </select>
+    <select id="getClientCodeByClientName" resultType="java.lang.String">
+        select
+        eve.client_code
+        from
+        eg_voucher_entry eve
+        left join eg_client ec on
+        eve.client_code = ec.client_code
+        and ec.del_flag = '0'
+        where
+        1 = 1
+        and eve.del_flag = '0'
+        and ec.client_name = #{clientName}
+        order by eve.client_code
+        limit 1
+    </select>
+    <select id="selectVoucherEntity"
+            resultType="com.utfinancing.financehub.engine.finance.entity.VoucherEntity">
+        select
+        distinct ev.*
+        from
+        eg_voucher ev
+        inner join eg_voucher_entry eve on
+        ev.id = eve.voucher_id
+        where
+        1 = 1
+        and ev.del_flag = '0'
+        and eve.del_flag = '0'
+        <if test="param.orgId!=null and param.orgId !=''">
+            and ev.org_id = #{param.orgId}
+        </if>
+        <if test="param.sceneCode!=null and param.sceneCode !=''">
+            and ev.scene_code = #{param.sceneCode}
+        </if>
+        <if test="param.contractCode!=null and param.contractCode !=''">
+            and eve.contract_code = #{param.contractCode}
+        </if>
+    </select>
+
+
+    <select id="payablesReportQueryCount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.PayablesReportQueryInputDTO" resultType="java.lang.Integer">
+        with table1 as (
+            select
+                ev.period_code ,
+                ev.org_id,
+                eoc.org_name ,
+                eve.account_code ,
+                ea.account_name ,
+                sum(coalesce (eve.debit_amount, 0)) debit_amount,
+                sum(coalesce(eve.credit_amount, 0)) credit_amount ,
+                SUM(coalesce(eve.credit_amount, 0)) - SUM(coalesce(eve.debit_amount, 0)) as diff_amount,
+                case when
+                SUM(coalesce(eve.credit_amount, 0)) - SUM(coalesce(eve.debit_amount, 0)) = 0 then '否'
+                else '是'
+                end as is_exception
+            from
+                eg_voucher_entry eve
+            inner join eg_voucher ev on eve.voucher_id = ev.id and ev.del_flag = '0'
+            left join eg_org_company eoc on eoc.org_id = ev.org_id and eoc.del_flag ='0'
+            left join eg_account ea  on ea.account_code = eve.account_code and ea.del_flag ='0'
+            where
+                eve.del_flag = '0'
+                <if test="param.periodCodeStart!=null and param.periodCodeStart !=''">
+                    and ev.voucher_date <![CDATA[>=]]> #{param.periodCodeStart}
+                </if>
+                <if test="param.periodCodeEnd!=null and param.periodCodeEnd !=''">
+                    and ev.voucher_date <![CDATA[<=]]> #{param.periodCodeEnd}
+                </if>
+                <if test="param.periodCode!=null and param.periodCode !=''">
+                    and ev.period_code = #{param.periodCode}
+                    and eve.period_code = #{param.periodCode}
+                </if>
+                and eve.account_code = '2241.20'
+                <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                    and ev.org_id in
+                    <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            group by
+                ev.period_code ,
+                ev.org_id,
+                eoc.org_name,
+                eve.account_code,
+                ea.account_name
+        )
+        select
+            count(1) as totalCount
+        from table1
+        where 1=1
+            <if test="param.isException!=null and param.isException !=''">
+                and table1.isException = #{param.isException}
+            </if>
+    </select>
+
+    <select id="payablesReportQuery" parameterType="com.utfinancing.financehub.engine.finance.model.dto.PayablesReportQueryInputDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.PayablesReportQueryOutputDTO">
+        with table1 as (
+            select
+                ev.period_code ,
+                ev.org_id,
+                eoc.org_name ,
+                eve.account_code ,
+                ea.account_name ,
+                sum(coalesce (eve.debit_amount, 0)) debit_amount,
+                sum(coalesce(eve.credit_amount, 0)) credit_amount ,
+                SUM(coalesce(eve.credit_amount, 0)) - SUM(coalesce(eve.debit_amount, 0)) as diff_amount,
+                case when
+                    SUM(coalesce(eve.credit_amount, 0)) - SUM(coalesce(eve.debit_amount, 0)) = 0 then '否'
+                else '是'
+                end as is_exception
+            from
+                eg_voucher_entry eve
+            inner join eg_voucher ev on eve.voucher_id = ev.id and ev.del_flag = '0'
+            left join eg_org_company eoc on eoc.org_id = ev.org_id and eoc.del_flag ='0'
+            left join eg_account ea  on ea.account_code = eve.account_code and ea.del_flag ='0'
+            where
+                eve.del_flag = '0'
+                <if test="param.periodCodeStart!=null and param.periodCodeStart !=''">
+                    and ev.voucher_date <![CDATA[>=]]> #{param.periodCodeStart}
+                </if>
+                <if test="param.periodCodeEnd!=null and param.periodCodeEnd !=''">
+                    and ev.voucher_date <![CDATA[<=]]> #{param.periodCodeEnd}
+                </if>
+                <if test="param.periodCode!=null and param.periodCode !=''">
+                    and ev.period_code = #{param.periodCode}
+                    and eve.period_code = #{param.periodCode}
+                </if>
+                and eve.account_code = '2241.20'
+                <if test="param.orgIdList != null and param.orgIdList.size > 0">
+                    and ev.org_id in
+                    <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            group by
+                ev.period_code ,
+                ev.org_id,
+                eoc.org_name,
+                eve.account_code,
+                ea.account_name
+        )
+        select
+            table1.period_code ,
+            table1.org_id,
+            table1.org_name ,
+            table1.account_code ,
+            table1.account_name ,
+            table1.debit_amount,
+            table1.credit_amount ,
+            table1.diff_amount,
+            table1.is_exception
+        from table1
+        where 1=1
+        <if test="param.isException!=null and param.isException !=''">
+            and table1.isException = #{param.isException}
+        </if>
+        order by
+            table1.period_code ,
+            table1.org_id
+        limit #{param.limit} offset #{param.offset}
+    </select>
+
+
+    <select id="voucherDetailQuery" parameterType="com.utfinancing.financehub.engine.finance.model.dto.VoucherDetailQueryDTOInput" resultType="com.utfinancing.financehub.engine.finance.model.dto.VoucherDetailQueryDTOOutput">
+        select
+            ev.org_id,
+            eoc.org_name ,
+            to_char(ev.business_date, 'yyyy-mm-dd') business_date,
+            to_char(ev.voucher_date, 'yyyy-mm-dd') voucher_date,
+            ev.system_name,
+            ev.scene_name,
+            ev.contract_code,
+            eve.account_code,
+            eve.account_name,
+            coalesce (eve.debit_amount, 0) debit_amount,
+            coalesce(eve.credit_amount, 0) credit_amount ,
+            coalesce(eve.credit_amount, 0) - coalesce(eve.debit_amount, 0) as diff_amount
+        from
+            eg_voucher_entry eve
+        inner join eg_voucher ev on eve.voucher_id = ev.id and ev.del_flag = '0'
+        inner join eg_interface_data eid ON ev.interface_id = eid.interface_id and eid.del_flag ='0'
+        left join eg_org_company eoc on eoc.org_id = ev.org_id and eoc.del_flag ='0'
+        where
+            eve.del_flag = '0'
+            and ev.interface_data_id = #{param.interfaceId}
+    </select>
+</mapper>
+

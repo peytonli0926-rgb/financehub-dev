@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ServiceFeeDetailsMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ServiceFeeDetailsEntity">
+                    <id column="id" property="id" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="service_fee_id" property="serviceFeeId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="service_fee_no" property="serviceFeeNo" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="service_org_id" property="serviceOrgId" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="allocation_method" property="allocationMethod" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="service_fee_received" property="serviceFeeReceived" />
+                    <result column="service_fee_allocation_no_tax" property="serviceFeeAllocationNoTax" />
+                    <result column="last_month_service_fee_allocation_no_tax" property="lastMonthServiceFeeAllocationNoTax" />
+                    <result column="reclassification_adjustment_no_tax_amount" property="reclassificationAdjustmentNoTaxAmount" />
+                    <result column="accrual_type" property="accrualType" />
+                    <result column="before_x_year_month_amount" property="beforeXYearMonthAmount" />
+                    <result column="x_year_month_adjustment_amount" property="xYearMonthAdjustmentAmount" />
+                    <result column="allocation_after_x_year_month_balance" property="allocationAfterXYearMonthBalance" />
+                    <result column="not_accrued_amount" property="notAccruedAmount" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="periods" property="periods" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="accumulated_accrued_amount" property="accumulatedAccruedAmount" />
+                    <result column="allocation_completion_mark" property="allocationCompletionMark" />
+                    <result column="exception_type" property="exceptionType" />
+                    <result column="voucher_id" property="voucherId" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, account_date, business_date, service_fee_id, contract_code, service_fee_no, client_code, client_name, org_id, service_org_id, contract_status, allocation_method, business_code, business_name, lease_date_start, lease_date_end, service_fee_received, service_fee_allocation_no_tax, last_month_service_fee_allocation_no_tax, reclassification_adjustment_no_tax_amount, accrual_type, before_x_year_month_amount, x_year_month_adjustment_amount, allocation_after_x_year_month_balance, not_accrued_amount, is_generate_voucher, periods, financial_contract_status, accumulated_accrued_amount, allocation_completion_mark, exception_type, voucher_id, del_flag, create_by, create_time, update_by, update_time
+        </sql>
+    <select id="selectServiceFeeInfo"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeeDetailsVO">
+        select a.*,
+        ec.sharing_service_fee_flag shared_flag,
+        ec.end_sharing_service_fee_flag,
+        ec.special_status_adjustment_flag
+        from eg_service_fee_details a
+        left join eg_contract_month ec on a.contract_code = ec.contract_code and a.org_id =ec.org_id
+        left join eg_service_fee esf on a.service_fee_id = esf.id
+        where
+        1=1
+        and  a.service_fee_allocation_no_tax <![CDATA[<>]]> 0
+        and ec.special_status_adjustment_flag = false
+        <if test="param.businessTypeList != null and param.businessTypeList.size > 0">
+            and a.business_code in
+            <foreach item="item" index="index" collection="param.businessTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.allocationMethod != null and param.allocationMethod != ''">
+            and a.allocation_method = #{param.allocationMethod}
+        </if>
+        <if test="param.allocationCompletionMark != null and param.allocationCompletionMark != ''">
+            and a.allocation_completion_mark = #{param.allocationCompletionMark}
+        </if>
+        <if test="param.serviceFeeId != null">
+            and a.service_fee_id = #{param.serviceFeeId}
+        </if>
+        <if test="param.contractStatus != null and param.contractStatus != ''">
+            and ec.contract_status = #{param.contractStatus}
+        </if>
+        <if test="param.financialContractStatus != null and param.financialContractStatus != ''">
+            and ec.financial_contract_status = #{param.financialContractStatus}
+        </if>
+        <if test="param.voucherStatus != null and param.voucherStatus != ''">
+            and a.is_generate_voucher = #{param.voucherStatus}
+        </if>
+        <if test="param.leaseDateStart != null ">
+            and a.lease_date_start &gt;= #{param.leaseDateStart}
+        </if>
+        <if test="param.leaseDateEnd != null ">
+            and a.lease_date_end &lt;= #{param.leaseDateEnd}
+        </if>
+        <if test="param.businessStartDate != null ">
+            and a.business_date &gt;= #{param.businessStartDate}
+        </if>
+        <if test="param.businessEndDate != null ">
+            and a.business_date &lt;= #{param.businessEndDate}
+        </if>
+        <if test="param.contractCode != null and param.contractCode != ''">
+            and a.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and a.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.serviceOrgIdList != null and param.serviceOrgIdList.size > 0">
+            and a.service_org_id in
+            <foreach item="item" index="index" collection="param.serviceOrgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.serviceFeeIdList != null and param.serviceFeeIdList.size > 0">
+            and a.service_fee_id in
+            <foreach item="item" index="index" collection="param.serviceFeeIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.exceptionTypeList != null and param.exceptionTypeList.size > 0">
+            and a.exception_type in
+            <foreach item="item" index="index" collection="param.exceptionTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.financialContractStatusList != null and param.financialContractStatusList.size > 0">
+            and ec.financial_contract_status in
+            <foreach item="item" index="index" collection="param.financialContractStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.systemCodeList != null and param.systemCodeList.size > 0">
+            and ec.system_code in
+            <foreach item="item" index="index" collection="param.systemCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by a.contract_code ,a.service_fee_no ,a.periods
+    </select>
+    <select id="selectDetailList"
+            resultType="com.utfinancing.financehub.engine.finance.model.vo.ServiceFeeDetailsVO">
+        select a.*,
+        ec.sharing_service_fee_flag shared_flag,
+        ec.end_sharing_service_fee_flag,
+        ec.special_status_adjustment_flag,
+        esf.voucher_status
+        from eg_service_fee_details a
+        left join eg_contract_month ec on a.contract_code = ec.contract_code and a.org_id =ec.org_id
+        left join eg_service_fee esf on a.service_fee_id = esf.id
+        where
+        1=1
+        and  a.service_fee_allocation_no_tax <![CDATA[<>]]> 0
+          and ec.special_status_adjustment_flag = false
+        <if test="param.serviceFeeId != null ">
+            and a.service_fee_id = #{param.serviceFeeId}
+        </if>
+        <if test="param.serviceFeeIdList != null and param.serviceFeeIdList.size > 0">
+            and a.service_fee_id in
+            <foreach item="item" index="index" collection="param.serviceFeeIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.contractCode != null ">
+            and a.contract_code like  concat('%', #{param.contractCode}, '%')
+        </if>
+        <if test="param.contractStatus != null ">
+            and a.contract_status = #{param.contractStatus}
+        </if>
+    </select>
+</mapper>
+

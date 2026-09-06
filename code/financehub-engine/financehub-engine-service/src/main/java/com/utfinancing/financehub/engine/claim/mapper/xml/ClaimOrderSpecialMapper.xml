@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.claim.mapper.ClaimOrderSpecialMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.claim.entity.ClaimOrderSpecialEntity">
+                    <id column="id" property="id" />
+                    <result column="claim_order_id" property="claimOrderId" />
+                    <result column="order_no" property="orderNo" />
+                    <result column="no" property="no" />
+                    <result column="org" property="org" />
+                    <result column="source_system" property="sourceSystem" />
+                    <result column="contract_num" property="contractNum" />
+                    <result column="tenant" property="tenant" />
+                    <result column="account_date" property="accountDate" />
+                    <result column="unit_price" property="unitPrice" />
+                    <result column="equip_notax_amount" property="equipNotaxAmount" />
+                    <result column="equip_input_tax" property="equipInputTax" />
+                    <result column="install_amount" property="installAmount" />
+                    <result column="install_notax_amount" property="installNotaxAmount" />
+                    <result column="install_input_tax" property="installInputTax" />
+                    <result column="service_amount" property="serviceAmount" />
+                    <result column="service_notax_amount" property="serviceNotaxAmount" />
+                    <result column="service_input_tax" property="serviceInputTax" />
+                    <result column="supplier" property="supplier" />
+                    <result column="tianji_flag" property="tianjiFlag" />
+                    <result column="payment_amount" property="paymentAmount" />
+                    <result column="payment_notax_amount" property="paymentNotaxAmount" />
+                    <result column="payment_input_tax" property="paymentInputTax" />
+                    <result column="cost_center" property="costCenter" />
+                    <result column="voucher_flag" property="voucherFlag" />
+                    <result column="item01" property="item01" />
+                    <result column="item02" property="item02" />
+                    <result column="item03" property="item03" />
+                    <result column="item04" property="item04" />
+                    <result column="item05" property="item05" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher"/>
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, claim_order_id, order_no, no, org, source_system, contract_num, tenant, account_date, unit_price, equip_notax_amount, equip_input_tax, install_amount, install_notax_amount, install_input_tax, service_amount, service_notax_amount, service_input_tax, supplier, tianji_flag, payment_amount, payment_notax_amount, payment_input_tax, cost_center, voucher_flag, item01, item02, item03, item04, item05, create_by, create_time, update_by, update_time, del_flag, is_generate_voucher
+        </sql>
+    <select id="selectByCondition"
+            resultType="com.utfinancing.financehub.engine.claim.model.vo.ClaimOrderSpecialVO">
+        select
+            ecos.*,
+            ecod.expense_type,
+            ecod.expense_date,
+            eoc.org_id,
+            eco.currency_type
+        from
+            eg_claim_order_special ecos
+                inner join eg_claim_order eco on
+                ecos.claim_order_id = eco.id
+                inner join eg_claim_order_detail ecod on
+                eco.id = ecod.claim_order_id
+                left join eg_org_company eoc on ecos.org = eoc.org_name
+        where
+            1 = 1
+          and ecos.del_flag = '0'
+          and eco.del_flag = '0'
+          and ecod.del_flag = '0'
+          <if test="condition.expenseType !=null and condition.expenseType!=''">
+              and ecod.expense_type = #{condition.expenseType}
+          </if>
+          <if test="condition.expenseTypeList != null and condition.expenseTypeList.size > 0">
+            and ecod.expense_type in
+            <foreach item="item" index="index" collection="condition.expenseTypeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+          </if>
+          <if test="condition.orderStatus !=null and condition.orderStatus!=''">
+              and eco.order_status = #{condition.orderStatus}
+          </if>
+        <if test="condition.isGenerateVoucher !=null and condition.isGenerateVoucher!=''">
+            and ecos.is_generate_voucher = #{condition.isGenerateVoucher}
+        </if>
+        order by ecos.id
+    </select>
+    <select id="statisticalCost"
+            resultType="com.utfinancing.financehub.engine.claim.model.vo.ClaimOrderCostVo">
+        select
+            ecos.claim_order_id,
+            eoc.org_id,
+            ecos.contract_num,
+            ecos.account_date,
+            'MFXT' as system_source,
+            sum(ecos.payment_notax_amount) as amount
+        from
+            eg_claim_order_special ecos
+                inner join eg_claim_order eco on
+                ecos.claim_order_id = eco.id
+                inner join eg_claim_order_detail ecod on
+                eco.id = ecod.claim_order_id
+                left join eg_org_company eoc on
+                ecos.org = eoc.org_name
+        where
+            1 = 1
+          and ecos.del_flag = '0'
+          and eco.del_flag = '0'
+          and ecod.del_flag = '0'
+          and eco.is_generate_voucher = '1'
+          and ecod.expense_type in ('GPS费','手环费')
+          <if test="condition.accountDate!=null and condition.accountDate!=''">
+              and ecos.account_date = #{condition.accountDate}
+          </if>
+        group by
+            ecos.claim_order_id,
+            ecos.contract_num,
+            eoc.org_id,
+            ecos.account_date
+    </select>
+    <select id="getOrderByContractCodeList"
+            resultType="com.utfinancing.financehub.engine.claim.model.vo.ClaimOrderSpecialVO">
+        select
+        distinct
+        x.order_no,
+        x.contract_num,
+        d.content_abstract
+        from
+        eg_claim_order_special x
+        inner join eg_claim_order_detail d on
+        x.claim_order_id = d.claim_order_id
+        where
+        1 = 1
+        and x.del_flag = '0'
+        and d.del_flag = '0'
+        and x.contract_num in
+        <foreach collection="contractCodeList" index="key" item="contractCode" open="(" separator="," close=")">
+            #{contractCode}
+        </foreach>
+    </select>
+</mapper>
+

@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.micro.mapper.MicroDataMapper">
+
+    <select id="selectDataCommon" resultType="java.util.Map">
+        select comm.* from (
+            ${detailSql}
+        ) comm
+    </select>
+
+    <select id="selectRepaymentFromXWXTGroup" resultType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTDTO" parameterType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTInputDTO">
+        select
+            'XWXT' as systemCode,  -- 来源系统
+            CASE
+                WHEN gf.vc_chuzrwtdlr='海通恒信国际融资租赁股份有限公司' THEN '01-C0001'
+                WHEN gf.vc_chuzrwtdlr='海通恒信国际融资租赁（天津）有限公司' THEN '02-C0001'
+                WHEN gf.vc_chuzrwtdlr='海通恒信小微融资租赁（上海）有限公司' THEN '80001'
+                WHEN gf.vc_chuzrwtdlr='海通恒运融资租赁（上海）有限公司' THEN '30001'
+            END AS orgId,
+            -- gf.vc_chuzrwtdlr 签约主体名称,
+            ht.vc_hetbh as contractCode, -- 合同编号
+            -- ht.vc_hetmc 合同名称,
+            ht.vc_kehbh as clientCode, -- 客户编号
+            -- czr.vc_kehmc 客户名称,
+            cw.nu_qix as periods,  --  期数
+            -- ht.dt_shijqzr 业务日期,
+            max(nvl(zjjh.dt_chengfrq,cw.dt_chengfrq)) as planDate, --  计划还款日
+            sum(nvl(zjjh.dec_zuj,0))  as rentAmount,  -- "归还租金（含税额）"
+            sum(nvl(zjjh.dec_benj,0)) as principalAmount , -- "归还本金（含税额）"
+            sum(nvl(zjjh.dec_zux,0))  as interestAmount,  -- "归还利息（含税额）"
+            -- nvl(zjjh.dec_zuj,0) "归还租金（不含税额）",
+            -- nvl(zjjh.dec_benj,0) "归还本金（不含税额）",
+            -- nvl(zjjh.dec_zux,0) "归还利息（不含税额）",
+            hlzt.vc_mingc as recaptureStatus , -- 回笼状态
+            zjjh.dec_nianll as sourceIrrRate,
+            -- decode(nvl(zjjh.vc_jihzt,'0'), '0', 0, trunc(sysdate) - zjjh.dt_chengfrq) 逾期天数,
+            sum(cw.dec_jingll) as cashFlow
+        from
+            jbfs.bz_hetjbxx ht
+        join jbfs.bz_hetgf gf on gf.vc_hetbh = ht.vc_hetbh
+        join jbfs.cm_jigkh czr on czr.vc_kehbh = ht.vc_kehbh
+        join jbfs.fm_jiaoyjg jg on jg.vc_cesztbh = ht.vc_hetbh
+        left join jbfs.fm_jiaoyjgcwxjl cw on jg.vc_cesztbh = cw.vc_cesztbh
+        left join jbfs.fm_jiaoyjgzjjh zjjh on zjjh.vc_cesztbh = cw.vc_cesztbh and zjjh.nu_qix = cw.nu_duiyzjbdqx
+        left join jbfs.ba_shujzd hlzt on hlzt.vc_zhi = zjjh.vc_jihzt and hlzt.vc_fujdid = 'huilzt'
+        where
+            ht.vc_hetzt = '31'
+        group by
+            gf.vc_chuzr, ht.vc_hetbh, ht.vc_kehbh, cw.nu_qix, nvl(zjjh.dt_chengfrq,cw.dt_chengfrq), hlzt.vc_mingc, zjjh.dec_nianll
+        order by
+            ht.vc_hetbh, nvl(zjjh.dt_chengfrq,cw.dt_chengfrq)
+    </select>
+
+    <select id="selectRepaymentFromXWXT" resultType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTDTO" parameterType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTInputDTO">
+        select
+            'XWXT' as systemCode,  -- 来源系统
+            CASE
+                WHEN gf.vc_chuzrwtdlr='海通恒信国际融资租赁股份有限公司' THEN '01-C0001'
+                WHEN gf.vc_chuzrwtdlr='海通恒信国际融资租赁（天津）有限公司' THEN '02-C0001'
+                WHEN gf.vc_chuzrwtdlr='海通恒信小微融资租赁（上海）有限公司' THEN '80001'
+                WHEN gf.vc_chuzrwtdlr='海通恒运融资租赁（上海）有限公司' THEN '30001'
+            END AS orgId,
+            -- gf.vc_chuzrwtdlr 签约主体名称,
+            ht.vc_hetbh as contractCode, -- 合同编号
+            -- ht.vc_hetmc 合同名称,
+            ht.vc_kehbh as clientCode, -- 客户编号
+            -- czr.vc_kehmc 客户名称,
+            cw.nu_qix as periods,  --  期数
+            -- ht.dt_shijqzr 业务日期,
+            nvl(zjjh.dt_chengfrq,cw.dt_chengfrq) as planDate, --  计划还款日
+            nvl(zjjh.dec_zuj,0)  as rentAmount,  -- "归还租金（含税额）"
+            nvl(zjjh.dec_benj,0) as principalAmount , -- "归还本金（含税额）"
+            nvl(zjjh.dec_zux,0)  as interestAmount,  -- "归还利息（含税额）"
+            -- nvl(zjjh.dec_zuj,0) "归还租金（不含税额）",
+            -- nvl(zjjh.dec_benj,0) "归还本金（不含税额）",
+            -- nvl(zjjh.dec_zux,0) "归还利息（不含税额）",
+            hlzt.vc_mingc as recaptureStatus , -- 回笼状态
+            zjjh.dec_nianll as sourceIrrRate,
+            -- decode(nvl(zjjh.vc_jihzt,'0'), '0', 0, trunc(sysdate) - zjjh.dt_chengfrq) 逾期天数,
+            cw.dec_jingll as cashFlow
+        from
+            jbfs.bz_hetjbxx ht
+        join jbfs.bz_hetgf gf on gf.vc_hetbh = ht.vc_hetbh
+        join jbfs.cm_jigkh czr on czr.vc_kehbh = ht.vc_kehbh
+        join jbfs.fm_jiaoyjg jg on jg.vc_cesztbh = ht.vc_hetbh
+        left join jbfs.fm_jiaoyjgcwxjl cw on jg.vc_cesztbh = cw.vc_cesztbh
+        left join jbfs.fm_jiaoyjgzjjh zjjh on zjjh.vc_cesztbh = cw.vc_cesztbh and zjjh.nu_qix = cw.nu_duiyzjbdqx
+        left join jbfs.ba_shujzd hlzt on hlzt.vc_zhi = zjjh.vc_jihzt and hlzt.vc_fujdid = 'huilzt'
+        where
+        ht.vc_hetzt = '31'
+        <if test="params.contractCode != null and params.contractCode != ''">
+            and ht.vc_hetbh = #{params.contractCode}
+        </if>
+        order by ht.vc_hetbh, nvl(zjjh.dt_chengfrq,cw.dt_chengfrq)
+    </select>
+
+    <select id="selectRepaymentFromXWXTGroupInit" resultType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTDTO" parameterType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTInputDTO">
+        WITH table1 AS (
+            SELECT
+                CONTRACT_ID
+            FROM jbfs.rpt_accmonth_firr_new
+            GROUP BY contract_id
+            HAVING TRUNC(max(PLAN_DATE)) >= TRUNC(TO_DATE('2023-01-01', 'YYYY-MM-DD'))
+        )
+        SELECT
+            CASE
+                WHEN c.vc_kehmc='海通恒信国际融资租赁股份有限公司' THEN '01-C0001'
+                WHEN c.vc_kehmc='海通恒信国际融资租赁（天津）有限公司' THEN '02-C0001'
+                WHEN c.vc_kehmc='海通恒信小微融资租赁（上海）有限公司' THEN '80001'
+                WHEN c.vc_kehmc='海通恒运融资租赁（上海）有限公司' THEN '30001'
+            END AS orgId,
+            'XWXT' as systemCode, -- 业务系统编号
+            a.contract_id as contractCode, --合同编号
+            a.plan_list as periods, -- 期项
+            max(a.plan_date) as planDate, -- 承付日期
+            sum(a.rent) as rentAmount, --租金
+            sum(a.net_flow) as cashFlow, --净流量
+            sum(a.naf_cut) as principalAmount, --本金
+            sum(a.interest) as interestAmount --租息
+            -- 签约主体
+            -- IRR Rate
+            -- a.inter_day nu_interday, -- 当期承付日期与上期承付日期相差的天数
+            -- a.interest_day dec_rilx, --日利息
+            -- a.interest_date dt_dangqzhyt, -- 当期最后一天
+            -- a.up_day nu_upday, --当期承付日期距上月最后一天的天数
+            -- a.down_day nu_downday, --当期承付日期距当月最后一天的天数
+            -- a.interest_cal dec_hanslx, --  含税利息
+            -- a.interest_cal_aftertax dec_buhslx, --不含税利息
+            -- SYSDATE dt_chuangjsj -- 创建时间
+        FROM jbfs.rpt_accmonth_firr_new a
+        INNER JOIN table1 d ON a.CONTRACT_ID = d.CONTRACT_ID
+        LEFT JOIN jbfs.bz_hetgf b ON a.CONTRACT_ID = b.VC_HETBH
+        LEFT JOIN jbfs.cm_jigkh c on b.vc_chuzr = c.vc_kehbh and c.CH_YOUXBS = '0'
+        where c.vc_kehmc is not null
+            <if test="params.contractCode != null and params.contractCode != ''">
+                and a.contract_id = #{params.contractCode}
+            </if>
+        group by
+            a.contract_id, a.plan_list, to_char(a.plan_date, 'yyyy-MM'), c.vc_kehmc
+        order by
+            a.contract_id, a.plan_list
+    </select>
+
+    <select id="selectRepaymentFromXWXTInit" resultType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTDTO" parameterType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTInputDTO">
+        WITH table1 AS (
+            SELECT
+                CONTRACT_ID
+            FROM jbfs.rpt_accmonth_firr_new
+            GROUP BY contract_id
+            HAVING TRUNC(max(PLAN_DATE)) >= TRUNC(TO_DATE('2023-01-01', 'YYYY-MM-DD'))
+        )
+        SELECT
+            CASE
+                WHEN c.vc_kehmc='海通恒信国际融资租赁股份有限公司' THEN '01-C0001'
+                WHEN c.vc_kehmc='海通恒信国际融资租赁（天津）有限公司' THEN '02-C0001'
+                WHEN c.vc_kehmc='海通恒信小微融资租赁（上海）有限公司' THEN '80001'
+                WHEN c.vc_kehmc='海通恒运融资租赁（上海）有限公司' THEN '30001'
+            END AS orgId,
+            'XWXT' as systemCode, -- 业务系统编号
+            a.contract_id as contractCode, --合同编号
+            a.plan_list as periods, -- 期项
+            a.plan_date as planDate, -- 承付日期
+            a.rent as rentAmount, --租金
+            a.net_flow as cashFlow, --净流量
+            a.naf_cut as principalAmount, --本金
+            a.interest as interestAmount --租息
+            -- 签约主体
+            -- IRR Rate
+            -- a.inter_day nu_interday, -- 当期承付日期与上期承付日期相差的天数
+            -- a.interest_day dec_rilx, --日利息
+            -- a.interest_date dt_dangqzhyt, -- 当期最后一天
+            -- a.up_day nu_upday, --当期承付日期距上月最后一天的天数
+            -- a.down_day nu_downday, --当期承付日期距当月最后一天的天数
+            -- a.interest_cal dec_hanslx, --  含税利息
+            -- a.interest_cal_aftertax dec_buhslx, --不含税利息
+            -- SYSDATE dt_chuangjsj -- 创建时间
+        FROM jbfs.rpt_accmonth_firr_new a
+        INNER JOIN table1 d ON a.CONTRACT_ID = d.CONTRACT_ID
+        LEFT JOIN jbfs.bz_hetgf b ON a.CONTRACT_ID = b.VC_HETBH
+        LEFT JOIN jbfs.cm_jigkh c on b.vc_chuzr = c.vc_kehbh and c.CH_YOUXBS = '0'
+        where c.vc_kehmc is not null
+            <if test="params.contractCode != null and params.contractCode != ''">
+                and a.contract_id = #{params.contractCode}
+            </if>
+        ORDER BY a.contract_id, a.plan_list
+    </select>
+
+    <select id="selectReceiveRepayment" resultType="com.utfinancing.financehub.etl.micro.model.SelectReceiveRepaymentDTO"  parameterType="com.utfinancing.financehub.etl.micro.model.SelectRepaymentFromXWXTInputDTO">
+        WITH table1 AS (
+            SELECT
+                CONTRACT_ID
+            FROM jbfs.rpt_accmonth_firr_new
+            GROUP BY contract_id
+            HAVING TRUNC(max(PLAN_DATE)) >= TRUNC(TO_DATE('2023-01-01', 'YYYY-MM-DD'))
+        )
+        select
+            'XWXT' as systemCode,
+            s.vc_hetbh AS contractCode,
+            s.nu_jihqx AS periods,
+            s.vc_wangybh AS ebankSerialNumber,
+            trunc(s.dt_huilrq) AS planDate,
+            s.dec_huilzj AS actualRepaymentRentAmount,
+            s.dec_huilbj AS actualRepaymentPrincipalAmount,
+            s.dec_huilzx AS actualRepaymentInteresAmount
+            -- s.dec_huilfx 已收罚息,
+            -- s.dec_faxtz 罚息调整,
+            -- s.vc_fukr 付款人,
+            -- d1.vc_mingc 结算方式,
+            -- d2.vc_mingc 是否代付,
+            -- trunc(s.dt_shurrq) 操作日期
+        from jbfs.fm_zujhl s
+        inner join table1 d on s.vc_hetbh = d.contract_id
+        left join jbfs.ba_shujzd d1 on d1.vc_zhi = s.vc_jiesfs
+        left join jbfs.ba_shujzd d2 on d2.vc_zhi = s.vc_shifdf and d2.vc_fujdid = 'flag'
+        <trim prefix="where" prefixOverrides="and" >
+            <if test="params.contractCode != null and params.contractCode != ''">
+                and s.vc_hetbh = #{params.contractCode}
+            </if>
+        </trim>
+    </select>
+
+    <select id="getTaReclassificationDetailList" resultType="com.utfinancing.financehub.etl.financial.entity.TaReclassificationDetailEntity">
+        --TA余额+租金余额
+        SELECT
+        bz_hetjbxx.vc_hetbh contract_code,--合同编号
+        inter_orgcode.org_name AS org_id,--签约主体
+        --inter_orgcode.cust_id AS qyztgs,
+        --bz_hetjbxx.dt_shijqzr,
+        --shifyzx.vc_mingc AS vc_shifyzx,
+        --inter_custid_join.cust_id_f,
+        ba_hetztzd.vc_zhuangtmc contract_status,--合同状态
+        bz_hetjbxx.vc_kehbh client_code,--客户编号
+        cm_jigkh.vc_kehmc client_name,--客户名称
+        --bb_getBadDays('1900-01-01',
+        --to_char(SYSDATE, 'yyyy-mm-dd'),
+        --bz_hetjbxx.vc_hetbh) AS badDays,
+        ta_bal.vc_wangybh ebank_serial_number,--业务系统网银编号/批次号
+        ta_memo.vc_beiz operation_remark, --运营部备注
+        --fm_wangysj.dt_daozsj,
+        fm_wangysj.vc_fukkh ebank_client_name,--网银付款人名称
+        fm_wangysj.vc_suosgs bank_org_id,--网银到账主体
+        --zulxgbz.vc_mingc AS ch_zulxgbz,
+        --CASE
+        --WHEN dt_shijqzr >= to_date('2009-04-01', 'yyyy/mm/dd')
+        --OR vc_zhuangtmc = '合同签约' THEN 'New'
+        -- ELSE 'Legacy'
+        --END Portfolio,
+        nvl(ta_bal.ta_bal, 0) ta_excess_balance--TA/溢存款余额
+        --t2.rent -  nvl(t3.rent, 0) as 租金余额--应收租金余额
+        --ta_bal.ta_caozrq
+        FROM
+        (
+        SELECT
+        vc_hetbh,
+        vc_wangybh,
+        SUM(dec_shouzje) ta_bal,
+        MIN(dt_chuangjsj) ta_caozrq
+        FROM
+            jbfs.fm_shissf fm_shissf
+        WHERE
+        vc_feiylx = '206'
+        AND dt_huijclr &lt; to_date(#{queryDate},'yyyy-mm-dd') + 1
+        GROUP BY
+        vc_hetbh,
+        vc_wangybh) ta_bal
+        LEFT JOIN (
+        SELECT
+        fm_shissf.vc_hetbh,
+        fm_shissf.vc_wangybh,
+        fm_shissf.vc_beiz
+        FROM
+            jbfs.fm_shissf fm_shissf
+        INNER JOIN (
+        SELECT
+        vc_hetbh,
+        vc_wangybh,
+        MAX(nu_id) id
+        FROM
+            jbfs.fm_shissf fm_shissf
+        WHERE
+        vc_feiylx = '206'
+        AND dt_huijclr &lt; to_date(#{queryDate},'yyyy-mm-dd')  + 1
+        GROUP BY
+        vc_hetbh,
+        vc_wangybh) a ON
+        a.vc_hetbh = fm_shissf.vc_hetbh
+        AND a.vc_wangybh = fm_shissf.vc_wangybh
+        AND a.id = fm_shissf.nu_id) ta_memo ON
+        ta_memo.vc_hetbh = ta_bal.vc_hetbh
+        AND ta_memo.vc_wangybh = ta_bal.vc_wangybh
+        LEFT JOIN jbfs.bz_hetjbxx bz_hetjbxx ON
+        bz_hetjbxx.vc_hetbh = ta_bal.vc_hetbh
+        LEFT JOIN jbfs.bz_hetgf bz_hetgf ON
+        bz_hetgf.vc_hetbh = bz_hetjbxx.vc_hetbh
+        LEFT JOIN jbfs.inter_orgcode inter_orgcode ON
+        inter_orgcode.cust_id = bz_hetgf.vc_chuzr
+        LEFT JOIN jbfs.cm_jigkh cm_jigkh ON
+        cm_jigkh.vc_kehbh = bz_hetjbxx.vc_kehbh
+        LEFT JOIN jbfs.inter_custid_join inter_custid_join ON
+        inter_custid_join.cust_id_b = bz_hetjbxx.vc_kehbh
+        LEFT JOIN jbfs.fm_wangysj fm_wangysj ON
+        fm_wangysj.vc_wangybh = ta_bal.vc_wangybh
+        LEFT JOIN jbfs.ba_hetztzd ba_hetztzd ON
+        ba_hetztzd.vc_zhuangtbh = bz_hetjbxx.vc_hetzt
+        LEFT JOIN jbfs.ba_shujzd shifyzx ON
+        bz_hetjbxx.vc_shifyzx = shifyzx.vc_zhi
+        AND shifyzx.vc_fujdid = 'flag'
+        LEFT JOIN jbfs.ba_shujzd zulxgbz ON
+        fm_wangysj.ch_zulxgbz = zulxgbz.vc_zhi
+        AND zulxgbz.vc_fujdid = 'flag'
+        --LEFT JOIN (SELECT vc_cesztbh, SUM(dec_zuj) rent, SUM(dec_zux) interest
+        --FROM fm_jiaoyjgzjjh
+        --GROUP BY vc_cesztbh) t2
+        --ON bz_hetjbxx.vc_hetbh = t2.vc_cesztbh
+        --LEFT JOIN (SELECT vc_hetbh, SUM(dec_huilzj) rent, SUM(dec_huilzx) interest
+        --FROM fm_zujhl
+        --WHERE nvl(dt_huijclr, dt_huilrq) &lt; to_date('会计回笼截止日期入参','yyyy/mm/dd') + 1 --会计回笼截止日期入参
+        --GROUP BY vc_hetbh) t3
+        --ON bz_hetjbxx.vc_hetbh = t3.vc_hetbh
+        WHERE
+        nvl(ta_bal.ta_bal, 0) &gt; 0
+
+        --AND bz_hetjbxx.vc_shifyzx = ?{shifyzx}
+
+        -- AND inter_orgcode.cust_id IN (?{qianyzhtgs})
+    </select>
+
+    <select id="selectNonConfirmAmount" parameterType="com.utfinancing.financehub.etl.micro.model.SelectNonConfirmAmountInputDTO" resultType="com.utfinancing.financehub.etl.micro.model.SelectNonConfirmAmountOutputDTO">
+        SELECT
+            shifyzwzsk.vc_mingc AS isTransferTemporaryCredit,
+            a.vc_wangybh AS ebankSerialNumber,
+            a.vc_daozyh AS collectionAccountsBankName,
+            a.vc_fukkh AS paymentClientName,
+            a.dt_daozsj AS businessDate,
+            a.dec_daozje AS ebankAmount,
+            nvl(x.t1, 0) + nvl(y.t2, 0) AS confirmedAmount,
+            a.dec_daozje - nvl(x.t1, 0) - nvl(y.t2, 0) AS nonConfirmedAmount,
+            a.vc_zhaiy AS remark,
+            a.vc_suosgs AS collectionAccountsBankOrgName
+        FROM
+            jbfs.fm_wangysj a
+        LEFT JOIN (
+            SELECT
+                vc_wangybh,
+                SUM(nvl(dec_huilzj, 0) + nvl(dec_huilfx, 0) + nvl(dec_huandje, 0)) t1
+            FROM
+                jbfs.fm_zujhl
+            WHERE
+                nvl(dt_huijclr, dt_huilrq) <![CDATA[<]]> to_date(#{params.queryDate}, 'yyyy/mm/dd') + 1
+            GROUP BY
+                vc_wangybh
+        ) x ON a.vc_wangybh = x.vc_wangybh
+        LEFT JOIN (
+            SELECT
+                vc_wangybh,
+                SUM(nvl(dec_shouzje, 0)) t2
+            FROM
+                jbfs.fm_shissf
+            WHERE
+                nvl(dt_huijclr, dt_shouzrq) <![CDATA[<]]> to_date(#{params.queryDate}, 'yyyy/mm/dd') + 1
+            GROUP BY
+                vc_wangybh
+        ) y ON a.vc_wangybh = y.vc_wangybh
+        LEFT JOIN jbfs.ba_shujzd shifyzwzsk ON
+            shifyzwzsk.vc_zhi = a.ch_shifyzwzsk
+            AND shifyzwzsk.vc_fujdid = 'flag'
+        LEFT JOIN jbfs.inter_orgcode inter_orgcode ON inter_orgcode.org_name = a.vc_suosgs
+        WHERE
+            a.dt_shangcrq  <![CDATA[<]]> to_date(#{params.queryDate}, 'yyyy/mm/dd') + 1
+            AND a.ch_youxbs = '0'
+            AND a.ch_zulxgbz = '0'
+            AND a.dec_daozje - nvl(x.t1, 0) - nvl(y.t2, 0) <![CDATA[<>]]> 0
+            AND a.vc_wangybh NOT IN ('03A151023023606', '03A160620012145')
+    </select>
+</mapper>
+

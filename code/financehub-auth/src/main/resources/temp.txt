@@ -1,0 +1,32 @@
+{
+            "children": [
+                {
+                    "children": [
+                        {
+                            "children": [],
+                            "elements": [
+                                {
+                                    "name": "indicator_btn_edit"
+                                },
+                                {
+                                    "name": "indicator_btn_delete"
+                                },
+                                {
+                                    "name": "indicator_btn_add"
+                                }
+                            ],
+                            "menuType": 3,
+                            "menu": "indicatorDict"
+                        }
+                    ],
+                    "elements": [],
+                    "menuType": 5,
+                    "sort": 1,
+                    "menu": "indicatorDictIndex"
+                }
+            ],
+            "elements": [],
+            "menuType": 5,
+            "sort": 2,
+            "menu": "dataGovernance"
+        },

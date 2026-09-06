@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.DwBzHetjbxxDMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.dw.entity.DwBzHetjbxxDEntity">
+        <id column="vc_hetbh" property="vcHetbh"/>
+        <result column="vc_kehbh" property="vcKehbh"/>
+        <result column="vc_xiangmbh" property="vcXiangmbh"/>
+        <result column="vc_nasrzl" property="vcNasrzl"/>
+        <result column="vc_kehhylx" property="vcKehhylx"/>
+        <result column="vc_hetlx" property="vcHetlx"/>
+        <result column="vc_hetxz" property="vcHetxz"/>
+        <result column="vc_qizlx" property="vcQizlx"/>
+        <result column="vc_neimwm" property="vcNeimwm"/>
+        <result column="vc_yewdl" property="vcYewdl"/>
+        <result column="vc_yewlx" property="vcYewlx"/>
+        <result column="vc_yewzl" property="vcYewzl"/>
+        <result column="vc_biz" property="vcBiz"/>
+        <result column="vc_hetcdbm" property="vcHetcdbm"/>
+        <result column="vc_xiangmjl" property="vcXiangmjl"/>
+        <result column="vc_bscjlid" property="vcBscjlid"/>
+        <result column="vc_xiangmxb" property="vcXiangmxb"/>
+        <result column="vc_hetzt" property="vcHetzt"/>
+        <result column="vc_hetztlx" property="vcHetztlx"/>
+        <result column="vc_shifhx" property="vcShifhx"/>
+        <result column="dt_yuedjsr" property="dtYuedjsr"/>
+        <result column="dt_shijqzr" property="dtShijqzr"/>
+        <result column="dt_kuaijqzr" property="dtKuaijqzr"/>
+        <result column="dt_hetqyrq" property="dtHetqyrq"/>
+        <result column="dt_hetsjjsrq" property="dtHetsjjsrq"/>
+        <result column="vc_kehdxbq" property="vcKehdxbq"/>
+        <result column="vc_hangyflbq" property="vcHangyflbq"/>
+        <result column="vc_danblxbq" property="vcDanblxbq"/>
+        <result column="vc_neibbqsh" property="vcNeibbqsh"/>
+        <result column="vc_neibzllx" property="vcNeibzllx"/>
+        <result column="vc_kehssbj" property="vcKehssbj"/>
+        <result column="vc_neibkhxz" property="vcNeibkhxz"/>
+        <result column="dt_chuangjsj" property="dtChuangjsj"/>
+        <result column="vc_tiaoxfs" property="vcTiaoxfs"/>
+        <result column="vc_sheblx" property="vcSheblx"/>
+        <result column="ch_shifcb" property="chShifcb"/>
+        <result column="ch_shifncb" property="chShifncb"/>
+        <result column="dt_chexsj" property="dtChexsj"/>
+        <result column="vc_guaks" property="vcGuaks"/>
+        <result column="vc_yewglr" property="vcYewglr"/>
+        <result column="vc_chengzr_b" property="vcChengzrB"/>
+        <result column="vc_daq" property="vcDaq"/>
+        <result column="vc_quy" property="vcQuy"/>
+        <result column="ch_shifblzccb" property="chShifblzccb"/>
+        <result column="pt" property="pt"/>
+        <result column="vc_yewxtid" property="vcYewxtid"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        vc_hetbh, vc_kehbh, vc_xiangmbh, vc_nasrzl, vc_kehhylx, vc_hetlx, vc_hetxz, vc_qizlx, vc_neimwm, vc_yewdl,
+        vc_yewlx, vc_yewzl, vc_biz, vc_hetcdbm, vc_xiangmjl, vc_bscjlid, vc_xiangmxb, vc_hetzt, vc_hetztlx, vc_shifhx,
+        dt_yuedjsr, dt_shijqzr, dt_kuaijqzr, dt_hetqyrq, dt_hetsjjsrq, vc_kehdxbq, vc_hangyflbq, vc_danblxbq,
+        vc_neibbqsh, vc_neibzllx, vc_kehssbj, vc_neibkhxz, dt_chuangjsj, vc_tiaoxfs, vc_sheblx, ch_shifcb, ch_shifncb,
+        dt_chexsj, vc_guaks, vc_yewglr, vc_chengzr_b, vc_daq, vc_quy, ch_shifblzccb, pt, vc_yewxtid
+    </sql>
+
+
+    <select id="selectBzhetjbxxByContractCode" parameterType="java.util.List" resultMap="BaseResultMap">
+        select
+            d.vc_hetbh, d.vc_kehbh, d.vc_xiangmbh, d.vc_nasrzl, d.vc_kehhylx, d.vc_hetlx, d.vc_hetxz, d.vc_qizlx, d.vc_neimwm, dict1.vc_mingc vc_yewdl,
+            d.vc_yewlx, d.vc_yewzl, d.vc_biz, d.vc_hetcdbm, d.vc_xiangmjl, d.vc_bscjlid, d.vc_xiangmxb, dict2.vc_mingc vc_hetzt, d.vc_hetztlx, d.vc_shifhx,
+            d.dt_yuedjsr, d.dt_shijqzr, d.dt_kuaijqzr, d.dt_hetqyrq, d.dt_hetsjjsrq, d.vc_kehdxbq, d.vc_hangyflbq, d.vc_danblxbq,
+            d.vc_neibbqsh, d.vc_neibzllx, d.vc_kehssbj, d.vc_neibkhxz, d.dt_chuangjsj, d.vc_tiaoxfs, d.vc_sheblx, d.ch_shifcb, d.ch_shifncb,
+            d.dt_chexsj, d.vc_guaks, d.vc_yewglr, d.vc_chengzr_b, d.vc_daq, d.vc_quy, d.ch_shifblzccb, d.pt, d.vc_yewxtid
+        from dw_bz_hetjbxx_d d
+        left join dw_dict_data dict1 on d.vc_yewdl = dict1.vc_zhi and dict1.vc_fujdid ='yewdl'
+        left join dw_dict_data dict2 on d.vc_hetzt = dict2.vc_zhi and dict2.vc_fujdid ='hetzt'
+        where
+        d.vc_hetbh in
+        <foreach collection="contractCodeList" index="key" item="contractCode" open="(" separator="," close=")">
+            #{contractCode}
+        </foreach>
+    </select>
+</mapper>
+

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.dw.mapper.DwChargeOffSummaryMapper">
+
+    <!-- 批量插入ChargeOff汇总数据 -->
+    <insert id="insertBatch">
+        INSERT INTO dw_chargeoff_summary (
+        id,
+        contract_code,
+        org_name,
+        verification_status,
+        client_name,
+        verification_date,
+        financial_expense_amount,
+        provision_reversal_amount10,
+        provision_reversal_amount9,
+        provision_reversal_amount8,
+        provision_reversal_amount7,
+        provision_reversal_amount6,
+        provision_reversal_amount5,
+        provision_reversal_amount4,
+        provision_reversal_amount3,
+        provision_reversal_amount2,
+        provision_reversal_amount1,
+        provision_reversal_amount0,
+        provision_reversal_amount_total,
+        bad_debt_write_off_balance,
+        tax_verification_date,
+        tax_verification_amount,
+        period_code
+        ) VALUES
+        <foreach collection="entityList" item="item" separator=",">
+            (
+            #{item.id},
+            #{item.contractCode},
+            #{item.orgName},
+            #{item.verificationStatus},
+            #{item.clientName},
+            #{item.verificationDate},
+            #{item.financialExpenseAmount},
+            #{item.provisionReversalAmount10},
+            #{item.provisionReversalAmount9},
+            #{item.provisionReversalAmount8},
+            #{item.provisionReversalAmount7},
+            #{item.provisionReversalAmount6},
+            #{item.provisionReversalAmount5},
+            #{item.provisionReversalAmount4},
+            #{item.provisionReversalAmount3},
+            #{item.provisionReversalAmount2},
+            #{item.provisionReversalAmount1},
+            #{item.provisionReversalAmount0},
+            #{item.provisionReversalAmountTotal},
+            #{item.badDebtWriteOffBalance},
+            #{item.taxVerificationDate},
+            #{item.taxVerificationAmount},
+            #{item.periodCode}
+            )
+        </foreach>
+    </insert>
+
+
+</mapper>
+

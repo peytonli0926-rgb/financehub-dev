@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.integration.mapper.ExternalVoucherMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.integration.entity.ExternalVoucherEntity">
+                    <id column="id" property="id" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="company_number" property="companyNumber" />
+                    <result column="booked_date" property="bookedDate" />
+                    <result column="biz_date" property="bizDate" />
+                    <result column="period_year" property="periodYear" />
+                    <result column="period_number" property="periodNumber" />
+                    <result column="voucher_type" property="voucherType" />
+                    <result column="attaches" property="attaches" />
+                    <result column="description" property="description" />
+                    <result column="voucher_number" property="voucherNumber" />
+                    <result column="creator" property="creator" />
+                    <result column="poster" property="poster" />
+                    <result column="auditor" property="auditor" />
+                    <result column="eas_status" property="easStatus" />
+                    <result column="eas_flag" property="easFlag" />
+                    <result column="eas_period_year" property="easPeriodYear" />
+                    <result column="eas_period_month" property="easPeriodMonth" />
+                    <result column="eas_voucher_type" property="easVoucherType" />
+                    <result column="eas_log" property="easLog" />
+                    <result column="eas_voucher_number" property="easVoucherNumber" />
+                    <result column="eas_voucher_id" property="easVoucherId" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, system_code, company_number, booked_date, biz_date, period_year, period_number, voucher_type, attaches, description, voucher_number, creator, poster, auditor, eas_status, eas_flag, eas_period_year, eas_period_month, eas_voucher_type, eas_log, eas_voucher_number, eas_voucher_id, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+

@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.commveh.mapper.CommercialVehicleDataMapper">
+
+    <select id="selectDataCommon" resultType="java.util.Map">
+        select comm.* from (
+            ${detailSql}
+        ) comm
+    </select>
+
+    <select id="selectRepaymentFromSYCXTGroup" resultType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTDTO" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTInputDTO">
+        select
+            'SYCXT' as systemCode,
+            h.vc_hetgs AS orgId,
+            h.vc_hethm as contractCode,
+            max(t.dec_qic) as periods,
+            max(t.dt_riq) as planDate,
+            sum(t.dec_shijzj) as rentAmount,
+            sum(t.dec_benj) as principalAmount,
+            sum(t.dec_lix) interestAmount
+        from hengyun.sy_pm_zujjhb t
+        left join hengyun.sy_pm_hetb h on h.vc_hetbid = t.vc_hetbid
+        left join hengyun.sy_cm_hetgrgfb ch on ch.vc_hetbid = h.vc_hetbid and ch.vc_zhongl = '0'
+        left join hengyun.sY_OP_YuQXXB yq on yq.vc_hetbid = h.vc_hetbid and yq.vc_shifwj = '0'
+        left join hengyun.sy_pm_rongzxxb rz on rz.vc_hetbid = h.vc_hetbid
+        where t.dec_qic is not null and t.dec_qic <![CDATA[<>]]> 0
+        and not exists (select zc.vc_hethm from hengyun.sy_op_ziczrqdb zc where zc.vc_hethm = h.vc_hethm)
+        and h.vc_hetztm in ('1','10','13','2','4','5','6','7')
+        <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+            and a.contract_id in
+            <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by h.vc_hetgs, h.vc_hethm, to_char(t.dt_riq, 'yyyy-MM')
+        order by h.vc_hethm, max(t.dt_riq)
+    </select>
+
+    <select id="selectRepaymentFromSYCXT" resultType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTDTO" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTInputDTO">
+        select
+            'SYCXT' as systemCode,
+            h.vc_hetgs AS orgId,
+            h.vc_hethm as contractCode,
+            t.dec_qic as periods,
+            t.dt_riq as planDate,
+            t.dec_shijzj as rentAmount,
+            t.dec_benj as principalAmount,
+            t.dec_lix interestAmount
+        from hengyun.sy_pm_zujjhb t
+        left join hengyun.sy_pm_hetb h on h.vc_hetbid = t.vc_hetbid
+        left join hengyun.sy_cm_hetgrgfb ch on ch.vc_hetbid = h.vc_hetbid and ch.vc_zhongl = '0'
+        left join hengyun.sY_OP_YuQXXB yq on yq.vc_hetbid = h.vc_hetbid and yq.vc_shifwj = '0'
+        left join hengyun.sy_pm_rongzxxb rz on rz.vc_hetbid = h.vc_hetbid
+        where t.dec_qic is not null and t.dec_qic <![CDATA[<>]]> 0
+        and not exists (select zc.vc_hethm from hengyun.sy_op_ziczrqdb zc where zc.vc_hethm = h.vc_hethm)
+        and h.vc_hetztm in ('1','10','13','2','4','5','6','7')
+        <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+            and a.contract_id in
+            <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by h.vc_hethm, t.dec_qic
+    </select>
+
+    <select id="selectContractCodeByPage" resultType="java.lang.String" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectContractCodeByPageDTO">
+        SELECT
+            CONTRACT_ID
+        FROM (
+            SELECT
+                CONTRACT_ID , rownum rn
+            FROM (
+                SELECT
+                    CONTRACT_ID
+                FROM hengyun.rpt_firr_new
+                GROUP BY contract_id
+                HAVING TRUNC(max(PLAN_DATE)) >= TRUNC(TO_DATE('2023-01-01', 'YYYY-MM-DD'))
+                ORDER BY CONTRACT_ID
+            )
+            WHERE rownum <![CDATA[<=]]> #{params.end}
+        )
+        WHERE rn <![CDATA[>]]> #{params.start}
+    </select>
+
+    <select id="selectRepaymentFromSYCXTGroupInit" resultType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTDTO" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTInputDTO">
+        <!--WITH table1 AS (
+            SELECT
+                CONTRACT_ID
+            FROM rpt_firr_new
+            WHERE 1=1
+            <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+                and contract_id in
+                <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            GROUP BY contract_id
+            HAVING TRUNC(max(PLAN_DATE)) >= TRUNC(TO_DATE('2023-01-01', 'YYYY-MM-DD'))
+        )-->
+        SELECT
+            b.vc_hetgs AS orgId,
+            'SYCXT' as systemCode, -- 业务系统编号
+            a.contract_id as contractCode, --合同编号
+            max(a.plan_list) as periods, -- 期项
+            max(a.plan_date) as planDate, -- 承付日期
+            sum(a.rent) as rentAmount, --租金
+            sum(a.net_flow) as cashFlow, --净流量
+            sum(a.naf_cut) as principalAmount, --本金
+            sum(a.interest) as interestAmount --租息
+            -- 签约主体
+            -- IRR Rate
+            -- a.inter_day nu_interday, -- 当期承付日期与上期承付日期相差的天数
+            -- a.interest_day dec_rilx, --日利息
+            -- a.interest_date dt_dangqzhyt, -- 当期最后一天
+            -- a.up_day nu_upday, --当期承付日期距上月最后一天的天数
+            -- a.down_day nu_downday, --当期承付日期距当月最后一天的天数
+            -- a.interest_cal dec_hanslx, --  含税利息
+            -- a.interest_cal_aftertax dec_buhslx, --不含税利息
+            --  SYSDATE dt_chuangjsj -- 创建时间
+        FROM hengyun.rpt_firr_new a
+        <!--INNER JOIN table1 d ON a.CONTRACT_ID = d.CONTRACT_ID-->
+        LEFT JOIN hengyun.sy_pm_hetb b ON a.CONTRACT_ID = b.vc_hethm
+        WHERE b.vc_hetgs IS NOT null
+        <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+            and a.contract_id in
+            <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by a.contract_id, to_char(a.plan_date, 'yyyy-MM'), b.vc_hetgs
+        ORDER BY a.contract_id, max(a.plan_date)
+    </select>
+
+    <select id="selectRepaymentFromSYCXTInit" resultType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTDTO" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTInputDTO">
+        <!--WITH table1 AS (
+            SELECT
+                CONTRACT_ID
+            FROM rpt_firr_new
+            WHERE 1=1
+            <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+                and contract_id in
+                <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            GROUP BY contract_id
+            HAVING TRUNC(max(PLAN_DATE)) >= TRUNC(TO_DATE('2023-01-01', 'YYYY-MM-DD'))
+        )-->
+        SELECT
+            b.vc_hetgs AS orgId,
+            'SYCXT' as systemCode, -- 业务系统编号
+            a.contract_id as contractCode, --合同编号
+            a.plan_list as periods, -- 期项
+            a.plan_date as planDate, -- 承付日期
+            a.rent as rentAmount, --租金
+            a.net_flow as cashFlow, --净流量
+            a.naf_cut as principalAmount, --本金
+            a.interest as interestAmount --租息
+            -- 签约主体
+            -- IRR Rate
+            -- a.inter_day nu_interday, -- 当期承付日期与上期承付日期相差的天数
+            -- a.interest_day dec_rilx, --日利息
+            -- a.interest_date dt_dangqzhyt, -- 当期最后一天
+            -- a.up_day nu_upday, --当期承付日期距上月最后一天的天数
+            -- a.down_day nu_downday, --当期承付日期距当月最后一天的天数
+            -- a.interest_cal dec_hanslx, --  含税利息
+            -- a.interest_cal_aftertax dec_buhslx, --不含税利息
+            --  SYSDATE dt_chuangjsj -- 创建时间
+        FROM hengyun.rpt_firr_new a
+        <!--INNER JOIN table1 d ON a.CONTRACT_ID = d.CONTRACT_ID-->
+        LEFT JOIN hengyun.sy_pm_hetb b ON a.CONTRACT_ID = b.vc_hethm
+        WHERE b.vc_hetgs IS NOT null
+        <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+            and a.contract_id in
+            <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY a.contract_id, a.plan_list
+    </select>
+
+
+    <select id="selectReceiveRepayment" resultType="com.utfinancing.financehub.etl.commveh.model.SelectReceiveRepaymentDTO"  parameterType="com.utfinancing.financehub.etl.commveh.model.SelectRepaymentFromSYCXTInputDTO">
+        select
+            'SYCXT' as systemCode,
+            h.vc_hethm AS contractCode,
+            t.Dec_qic AS periods,
+            t.DT_RiQ AS planDate,
+            f.dec_yisfje AS actualRepaymentRentAmount,
+            f.dec_yisje AS actualRepaymentPrincipalAmount,
+            f.dec_yislx AS actualRepaymentInteresAmount
+            <!--t.DEC_YuJZJ 客户应付租金,
+            t.DEC_ShiJZJ 我司应收租金,
+            t.DEC_BenJ 租赁本金,
+            t.DEC_LiX 利息,
+            t.DEC_ShengYBJ 剩余本金,
+            t.DEC_XianJL 现金流,
+            decode(f.vc_hexbz, '2', '已回笼', '1', '部分回笼', '未回笼') 回笼标志,
+            f.dt_wanqhxr 操作完成日期,
+            f.dt_yunyhxr 实际回笼日期,
+            f.DEC_YiJMJE 减免金额,
+            f.dec_weisfje 未收金额,
+            t.DEC_FAJJE 罚息金额-->
+        from hengyun.SY_PM_ZUJJHB t
+        left join hengyun.SY_FM_ShouFKB f on t.vc_hetbid = f.vc_hetbid
+            and t.dec_qic = f.dec_qis
+            and f.vc_xianjlxm = '100009'
+        inner join hengyun.sy_pm_hetb h on h.vc_hetbid = f.vc_hetbid
+        where not exists (
+            select zc.vc_hethm
+            from hengyun.sy_op_ziczrqdb zc
+            where zc.vc_hethm = h.vc_hethm
+        )
+        <if test="params.contractCodeList != null and params.contractCodeList.size() > 0">
+            and h.vc_hethm in
+            <foreach collection="params.contractCodeList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by to_Number(Dec_qic)
+    </select>
+
+    <select id="getTaReclassificationDetailList" resultType="com.utfinancing.financehub.etl.financial.entity.TaReclassificationDetailEntity">
+        --select t.*,
+        --case when h.is_tianjin ='1' then '是' else '否' end tianjin from (
+        select t.vc_wangybh ebank_batch_no, --业务系统批扣流水号
+               t.vc_pingzzy ebank_serial_number, --业务系统网银编号/批次号
+               t.vc_wangygs bank_org_id, --网银到账主体
+               --t.dec_ruzje,
+               t.dec_weiczje ta_excess_balance, --TA/溢存款余额
+               t.vc_hethm contract_code, --合同编号
+               t.vc_xingm ebank_client_name, --网银付款人名称
+               h.vc_hetgs org_id,--合同签约主体
+               t.vc_hetzt contract_status --合同状态
+        --t.vc_hethm_other, t.dec_weisfje, t.dec_weisfje_other
+        from hengyun.rpt_yick_info t
+                 left join hengyun.sy_pm_hetb h on t.vc_hethm = h.vc_hethm
+        where to_char(t.his_date,'yyyy-MM') = substr(#{queryDate},1,7)
+        --) t left join sy_pm_hetb h on t.vc_hethm = h.vc_hethm
+        --where 1=1 ;
+    </select>
+
+    <select id="selectSurplusDeposit" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectSurplusDepositInputDTO" resultType="com.utfinancing.financehub.etl.commveh.model.SelectSurplusDepositOutputDTO">
+        select
+            t.*
+        from (
+            select
+                t.vc_wangybh as ebankSerialNumber,
+                t.vc_pingzzy as ebankNumber,
+                t.vc_wangygs as collectionAccountsBank,
+                t.dec_ruzje as incomeAmount,
+                t.dec_weiczje as nonOutcomeAmount,
+                t.vc_hethm as contractCode,
+                t.vc_xingm as clientName,
+                t.vc_hetzt as contractStatus
+                <!--t.vc_hethm_other,
+                t.dec_weisfje,
+                t.dec_weisfje_other-->
+            from hengyun.rpt_yick_info t where to_char(t.his_date,'yyyy-MM-dd') = #{params.queryDate}
+        ) t left join hengyun.sy_pm_hetb h on t.contractCode = h.vc_hethm
+        where 1=1
+    </select>
+
+
+    <select id="selectNonConfirmAmount" parameterType="com.utfinancing.financehub.etl.commveh.model.SelectNonConfirmAmountInputDTO" resultType="com.utfinancing.financehub.etl.commveh.model.SelectNonConfirmAmountOutputDTO">
+        select
+            t.his_date,
+            case when substr(t.vc_wangybh, 0, 3) = 'GHG' then t.vc_pich
+                else t.vc_wangybh
+            end as vc_wangybh,
+            t.vc_pich,
+            t.vc_wangyb_hy,
+            t.vc_daozyh,
+            t.vc_daozyhzh,
+            t.vc_fukzh,
+            t.dt_daodsj,
+            t.dec_daozje,
+            t.dec_kehxje,
+            t.dec_yihxje,
+            null vc_biz,
+            t.vc_wangygs,
+            t.vc_baozjgs,
+            t.vc_spmc,
+            t.vc_zhaiy
+        from (
+            select
+                rp.his_date,
+                rp.vc_wangybh,
+                rp.vc_pich,
+                rp.vc_wangybh vc_wangyb_hy,
+                w.vc_daozyh,
+                w.vc_daozyhzh,
+                w.vc_fukzh,
+                rp.dt_daodsj,
+                rp.dec_daozje ,
+                rp.dec_kehxje,
+                rp.dec_daozje-rp.dec_kehxje dec_yihxje,
+                null vc_biz,
+                te.codename vc_wangygs,
+                wybzj.vc_baozjgs,
+                wybzj.vc_spmc,
+                w.vc_zhaiy
+            from (
+                select
+                    *
+                from
+                    hengyun.rpt_fm_wangyjlb rp
+                where
+                    his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                    and (dt_daodsj <![CDATA[<]]> to_date(#{params.queryDate}, 'yyyy-MM-dd')
+                    or (vc_wangybh not like 'KEB%' and vc_wangybh not like 'CEBMS%'))
+                    and vc_mark is null
+                    and not exists (
+                        select
+                            1
+                        from
+                            hengyun.rpt_fm_wangyjlb kz
+                        where
+                            kz.vc_wangyjlbid = rp.vc_wangyjlbid
+                            and kz.his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                            and to_char(kz.dt_daodsj, 'yyyy-MM-dd') = #{params.queryDate}
+                            and kz.vc_pich like 'MS%'
+                        )
+            ) rp
+            left join hengyun.gy_fm_wangyjlb w on w.vc_wangyjlbid = rp.vc_wangyjlbid
+            left join hengyun.t_wf_code te on te.codevalue = w.vc_wangygs and te.typevalue = 'vc_suosgs'
+            left join hengyun.sy_op_spbzjwyglb wybzj on wybzj.vc_wangybh = w.vc_wangybh
+            union all
+            select
+                his_date,
+                vc_pich,
+                vc_pich,
+                to_char(vc_wangyb_hy) vc_wangyb_hy,
+                vc_shoukyh,
+                vc_shoukyhzh,
+                null,
+                null,
+                dec_daozje,
+                dec_kehxje,
+                dec_yihxje,
+                null vc_biz,
+                vc_wangygs,
+                null vc_baozjgs,
+                null vc_spmc,
+                null vc_zhaiy
+            from (
+                select
+                    rp.his_date,
+                    rp.vc_pich,
+                    wm_concat(rp.vc_wangybh) vc_wangyb_hy,
+                    k.vc_shoukyh,
+                    k.vc_shoukyhzh,
+                    sum(rp.dec_daozje) dec_daozje,
+                    sum(rp.dec_kehxje) dec_kehxje,
+                    sum(rp.dec_daozje)-sum(rp.dec_kehxje) dec_yihxje,
+                    te.codename vc_wangygs
+                from (
+                    select
+                        *
+                    from
+                        hengyun.rpt_fm_wangyjlb rp
+                    where
+                        rp.his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                        and rp.dt_daodsj <![CDATA[>=]]> to_date(#{params.queryDate}, 'yyyy-MM-dd')
+                        and (rp.vc_wangybh like 'KEB%'
+                        or rp.vc_wangybh like 'CEBMS%')
+                        and vc_mark is null
+                        and not exists (
+                            select
+                            1
+                            from
+                            hengyun.rpt_fm_wangyjlb kz
+                            where
+                            kz.vc_wangyjlbid = rp.vc_wangyjlbid
+                            and kz.his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                            and to_char(kz.dt_daodsj, 'yyyy-MM-dd') = #{params.queryDate}
+                            and (kz.vc_pich like 'MS%' or kz.vc_wangybh like 'GHG%')
+                        )
+                ) rp
+                left join hengyun.sy_fm_koukfphppcb p on rp.vc_pich = p.vc_pich
+                left join (
+                    select
+                        *
+                    from (
+                        select
+                            vc_koukfphppcbid,
+                            vc_shoukyh,
+                            vc_shoukyhzh,
+                            row_number() over (partition by vc_koukfphppcbid
+                            order by
+                            dt_chuangjsj desc) rown
+                        from
+                            hengyun.sy_fm_koukjlb k
+                    )
+                    where
+                        rown = 1
+                ) k on k.vc_koukfphppcbid = p.vc_koukfphppcbid
+                left join hengyun.gy_fm_wangyjlb w on w.vc_wangyjlbid = rp.vc_wangyjlbid
+                left join t_wf_code te on te.codevalue = w.vc_wangygs and te.typevalue = 'vc_suosgs'
+                group by
+                    rp.his_date,
+                    rp.vc_pich,
+                    te.codename,
+                    k.vc_shoukyh,
+                    k.vc_shoukyhzh
+            ) w2
+            union all
+            select
+                null,
+                vc_wangybh,
+                null,
+                vc_wangybh vc_wangyb_hy,
+                null,
+                null,
+                null,
+                null,
+                dec_daozje,
+                dec_kehxje,
+                dec_daozje-dec_kehxje,
+                vc_biz,
+                '海通恒信国际融资租赁股份有限公司',
+                null vc_baozjgs,
+                null vc_spmc,
+                null vc_zhaiy
+            from hengyun.gy_fm_wangyjlb_none
+            where
+                1 = 1
+            union all
+            select
+                rp.his_date,
+                rp.vc_wangybh,
+                rp.vc_pich,
+                rp.vc_wangybh vc_wangyb_hy,
+                w.vc_daozyh,
+                w.vc_daozyhzh,
+                w.vc_fukzh,
+                rp.dt_daodsj,
+                rp.dec_daozje ,
+                rp.dec_kehxje,
+                rp.dec_daozje-rp.dec_kehxje dec_yihxje,
+                rp.vc_mark vc_biz,
+                te.codename vc_wangygs,
+                wybzj.vc_baozjgs,
+                wybzj.vc_spmc,
+                w.vc_zhaiy
+            from (
+                select
+                    *
+                from
+                    hengyun.rpt_fm_wangyjlb rp
+                where
+                    his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                    and (dt_daodsj <![CDATA[<]]>to_date(#{params.queryDate}, 'yyyy-MM-dd')
+                    or vc_wangybh not like '%KEB%')
+                    and vc_mark is not null
+                    and not exists (
+                        select
+                            1
+                        from
+                            hengyun.rpt_fm_wangyjlb kz
+                        where
+                            kz.vc_wangyjlbid = rp.vc_wangyjlbid
+                            and kz.his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                            and to_char(kz.dt_daodsj, 'yyyy-MM-dd') = #{params.queryDate}
+                            and kz.vc_pich like 'MS%'
+                    )
+            ) rp
+            left join hengyun.gy_fm_wangyjlb@hydb104 w on w.vc_wangyjlbid = rp.vc_wangyjlbid
+            left join hengyun.t_wf_code te on te.codevalue = w.vc_wangygs and te.typevalue = 'vc_suosgs'
+            left join hengyun.sy_op_spbzjwyglb wybzj on wybzj.vc_wangybh = w.vc_wangybh
+            union all
+            select
+                his_date,
+                vc_pich,
+                vc_pich,
+                to_char(vc_wangyb_hy) vc_wangyb_hy,
+                vc_shoukyh,
+                vc_shoukyhzh,
+                null,
+                null,
+                dec_daozje,
+                dec_kehxje,
+                dec_yihxje,
+                null vc_biz,
+                vc_wangygs,
+                null vc_baozjgs,
+                null vc_spmc,
+                null vc_zhaiy
+            from  (
+                select
+                    rp.his_date,
+                    rp.vc_pich,
+                    wm_concat(rp.vc_wangybh) vc_wangyb_hy,
+                    k.vc_shoukyh,
+                    k.vc_shoukyhzh,
+                    sum(rp.dec_daozje) dec_daozje,
+                    sum(rp.dec_kehxje) dec_kehxje,
+                    sum(rp.dec_daozje)-sum(rp.dec_kehxje) dec_yihxje,
+                    te.codename vc_wangygs
+                from (
+                    select
+                        *
+                    from
+                        hengyun.rpt_fm_wangyjlb rp
+                    where
+                        his_date =  to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                        and rp.dt_daodsj <![CDATA[>=]]> to_date(#{params.queryDate}, 'yyyy-MM-dd')
+                        and rp.vc_wangybh like '%KEB%'
+                        and vc_mark is not null
+                        and not exists (
+                            select
+                                1
+                            from
+                                hengyun.rpt_fm_wangyjlb kz
+                            where
+                                kz.vc_wangyjlbid = rp.vc_wangyjlbid
+                                and kz.his_date = to_date(#{params.snapshootDate}, 'yyyy-MM-dd')
+                                and to_char(kz.dt_daodsj, 'yyyy-MM-dd') = #{params.queryDate}
+                                and kz.vc_pich like 'MS%'
+                        )
+                ) rp
+            left join hengyun.sy_fm_koukfphppcb@hydb104 p on rp.vc_pich = p.vc_pich
+            left join (
+                select
+                    *
+                from (
+                select
+                    vc_koukfphppcbid,
+                    vc_shoukyh,
+                    vc_shoukyhzh,
+                    row_number() over (partition by vc_koukfphppcbid
+                    order by
+                    dt_chuangjsj desc) rown
+                from
+                    hengyun.sy_fm_koukjlb@hydb104 k )
+                where
+                    rown = 1 ) k on k.vc_koukfphppcbid = p.vc_koukfphppcbid
+            left join hengyun.gy_fm_wangyjlb@hydb104 w on w.vc_wangyjlbid = rp.vc_wangyjlbid
+            left join hengyun.t_wf_code te on te.codevalue = w.vc_wangygs and te.typevalue = 'vc_suosgs'
+            group by
+                rp.his_date,
+                rp.vc_pich,
+                te.codename,
+                k.vc_shoukyh,
+                k.vc_shoukyhzh
+            ) w2
+        ) t
+        where
+            1 = 1
+    </select>
+</mapper>
+

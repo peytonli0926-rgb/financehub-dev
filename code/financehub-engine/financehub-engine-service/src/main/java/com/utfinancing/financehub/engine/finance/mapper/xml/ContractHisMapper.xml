@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.ContractHisMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.ContractHisEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="client_name" property="clientName" />
+                    <result column="org_id" property="orgId" />
+                    <result column="client_type" property="clientType" />
+                    <result column="lease_date_start" property="leaseDateStart" />
+                    <result column="lease_date_end" property="leaseDateEnd" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="business_name" property="businessName" />
+                    <result column="invoice_type" property="invoiceType" />
+                    <result column="industry" property="industry" />
+                    <result column="lease_type" property="leaseType" />
+                    <result column="contract_status" property="contractStatus" />
+                    <result column="interest_rate_type" property="interestRateType" />
+                    <result column="classification_five" property="classificationFive" />
+                    <result column="provision_type" property="provisionType" />
+                    <result column="return_type" property="returnType" />
+                    <result column="domestic_entrance" property="domesticEntrance" />
+                    <result column="project_differentiate" property="projectDifferentiate" />
+                    <result column="business_plate" property="businessPlate" />
+                    <result column="province_city" property="provinceCity" />
+                    <result column="currency_type" property="currencyType" />
+                    <result column="contract_amount" property="contractAmount" />
+                    <result column="lease_interest_rate_year" property="leaseInterestRateYear" />
+                    <result column="financial_contract_status_update_time" property="financialContractStatusUpdateTime" />
+                    <result column="financial_contract_status" property="financialContractStatus" />
+                    <result column="system_label" property="systemLabel" />
+                    <result column="transfer_org_id" property="transferOrgId" />
+                    <result column="transfer_contract_code" property="transferContractCode" />
+                    <result column="transfer_contract_status" property="transferContractStatus" />
+                    <result column="special_flag" property="specialFlag" />
+                    <result column="business_type_label" property="businessTypeLabel" />
+                    <result column="tax_rate" property="taxRate" />
+                    <result column="income_calculate" property="incomeCalculate" />
+                    <result column="income_provision_method" property="incomeProvisionMethod" />
+                    <result column="invoicing_flag" property="invoicingFlag" />
+                    <result column="payable_device_amount" property="payableDeviceAmount" />
+                    <result column="receivable_first_amount" property="receivableFirstAmount" />
+                    <result column="lessor_insurance_amount" property="lessorInsuranceAmount" />
+                    <result column="receivable_margin_amount" property="receivableMarginAmount" />
+                    <result column="channel_fees" property="channelFees" />
+                    <result column="payable_channel_expense" property="payableChannelExpense" />
+                    <result column="payable_inner_expense" property="payableInnerExpense" />
+                    <result column="receivable_procedure_amount" property="receivableProcedureAmount" />
+                    <result column="lessor_other_costs" property="lessorOtherCosts" />
+                    <result column="payable_other_amount" property="payableOtherAmount" />
+                    <result column="estimate_g_p_s_expense" property="estimateGPSExpense" />
+                    <result column="payable_introduce" property="payableIntroduce" />
+                    <result column="payable_law_amount" property="payableLawAmount" />
+                    <result column="receivable_firm_rebate" property="receivableFirmRebate" />
+                    <result column="receivable_insurance_amount" property="receivableInsuranceAmount" />
+                    <result column="retained_price" property="retainedPrice" />
+                    <result column="receivable_other" property="receivableOther" />
+                    <result column="receivable_service_amount" property="receivableServiceAmount" />
+                    <result column="vendor_margin_amount" property="vendorMarginAmount" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="contract_create_dept" property="contractCreateDept" />
+                    <result column="process_status" property="processStatus" />
+                    <result column="submit_by" property="submitBy" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+                    <result column="is_generate_voucher" property="isGenerateVoucher" />
+                    <result column="is_plan_voucher" property="isPlanVoucher" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, contract_name, client_code, client_name, org_id, client_type, lease_date_start, lease_date_end, business_code, business_name, invoice_type, industry, lease_type, contract_status, interest_rate_type, classification_five, provision_type, return_type, domestic_entrance, project_differentiate, business_plate, province_city, currency_type, contract_amount, lease_interest_rate_year, financial_contract_status_update_time, financial_contract_status, system_label, transfer_org_id, transfer_contract_code, transfer_contract_status, special_flag, business_type_label, tax_rate, income_calculate, income_provision_method, invoicing_flag, payable_device_amount, receivable_first_amount, lessor_insurance_amount, receivable_margin_amount, channel_fees, payable_channel_expense, payable_inner_expense, receivable_procedure_amount, lessor_other_costs, payable_other_amount, estimate_g_p_s_expense, payable_introduce, payable_law_amount, receivable_firm_rebate, receivable_insurance_amount, retained_price, receivable_other, receivable_service_amount, vendor_margin_amount, system_code, contract_create_dept, process_status, submit_by, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+    <select id="selectContractHisInfo"
+            resultType="com.utfinancing.financehub.engine.finance.entity.ContractHisEntity">
+        select a.*
+        from eg_contract_his a,
+        (
+        select contract_code,org_id , max(id) id
+        from eg_contract_his
+        where
+        del_flag = '0'
+        group by contract_code,org_id
+        ) b
+        where a.id = b.id
+        <if test="param.contractCode != null and param.contractCode != ''">
+            and a.contract_code like concat('%', #{param.contractCode}::text, '%')
+        </if>
+        <if test="param.id != null ">
+            and a.id = #{param.id}
+        </if>
+        <if test="param.contractCodeList != null and param.contractCodeList.size > 0">
+            and a.contract_code in
+            <foreach item="item" index="index" collection="param.contractCodeList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.clientName != null and param.clientName != ''">
+            and a.client_name like concat('%', #{param.clientName}::text, '%')
+        </if>
+        <if test="param.currencyType != null and param.currencyType != ''">
+            and a.currency_type = #{param.currencyType}::text
+        </if>
+        <if test="param.orgIdList != null and param.orgIdList.size > 0">
+            and a.org_id in
+            <foreach item="item" index="index" collection="param.orgIdList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.idList != null and param.idList.size > 0">
+            and a.id in
+            <foreach item="item" index="index" collection="param.idList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.processStatusList != null and param.processStatusList.size > 0">
+            and a.process_status in
+            <foreach item="item" index="index" collection="param.processStatusList" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.notContainProcessStatus != null and param.notContainProcessStatus != ''">
+            and a.process_status != #{param.notContainProcessStatus}::text
+        </if>
+        order by a.id desc
+    </select>
+</mapper>
+

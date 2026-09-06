@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.etl.invoicing.mapper.TaxicIiInvoiceMiddleMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.etl.invoicing.entity.TaxicIiInvoiceMiddleEntity">
+                    <id column="ID" property="id" />
+                    <result column="CANK1" property="cank1" />
+                    <result column="CANK10" property="cank10" />
+                    <result column="CANK2" property="cank2" />
+                    <result column="CANK3" property="cank3" />
+                    <result column="CANK4" property="cank4" />
+                    <result column="CANK5" property="cank5" />
+                    <result column="CANK6" property="cank6" />
+                    <result column="CANK7" property="cank7" />
+                    <result column="CANK8" property="cank8" />
+                    <result column="CANK9" property="cank9" />
+                    <result column="CAOZRQ" property="caozrq" />
+                    <result column="CONTRACTNO" property="contractno" />
+                    <result column="DUQZT" property="duqzt" />
+                    <result column="EDITIMGRQ" property="editimgrq" />
+                    <result column="FAPDM" property="fapdm" />
+                    <result column="FAPHM" property="faphm" />
+                    <result column="FAPLX" property="faplx" />
+                    <result column="GOUFNSRSBH" property="goufnsrsbh" />
+                    <result column="HEJJINE" property="hejjine" />
+                    <result column="IMAGEPATH" property="imagepath" />
+                    <result column="ISDELETE" property="isdelete" />
+                    <result column="KAIPRQ" property="kaiprq" />
+                    <result column="MESSAGE" property="message" />
+                    <result column="NOTAXJINE" property="notaxjine" />
+                    <result column="QIYBH" property="qiybh" />
+                    <result column="SCIMGRQ" property="scimgrq" />
+                    <result column="SHUIE" property="shuie" />
+                    <result column="TAXJINE" property="taxjine" />
+                    <result column="YEWLY" property="yewly" />
+                    <result column="YWXYEDITRQ" property="ywxyeditrq" />
+                    <result column="XIAOFSBH" property="xiaofsbh" />
+                    <result column="FAPLYDZXZ" property="faplydzxz" />
+                    <result column="ISOFD" property="isofd" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            ID, CANK1, CANK10, CANK2, CANK3, CANK4, CANK5, CANK6, CANK7, CANK8, CANK9, CAOZRQ, CONTRACTNO, DUQZT, EDITIMGRQ, FAPDM, FAPHM, FAPLX, GOUFNSRSBH, HEJJINE, IMAGEPATH, ISDELETE, KAIPRQ, MESSAGE, NOTAXJINE, QIYBH, SCIMGRQ, SHUIE, TAXJINE, YEWLY, YWXYEDITRQ, XIAOFSBH, FAPLYDZXZ, ISOFD
+        </sql>
+</mapper>
+

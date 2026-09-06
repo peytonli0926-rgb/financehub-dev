@@ -1,0 +1,3 @@
+com.utfinancing.financehub.admin.api.factory.RemoteLogFallbackFactory
+com.utfinancing.financehub.admin.api.factory.RemoteDictFallbackFactory
+com.utfinancing.financehub.admin.api.factory.RemoteOrgFallbackFactory

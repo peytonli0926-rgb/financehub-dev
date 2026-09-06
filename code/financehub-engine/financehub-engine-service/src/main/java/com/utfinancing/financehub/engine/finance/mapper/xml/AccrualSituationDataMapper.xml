@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.AccrualSituationDataMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.AccrualSituationDataEntity">
+                    <id column="id" property="id" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="contract_name" property="contractName" />
+                    <result column="business_code" property="businessCode" />
+                    <result column="accrual_rate" property="accrualRate" />
+                    <result column="accrual_name" property="accrualName" />
+                    <result column="pre_invoice_type" property="preInvoiceType" />
+                    <result column="period_num" property="periodNum" />
+                    <result column="invoice_org_id" property="invoiceOrgId" />
+                    <result column="invoice_org_name" property="invoiceOrgName" />
+                    <result column="invoice_org_object" property="invoiceOrgObject" />
+                    <result column="receivable_date" property="receivableDate" />
+                    <result column="billing_date" property="billingDate" />
+                    <result column="receivable_principal" property="receivablePrincipal" />
+                    <result column="receivable_intrest" property="receivableIntrest" />
+                    <result column="receivable_other" property="receivableOther" />
+                    <result column="accrual_amount" property="accrualAmount" />
+                    <result column="accrual_tax_amount" property="accrualTaxAmount" />
+                    <result column="real_invoice_org_id" property="realInvoiceOrgId" />
+                    <result column="real_invoice_org_name" property="realInvoiceOrgName" />
+                    <result column="real_invoice_org_object" property="realInvoiceOrgObject" />
+                    <result column="real_accrual_amount" property="realAccrualAmount" />
+                    <result column="real_accrual_rate" property="realAccrualRate" />
+                    <result column="real_accrual_tax_amount" property="realAccrualTaxAmount" />
+                    <result column="invoice_date" property="invoiceDate" />
+                    <result column="invoice_number" property="invoiceNumber" />
+                    <result column="except_type" property="exceptType" />
+                    <result column="remarks" property="remarks" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, contract_code, contract_name, business_code, accrual_rate, accrual_name, pre_invoice_type, period_num, invoice_org_id, invoice_org_name, invoice_org_object, receivable_date, billing_date, receivable_principal, receivable_intrest, receivable_other, accrual_amount, accrual_tax_amount, real_invoice_org_id, real_invoice_org_name, real_invoice_org_object, real_accrual_amount, real_accrual_rate, real_accrual_tax_amount, invoice_date, invoice_number, except_type, remarks, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+
+        <select id="getDataByVoucherId" resultType="com.utfinancing.financehub.engine.finance.entity.AccrualSituationDataEntity">
+            <if test="fillType != null and fillType == '1'">
+                select ev.contract_code ,'租金' as accrual_name, eid.interface_data->>'withdrawalPeriods' period_num,
+                ev.org_id real_invoice_org_id, ev.org_name real_invoice_org_name, ev.client_code real_invoice_org_object,
+                eve1.debit_amount real_accrual_amount, eve2.debit_amount real_accrual_tax_amount, eve2.debit_amount/(eve1.debit_amount-eve2.debit_amount) real_accrual_tax_rate
+                from eg_voucher ev
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve1 on ev.id = eve1.voucher_id  and eve1.account_code = '1531.01.01'
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve2 on ev.id = eve2.voucher_id  and eve2.account_code = '1531.01.09'
+                left join eg_interface_data eid on ev.interface_data_id = eid.id
+            </if>
+            <if test="fillType != null and fillType == '2'">
+                select ev.contract_code ,'留购价' as accrual_name,
+                ev.org_id real_invoice_org_id, ev.org_name real_invoice_org_name, ev.client_code real_invoice_org_object,
+                eve1.debit_amount real_accrual_amount, eve2.debit_amount real_accrual_tax_amount, eve2.debit_amount/(eve1.debit_amount-eve2.debit_amount) real_accrual_tax_rate
+                from eg_voucher ev
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve1 on ev.id = eve1.voucher_id  and eve1.account_code = '1531.01.03'
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve2 on ev.id = eve2.voucher_id  and eve2.account_code = '1531.01.09'
+            </if>
+            <if test="fillType != null and fillType == '3'">
+                select ev.contract_code ,'罚息' as accrual_name,
+                ev.org_id real_invoice_org_id, ev.org_name real_invoice_org_name, ev.client_code real_invoice_org_object,
+                eve1.debit_amount real_accrual_amount, eve2.debit_amount real_accrual_tax_amount, eve2.debit_amount/(eve1.debit_amount-eve2.debit_amount) real_accrual_tax_rate
+                from eg_voucher ev
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve1 on ev.id = eve1.voucher_id  and eve1.account_code = '1531.01.04'
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve2 on ev.id = eve2.voucher_id  and eve2.account_code = '1531.01.09'
+            </if>
+            <if test="fillType != null and fillType == '4'">
+                select ev.contract_code ,'手续费' as accrual_name,
+                ev.org_id real_invoice_org_id, ev.org_name real_invoice_org_name, ev.client_code real_invoice_org_object,
+                eve1.debit_amount real_accrual_amount, eve2.debit_amount real_accrual_tax_amount, eve2.debit_amount/(eve1.debit_amount-eve2.debit_amount) real_accrual_tax_rate
+                from eg_voucher ev
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve1 on ev.id = eve1.voucher_id  and eve1.account_code = '1221.16'
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve2 on ev.id = eve2.voucher_id  and eve2.account_code = '1531.01.09'
+            </if>
+            <if test="fillType != null and fillType == '5'">
+                select ev.contract_code ,'变更手续费' as accrual_name,
+                ev.org_id real_invoice_org_id, ev.org_name real_invoice_org_name, ev.client_code real_invoice_org_object,
+                eve1.debit_amount real_accrual_amount, eve2.debit_amount real_accrual_tax_amount, eve2.debit_amount/(eve1.debit_amount-eve2.debit_amount) real_accrual_tax_rate
+                from eg_voucher ev
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve1 on ev.id = eve1.voucher_id  and eve1.account_code = '1221.17'
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve2 on ev.id = eve2.voucher_id  and eve2.account_code = '1531.01.09'
+            </if>
+            <if test="fillType != null and fillType == '6'">
+                select ev.contract_code ,'租金' as accrual_name,
+                ev.org_id real_invoice_org_id, ev.org_name real_invoice_org_name, ev.client_code real_invoice_org_object,
+                eve1.debit_amount real_accrual_amount, eve2.debit_amount real_accrual_tax_amount, eve2.debit_amount/(eve1.debit_amount-eve2.debit_amount) real_accrual_tax_rate
+                from eg_voucher ev
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve1 on ev.id = eve1.voucher_id  and eve1.account_code = '1532.01'
+                join (select coalesce (sum(debit_amount),0) debit_amount, account_code, voucher_id from eg_voucher_entry where voucher_id = #{voucherId}
+                group by account_code, voucher_id) eve2 on ev.id = eve2.voucher_id  and eve2.account_code = '1531.01.09'
+            </if>
+        </select>
+</mapper>
+

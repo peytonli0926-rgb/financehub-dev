@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utfinancing.financehub.engine.finance.mapper.KingdeeMiddleVoucherMapper">
+
+        <!-- 通用查询映射结果 -->
+        <resultMap id="BaseResultMap" type="com.utfinancing.financehub.engine.finance.entity.KingdeeMiddleVoucherEntity">
+                    <id column="id" property="id" />
+                    <result column="org_id" property="orgId" />
+                    <result column="contract_code" property="contractCode" />
+                    <result column="business_date" property="businessDate" />
+                    <result column="voucher_date" property="voucherDate" />
+                    <result column="voucher_number" property="voucherNumber" />
+                    <result column="eas_flag" property="easFlag" />
+                    <result column="easbz_code" property="easbzCode" />
+                    <result column="system_code" property="systemCode" />
+                    <result column="scene_name" property="sceneName" />
+                    <result column="account_code" property="accountCode" />
+                    <result column="currency_number" property="currencyNumber" />
+                    <result column="debit_amount" property="debitAmount" />
+                    <result column="credit_amount" property="creditAmount" />
+                    <result column="voucher_abstract" property="voucherAbstract" />
+                    <result column="client_code" property="clientCode" />
+                    <result column="ebank_no" property="ebankNo" />
+                    <result column="batch_id" property="batchId" />
+                    <result column="message_status" property="messageStatus" />
+                    <result column="message_error" property="messageError" />
+                    <result column="create_by" property="createBy" />
+                    <result column="create_time" property="createTime" />
+                    <result column="update_by" property="updateBy" />
+                    <result column="update_time" property="updateTime" />
+                    <result column="del_flag" property="delFlag" />
+        </resultMap>
+
+        <!-- 通用查询结果列 -->
+        <sql id="Base_Column_List">
+            id, org_id, contract_code, business_date, voucher_date, voucher_number, eas_flag, easbz_code, system_code, scene_name, account_code, currency_number, debit_amount, credit_amount, voucher_abstract, client_code, ebank_no, batch_id, message_status, message_error, create_by, create_time, update_by, update_time, del_flag
+        </sql>
+</mapper>
+
