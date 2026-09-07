@@ -61,6 +61,10 @@ public class VoucherEntity extends Model<VoucherEntity> {
     //业务场景名称
     private String sceneName;
 
+    @TableField(exist = false)
+    @ApiModelProperty(value = "事件名称")
+    private String eventName;
+
     //合同编号
     private String contractCode;
 

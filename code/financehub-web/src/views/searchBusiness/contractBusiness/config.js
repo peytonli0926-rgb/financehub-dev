@@ -100,7 +100,10 @@ export const optionsConfig = (router, dictData = {}) => ({
       prop: 'systemCode',
       width: 160,
       render ({ systemCode, systemCodeName }) {
-        return (systemCode && h(ElTag, () => systemCodeName || dictMappingLabel(dictData, 'sys_form_source', systemCode))) || ''
+        const sourceName = ['CYCXT', 'RETAIL_FINANCE_LEASE'].includes(systemCode)
+          ? '零售融资租赁业务系统'
+          : (systemCodeName || dictMappingLabel(dictData, 'sys_form_source', systemCode))
+        return (systemCode && h(ElTag, () => sourceName)) || ''
       }
     },
     {

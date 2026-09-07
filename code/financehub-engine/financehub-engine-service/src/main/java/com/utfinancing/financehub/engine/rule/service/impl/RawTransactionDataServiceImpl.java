@@ -98,6 +98,7 @@ public class RawTransactionDataServiceImpl extends ServiceImpl<RawTransactionDat
                 .eq(StrUtil.isNotBlank(queryDTO.getContractStatus()), RawTransactionDataEntity::getContractStatus, queryDTO.getContractStatus())
                 .eq(StrUtil.isNotBlank(queryDTO.getMessageStatus()), RawTransactionDataEntity::getMessageStatus, queryDTO.getMessageStatus())
                 .like(StrUtil.isNotBlank(queryDTO.getErrorInfo()), RawTransactionDataEntity::getErrorInfo, queryDTO.getErrorInfo())
+                .orderByDesc(RawTransactionDataEntity::getBusinessDate)
                 .orderByDesc(RawTransactionDataEntity::getCreateTime);
         IPage<RawTransactionDataEntity> entityIPage = rawTransationDataMapper.selectPage(new Page<RawTransactionDataEntity>(queryDTO.getPageNum(), queryDTO.getPageSize()), queryWrapper);
         return ListBeanUtil.copyPage(entityIPage, RawTransactionDataVO.class);

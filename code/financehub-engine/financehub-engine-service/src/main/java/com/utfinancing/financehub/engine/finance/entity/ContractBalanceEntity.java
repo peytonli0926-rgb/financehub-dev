@@ -1942,6 +1942,18 @@ public class ContractBalanceEntity extends Model<ContractBalanceEntity> {
     // 租赁资产成本余额
     private BigDecimal leaseAssetCostBalance;
 
+    // 融资租赁资产-动产项目-回租发生额
+    private BigDecimal leaseAssetMovableLeasebackAmount;
+
+    // 融资租赁资产-动产项目-回租余额
+    private BigDecimal leaseAssetMovableLeasebackBalance;
+
+    // 融资租赁资产-在建动产项目-回租发生额
+    private BigDecimal leaseAssetConstructionLeasebackAmount;
+
+    // 融资租赁资产-在建动产项目-回租余额
+    private BigDecimal leaseAssetConstructionLeasebackBalance;
+
     // 应收租金发生额
     private BigDecimal leaseRentReceivableAmount;
 

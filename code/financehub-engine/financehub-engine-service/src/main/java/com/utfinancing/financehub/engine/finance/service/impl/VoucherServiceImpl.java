@@ -822,12 +822,20 @@ public class VoucherServiceImpl extends MPJBaseServiceImpl<VoucherMapper, Vouche
                 voucherSaveDTO.setValidFlag(VoucherValidFlagEnum.NO_VALID.getCode());
             }
             entrySaveDTO.setClientCode(interfaceDataDTO.getClientCode());
+            entrySaveDTO.setClientName(interfaceDataDTO.getClientName());
+            entrySaveDTO.setClientFlag("1");
+        } else {
+            entrySaveDTO.setClientFlag("0");
         }
         if (AssistFlagUtil.hasContractFlag(sceneVoucherEntryDTO.getAssistFlags())) {
             if (StringUtils.isEmpty(interfaceDataDTO.getContractCode())) {
                 voucherSaveDTO.setValidFlag(VoucherValidFlagEnum.NO_VALID.getCode());
             }
             entrySaveDTO.setContractCode(interfaceDataDTO.getContractCode());
+            entrySaveDTO.setContractName(interfaceDataDTO.getContractName());
+            entrySaveDTO.setContractFlag("1");
+        } else {
+            entrySaveDTO.setContractFlag("0");
         }
         if (AssistFlagUtil.hasBillContractFlag(sceneVoucherEntryDTO.getAssistFlags())) {
             if (StringUtils.isEmpty(interfaceDataDTO.getBillContractCode())) {
@@ -836,7 +844,11 @@ public class VoucherServiceImpl extends MPJBaseServiceImpl<VoucherMapper, Vouche
             entrySaveDTO.setBillContractCode(interfaceDataDTO.getBillContractCode());
         }
         entrySaveDTO.setDebitCreditType(sceneVoucherConditionDTO.getDebitCreditType());
-        if ("bank_deposits".equals(entrySaveDTO.getFundType())) {
+        // bank_deposits is the historical cash-type code; bank_deposit is the
+        // current Kingdee-synchronised dictionary code. Both must resolve the
+        // detail subject from the actual bank account instead of eg_account.
+        if ("bank_deposits".equals(entrySaveDTO.getFundType())
+                || "bank_deposit".equals(entrySaveDTO.getFundType())) {
             setAccountCodeAndName(entrySaveDTO, interfaceDataDTO.getBankNo(), sceneVoucherEntryDTO.getFundType());
         } else {
             //查询科目编码及科目名称
@@ -861,11 +873,19 @@ public class VoucherServiceImpl extends MPJBaseServiceImpl<VoucherMapper, Vouche
     }
 
     public void setAccountCodeAndName(VoucherEntrySaveDTO entrySaveDTO, String bankNo, String fundType) {
-        List<BankAccountEntity> bankAccountEntityList = iBankAccountService.lambdaQuery().eq(BankAccountEntity::getBankAccountNumber, bankNo).list();
+        if (StringUtils.isEmpty(bankNo)) {
+            throw new ServiceException("银行账号[bankNo]不能为空");
+        }
+        List<BankAccountEntity> bankAccountEntityList = iBankAccountService.lambdaQuery()
+                .eq(BankAccountEntity::getBankAccountNumber, bankNo)
+                .eq(BankAccountEntity::getDelFlag, YesOrNoEnum.NO.getCode())
+                .list();
         if (CollectionUtil.isNotEmpty(bankAccountEntityList)) {
             entrySaveDTO.setAccountCode(bankAccountEntityList.get(0).getAccountCode());
             entrySaveDTO.setAccountName(bankAccountEntityList.get(0).getAccountName());
+            return;
         }
+        throw new ServiceException("银行账号未同步会计科目: " + bankNo);
     }
 
     /**

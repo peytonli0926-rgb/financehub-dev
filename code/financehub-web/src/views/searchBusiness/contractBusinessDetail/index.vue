@@ -64,6 +64,7 @@
             <el-table-column prop="voucherDate" label="记账日期" width="168" />
             <el-table-column prop="periodCode" label="会计期间" width="100" align="center" />
             <el-table-column prop="sceneName" label="业务场景" width="120" />
+            <el-table-column prop="eventName" label="事件名称" width="210" show-overflow-tooltip />
             <el-table-column label="数据来源" width="160" show-overflow-tooltip><template #default="{ row }">{{ sourceLabel(row.systemCode || row.source) }}</template></el-table-column>
             <el-table-column prop="voucherNum" label="凭证号" width="100" />
             <el-table-column prop="voucherSummary" label="交易摘要" min-width="320" show-overflow-tooltip />
@@ -73,7 +74,7 @@
         </el-tab-pane>
 
         <el-tab-pane :label="`科目余额（${balanceRows.length}）`" name="balances">
-          <TableTitle title="合同科目发生额与余额" desc="直接展示合同 balance 表；一行对应一个交易事件，未发生的发生额显示 0.00" />
+          <TableTitle title="合同科目发生额与余额" desc="按交易事件汇总发生额并逐笔结转余额；未发生的发生额显示 0.00" />
           <el-table :data="balanceRows" border stripe max-height="620" empty-text="暂无合同科目余额">
             <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
             <el-table-column prop="periodCode" label="会计期间" width="100" fixed="left" />
@@ -163,11 +164,18 @@ const detail = ref({})
 const contract = computed(() => detail.value.contract || {})
 const model = computed(() => detail.value.businessModel || {})
 const plans = computed(() => detail.value.repaymentPlans || [])
-const byBusinessDateDesc = rows => [...(rows || [])].sort((left, right) => String(right.businessDate || right.voucherDate || '').localeCompare(String(left.businessDate || left.voucherDate || '')))
+const byBusinessDateDesc = rows => [...(rows || [])].sort((left, right) => {
+  const timeOrder = String(right.businessDate || right.voucherDate || '')
+    .localeCompare(String(left.businessDate || left.voucherDate || ''))
+  if (timeOrder !== 0) return timeOrder
+  const rightSequence = String(right.id || right.voucherId || '')
+  const leftSequence = String(left.id || left.voucherId || '')
+  return rightSequence.length - leftSequence.length || rightSequence.localeCompare(leftSequence)
+})
 const vouchers = computed(() => byBusinessDateDesc(detail.value.vouchers))
 const balanceRows = computed(() => byBusinessDateDesc(detail.value.balances))
 const balanceSubjects = [
-  { label: '融资租赁资产', amount: 'leaseAssetCostAmount', balance: 'leaseAssetCostBalance' },
+  { label: '融资租赁资产', amount: 'leaseAssetMovableLeasebackAmount', balance: 'leaseAssetMovableLeasebackBalance' },
   { label: '应收租赁本金', amount: 'leasePrincipalReceivableAmount', balance: 'leasePrincipalReceivableBalance' },
   { label: '应收租赁利息', amount: 'leaseInterestReceivableAmount', balance: 'leaseInterestReceivableBalance' },
   { label: '应收利息增值税', amount: 'leaseInterestVatReceivableAmount', balance: 'leaseInterestVatReceivableBalance' },
@@ -177,7 +185,13 @@ const balanceSubjects = [
   { label: '未实现融资收益-利息税', amount: 'unearnedLeaseInterestVatAmount', balance: 'unearnedLeaseInterestVatBalance' },
   { label: '未实现融资收益-留购价', amount: 'unearnedResidualValueAmount', balance: 'unearnedResidualValueBalance' },
   { label: '未实现融资收益-留购价税', amount: 'unearnedResidualValueVatAmount', balance: 'unearnedResidualValueVatBalance' },
-  { label: '融资租赁利息收入', amount: 'leaseInterestIncomeAmount', balance: 'leaseInterestIncomeBalance' }
+  { label: '融资租赁利息收入', amount: 'leaseInterestIncomeAmount', balance: 'leaseInterestIncomeBalance' },
+  { label: '应收车辆清分款', amount: 'vehicleProfitSharingReceivableAmount', balance: 'vehicleProfitSharingReceivableBalance' },
+  { label: '应付车辆分润费', amount: 'vehicleProfitSharingPayableAmount', balance: 'vehicleProfitSharingPayableBalance' },
+  { label: '车辆资产管理费', amount: 'vehicleProjectServiceFeeExpenseAmount', balance: 'vehicleProjectServiceFeeExpenseBalance' },
+  { label: '应付车辆管理费', amount: 'vehicleManagementFeePayableAmount', balance: 'vehicleManagementFeePayableBalance' },
+  { label: '印花税费用', amount: 'stampDutyExpenseAmount', balance: 'stampDutyExpenseBalance' },
+  { label: '应交印花税', amount: 'stampDutyPayableAmount', balance: 'stampDutyPayableBalance' }
 ]
 const activeBalanceSubjects = computed(() => balanceSubjects.filter(subject => balanceRows.value.some(row => Number(row[subject.amount] || 0) !== 0 || Number(row[subject.balance] || 0) !== 0)))
 const contractCode = computed(() => model.value.contractCode || contract.value.contractCode || '--')
@@ -187,6 +201,7 @@ const plannedRentTotal = computed(() => schedulePlans.value.reduce((sum, row) =>
 const incomeTotal = computed(() => accrualPlans.value.reduce((sum, row) => sum + Number(row.rentalIncome || 0), 0))
 const sourceLabels = {
   RETAIL_FINANCE_LEASE: '零售融资租赁',
+  CYCXT: '零售融资租赁',
   FINANCE_LEASE: '融资租赁',
   OPERATING_LEASE: '经营租赁',
   HOUSEHOLD_PV: '户用光伏',
@@ -208,7 +223,10 @@ const percent = value => {
 const dailyRate = value => value == null ? '--' : `${Number(value).toFixed(6)}%`
 const field = (label, value, span) => ({ label, value: value || value === 0 ? value : '--', span })
 const voucherStatusName = value => ({ 0: '待生成', 1: '待传送', 2: '已提交', 3: '已传送', 4: '已冲销' }[value] || value || '--')
-const balanceSceneName = row => vouchers.value.find(voucher => String(voucher.id) === String(row.voucherId))?.sceneName || row.sceneCode || '--'
+const balanceSceneName = row => {
+  const voucher = vouchers.value.find(item => String(item.id) === String(row.voucherId))
+  return voucher?.eventName || voucher?.sceneName || row.sceneCode || '--'
+}
 const viewVoucher = id => setVoucherPage({ voucherIdList: [id] })
 
 const contractInfoItems = computed(() => [

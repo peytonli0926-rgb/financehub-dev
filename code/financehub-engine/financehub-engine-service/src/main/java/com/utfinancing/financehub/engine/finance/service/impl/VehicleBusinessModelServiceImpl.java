@@ -19,13 +19,19 @@ import com.utfinancing.financehub.engine.finance.model.vo.VehicleLifecycleVO;
 import com.utfinancing.financehub.engine.finance.model.vo.VehicleContractExcelVO;
 import com.utfinancing.financehub.engine.finance.model.dto.ContractQueryDTO;
 import com.utfinancing.financehub.engine.finance.service.*;
+import com.utfinancing.financehub.engine.rule.entity.RawTransactionDataEntity;
+import com.utfinancing.financehub.engine.rule.mapper.RawTransactionDataMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.util.CollectionUtils;
@@ -41,6 +47,7 @@ public class VehicleBusinessModelServiceImpl
     private final RepaymentPlanMapper repaymentPlanMapper;
     private final ContractBalanceMapper contractBalanceMapper;
     private final VoucherMapper voucherMapper;
+    private final RawTransactionDataMapper rawTransactionDataMapper;
 
     @Override
     public void saveOrUpdateFromLeaseStart(Map<String, Object> data) {
@@ -189,17 +196,105 @@ public class VehicleBusinessModelServiceImpl
             model.setXirrRate(plans.get(0).getXirrRate());
         }
         vo.setRepaymentPlans(plans);
-        vo.setBalances(contractBalanceMapper.selectList(Wrappers.<ContractBalanceEntity>lambdaQuery()
+        List<ContractBalanceEntity> rawBalances = contractBalanceMapper.selectList(Wrappers.<ContractBalanceEntity>lambdaQuery()
                 .eq(ContractBalanceEntity::getContractCode, code)
                 .and(w -> w.isNull(ContractBalanceEntity::getDelFlag)
                         .or().eq(ContractBalanceEntity::getDelFlag, "0"))
-                .orderByDesc(ContractBalanceEntity::getVoucherDate, ContractBalanceEntity::getId)));
+                .orderByAsc(ContractBalanceEntity::getBusinessDate,
+                        ContractBalanceEntity::getVoucherDate, ContractBalanceEntity::getId));
         List<VoucherEntity> vouchers = voucherMapper.selectList(Wrappers.<VoucherEntity>lambdaQuery()
                 .eq(VoucherEntity::getContractCode, code)
                 .eq(VoucherEntity::getDelFlag, "0")
                 .orderByAsc(VoucherEntity::getBusinessDate, VoucherEntity::getVoucherDate, VoucherEntity::getId));
+        fillEventNames(vouchers);
+        vo.setBalances(buildLifecycleBalances(vouchers, rawBalances));
         vo.setVouchers(vouchers);
         return vo;
+    }
+
+    /**
+     * 单合同流水按凭证形成一个余额快照。余额表底层会按辅助核算组合拆行，
+     * 因此先合并同一凭证的发生额，再按真实业务时间逐笔结转合同级余额。
+     */
+    private List<ContractBalanceEntity> buildLifecycleBalances(List<VoucherEntity> vouchers,
+                                                                List<ContractBalanceEntity> rawBalances) {
+        Map<Long, List<ContractBalanceEntity>> balancesByVoucher = new LinkedHashMap<>();
+        for (ContractBalanceEntity balance : rawBalances) {
+            if (balance.getVoucherId() != null) {
+                balancesByVoucher.computeIfAbsent(balance.getVoucherId(), key -> new ArrayList<>()).add(balance);
+            }
+        }
+
+        List<Field> amountFields = new ArrayList<>();
+        for (Field field : ContractBalanceEntity.class.getDeclaredFields()) {
+            if (field.getType() == BigDecimal.class && field.getName().endsWith("Amount")) {
+                field.setAccessible(true);
+                amountFields.add(field);
+            }
+        }
+
+        Map<String, BigDecimal> runningBalances = new HashMap<>();
+        List<ContractBalanceEntity> result = new ArrayList<>();
+        for (VoucherEntity voucher : vouchers) {
+            ContractBalanceEntity snapshot = new ContractBalanceEntity();
+            snapshot.setId(voucher.getId());
+            snapshot.setVoucherId(voucher.getId());
+            snapshot.setInterfaceDataId(voucher.getInterfaceDataId());
+            snapshot.setSystemCode(voucher.getSystemCode());
+            snapshot.setBusinessCode(voucher.getBusinessCode());
+            snapshot.setBusinessDate(voucher.getBusinessDate());
+            snapshot.setVoucherDate(voucher.getVoucherDate());
+            snapshot.setSceneCode(voucher.getSceneCode());
+            snapshot.setContractCode(voucher.getContractCode());
+            snapshot.setClientCode(voucher.getClientCode());
+            snapshot.setOrgId(voucher.getOrgId());
+            snapshot.setPeriodCode(voucher.getPeriodCode());
+            snapshot.setDelFlag(voucher.getDelFlag());
+
+            List<ContractBalanceEntity> eventRows = balancesByVoucher.getOrDefault(voucher.getId(), new ArrayList<>());
+            for (Field amountField : amountFields) {
+                BigDecimal amount = BigDecimal.ZERO;
+                try {
+                    for (ContractBalanceEntity eventRow : eventRows) {
+                        BigDecimal rowAmount = (BigDecimal) amountField.get(eventRow);
+                        if (rowAmount != null) amount = amount.add(rowAmount);
+                    }
+                    amountField.set(snapshot, amount);
+                    String subject = amountField.getName().substring(0,
+                            amountField.getName().length() - "Amount".length());
+                    BigDecimal balance = runningBalances.getOrDefault(subject, BigDecimal.ZERO).add(amount);
+                    runningBalances.put(subject, balance);
+                    Field balanceField = ContractBalanceEntity.class.getDeclaredField(subject + "Balance");
+                    balanceField.setAccessible(true);
+                    balanceField.set(snapshot, balance);
+                } catch (IllegalAccessException | NoSuchFieldException exception) {
+                    throw new IllegalStateException("合同生命周期余额快照构建失败: " + amountField.getName(), exception);
+                }
+            }
+            result.add(snapshot);
+        }
+        return result;
+    }
+
+    private void fillEventNames(List<VoucherEntity> vouchers) {
+        List<Long> rawIds = vouchers.stream()
+                .map(VoucherEntity::getInterfaceId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        Map<Long, RawTransactionDataEntity> rawById = new HashMap<>();
+        if (!rawIds.isEmpty()) {
+            for (RawTransactionDataEntity raw : rawTransactionDataMapper.selectBatchIds(rawIds)) {
+                rawById.put(raw.getId(), raw);
+            }
+        }
+        for (VoucherEntity voucher : vouchers) {
+            RawTransactionDataEntity raw = rawById.get(voucher.getInterfaceId());
+            String eventName = raw == null || raw.getMessageContent() == null ? null
+                    : text(raw.getMessageContent(), "event_name", "sourceEventName",
+                    "sourceEventCode", "eventName", "sceneCodeOriginal");
+            voucher.setEventName(StrUtil.blankToDefault(eventName, voucher.getSceneName()));
+        }
     }
 
     private static String text(Map<String, Object> map, String... keys) {

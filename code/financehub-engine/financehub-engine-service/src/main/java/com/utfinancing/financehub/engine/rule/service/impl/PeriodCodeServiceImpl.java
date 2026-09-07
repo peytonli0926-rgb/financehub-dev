@@ -76,6 +76,11 @@ public class PeriodCodeServiceImpl implements IPeriodCodeService {
 
         String sceneCode = dto.getSceneCode();
         String isInterfaceData = dto.getIsInterfaceData();
+        // 零售融资租赁生命周期测试按业务发生时间模拟跨期交易。
+        // 该业务不能回退到CYCXT遗留的2024年关账记录，凭证日期和期间均取业务日期。
+        if ("CYC_RETAIL_LEASEBACK".equals(dto.getBusinessCode())) {
+            return null == businessDate ? LocalDate.now() : businessDate.toLocalDate();
+        }
         // 起租接口不要求上游传核算日期，凭证日期统一取业务发生日期。
         if (ObjectUtil.equals(sceneCode, SceneEnum.HTQZ.getCode())) {
             return null == businessDate ? LocalDate.now() : businessDate.toLocalDate();

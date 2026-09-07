@@ -1,7 +1,7 @@
 <template>
   <section class="documents-card">
     <header class="documents-header">
-      <div><h2>我的单据</h2><span>车辆全生命周期业务单据</span></div>
+      <div><h2>我的单据</h2><span>各来源系统通用业务单据</span></div>
       <el-form :inline="true" :model="query" class="document-search" @submit.prevent>
         <el-form-item label="单据编号"><el-input v-model.trim="query.orderId" clearable placeholder="请输入单据编号" @keyup.enter="search" /></el-form-item>
         <el-form-item label="合同编号"><el-input v-model.trim="query.contractCode" clearable placeholder="请输入合同编号" @keyup.enter="search" /></el-form-item>
@@ -19,10 +19,8 @@
       <el-table-column prop="orderId" label="单据编号" min-width="185" show-overflow-tooltip />
       <el-table-column label="单据来源" min-width="175" show-overflow-tooltip><template #default="{ row }"><el-tag effect="plain">{{ sourceSystemName(row) }}</el-tag></template></el-table-column>
       <el-table-column label="业务事件" width="115"><template #default="{ row }"><el-tag effect="plain" type="danger">{{ eventName(row) }}</el-tag></template></el-table-column>
-      <el-table-column label="客户名称" min-width="135" show-overflow-tooltip><template #default="{ row }">{{ content(row).customer_name || '-' }}</template></el-table-column>
-      <el-table-column prop="contractCode" label="合同编号" min-width="175" show-overflow-tooltip />
-      <el-table-column label="车辆VIN" min-width="180" show-overflow-tooltip><template #default="{ row }">{{ vehicleVin(row) }}</template></el-table-column>
-      <el-table-column label="融资金额（元）" width="145" align="right"><template #default="{ row }">{{ money(content(row).finance_amount) }}</template></el-table-column>
+      <el-table-column label="客户名称" min-width="150" show-overflow-tooltip><template #default="{ row }">{{ customerName(row) }}</template></el-table-column>
+      <el-table-column label="合同编号" min-width="180" show-overflow-tooltip><template #default="{ row }">{{ contractCode(row) }}</template></el-table-column>
       <el-table-column label="业务日期" width="115"><template #default="{ row }">{{ dateOnly(row.businessDate || content(row).business_date) }}</template></el-table-column>
       <el-table-column label="状态" width="115"><template #default="{ row }"><span class="status" :class="row.messageStatus">{{ statusText[row.messageStatus] || row.messageStatus }}</span></template></el-table-column>
       <el-table-column label="操作" width="220" fixed="right">
@@ -37,7 +35,7 @@
 
     <div class="pagination"><el-pagination v-model:current-page="query.pageNum" v-model:page-size="query.pageSize" layout="total, prev, pager, next" :total="total" @current-change="load" /></div>
 
-    <el-dialog v-model="detailVisible" title="起租单据原始报文" width="820px" top="6vh" destroy-on-close>
+    <el-dialog v-model="detailVisible" title="接口单据原始报文" width="820px" top="6vh" destroy-on-close>
       <div class="detail-summary" v-if="detail"><span>单据编号：{{ detail.orderId }}</span><span>合同编号：{{ detail.contractCode }}</span><span>事件：{{ eventName(detail) }}</span></div>
       <pre class="json-viewer">{{ formattedJson }}</pre>
       <template #footer><el-button @click="detailVisible = false">关闭</el-button><el-button type="primary" @click="copyJson">复制JSON</el-button></template>
@@ -59,22 +57,23 @@ const detail = ref(null)
 const detailVisible = ref(false)
 const { setVoucherPage } = useVoucherPage()
 let pollingTimer
-const query = reactive({ pageNum: 1, pageSize: 5, sceneCode: 'HTQZ', orderId: '', contractCode: '', messageStatus: '' })
+const query = reactive({ pageNum: 1, pageSize: 5, orderId: '', contractCode: '', messageStatus: '' })
 const statusText = { NOT_EXECUTE: '待生成', RUNNING: '凭证生成中', SUCCESS: '已生成凭证', FAILED: '生成失败' }
 const sourceSystemNames = {
   OPERATING_LEASE: '经营租赁业务系统',
   FINANCE_LEASE: '融资租赁业务系统',
   HOUSEHOLD_PV: '户用光伏业务系统',
   RETAIL_FINANCE_LEASE: '零售融资租赁业务系统',
+  CYCXT: '零售融资租赁业务系统',
   TREASURY: '资金系统',
   IMPAIRMENT: '减值系统'
 }
 const content = (row) => row?.messageContent || {}
-const sourceSystemName = (row) => sourceSystemNames[row?.systemCode || content(row).source_system] || row?.systemCode || content(row).source_system || '-'
-const eventName = (row) => content(row).event_name || (row.sceneCode === 'HTQZ' ? '起租' : row.sceneCode)
-const vehicleVin = (row) => content(row).assets?.[0]?.vin || '-'
+const sourceSystemName = (row) => sourceSystemNames[row?.systemCode || content(row).source_system] || content(row).systemName || content(row).system_name || row?.systemCode || content(row).source_system || '-'
+const eventName = (row) => content(row).event_name || content(row).sourceEventCode || content(row).sceneName || content(row).scene_name || (row.sceneCode === 'HTQZ' ? '起租' : row.sceneCode)
+const customerName = (row) => content(row).customer_name || content(row).clientName || content(row).client_name || '-'
+const contractCode = (row) => row?.contractCode || content(row).contract_no || content(row).contractCode || '-'
 const dateOnly = (value) => value ? String(value).slice(0, 10) : '-'
-const money = (value) => value === undefined || value === null ? '-' : Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const formattedJson = computed(() => JSON.stringify(content(detail.value), null, 2))
 
 async function load (silent = false) {

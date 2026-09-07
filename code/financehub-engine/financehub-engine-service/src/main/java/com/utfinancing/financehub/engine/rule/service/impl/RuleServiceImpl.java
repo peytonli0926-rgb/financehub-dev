@@ -42,6 +42,7 @@ import com.utfinancing.financehub.engine.finance.model.dto.*;
 import com.utfinancing.financehub.engine.finance.model.vo.*;
 import com.utfinancing.financehub.engine.finance.service.*;
 import com.utfinancing.financehub.engine.hthx.common.enums.FinanceEngineEnum;
+import com.utfinancing.financehub.engine.payment.service.RetailLeasebackStampDutyService;
 import com.utfinancing.financehub.engine.rule.constant.RuleConstant;
 import com.utfinancing.financehub.engine.rule.entity.InterfaceDataEntity;
 import com.utfinancing.financehub.engine.rule.entity.RawTransactionDataEntity;
@@ -149,6 +150,10 @@ public class RuleServiceImpl implements IRuleService {
 
     @Resource
     private FundPaymentDataMapper fundPaymentDataMapper;
+
+    @Lazy
+    @Resource
+    private RetailLeasebackStampDutyService retailLeasebackStampDutyService;
 
     @Override
     public List<SceneRuleDTO> getTranslateRule(String sceneCode, InterfaceDataDTO interfaceDataDTO, Map<String, Object> dataMap) {
@@ -308,6 +313,9 @@ public class RuleServiceImpl implements IRuleService {
                 //更新这条数据生成的凭证全部无效
                 voucherService.lambdaUpdate().set(VoucherEntity::getValidFlag, VoucherValidFlagEnum.NO_VALID.getCode()).in(VoucherEntity::getId, voucherIdList).update();
             }
+        }
+        if (SceneEnum.HTQZ.getCode().equals(sceneCode)) {
+            retailLeasebackStampDutyService.triggerAfterLeaseStart(dataMap);
         }
         return voucherAllList;
     }
@@ -981,7 +989,8 @@ public class RuleServiceImpl implements IRuleService {
         if (businessDTO == null) {
             throw new ServiceException(StrUtil.format("业务编码[{}]不存在", businessCode));
         }
-        String bankNo = "";
+        // 通用场景直接使用接口中的 bankNo；物业收付款场景仍按其历史字段规则覆盖。
+        String bankNo = MapUtil.getStr(dataMap, "bankNo");
         String transactionType = "";
         String paymentMethod = "";
         if (sceneCode.equals(SceneEnum.WYLSFK.getCode()) || sceneCode.equals(SceneEnum.WYLSSK.getCode())) {

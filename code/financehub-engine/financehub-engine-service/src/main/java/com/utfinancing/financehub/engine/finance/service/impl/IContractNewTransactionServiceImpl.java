@@ -60,6 +60,7 @@ public class IContractNewTransactionServiceImpl extends ServiceImpl<ContractMapp
         String clientType = MapUtil.getStr(interfaceDataMap, RuleConstant.FIELD_CLIENT_TYPE);
         String clientAttribute = MapUtil.getStr(interfaceDataMap, RuleConstant.FIELD_CLIENT_ATTRIBUTE);
         String contractLeaseType = MapUtil.getStr(interfaceDataMap, RuleConstant.FIELD_CONTRACT_LEASE_TYPE);
+        String sourceSystemCode = MapUtil.getStr(interfaceDataMap, "sourceSystemCode");
         if (StrUtil.isBlank(contractCode)) {
             return null;
         }
@@ -178,6 +179,9 @@ public class IContractNewTransactionServiceImpl extends ServiceImpl<ContractMapp
             }
 
 
+            if (StringUtils.isNotEmpty(sourceSystemCode)) {
+                entity.setSystemCode(sourceSystemCode);
+            }
             entity.updateById();
         } else {
             if (YesOrNoEnum.NO.getCode().equals(isSubmitFlag) || FinancialContractStatusEnum.THREE.getDesc().equals(financialContractStatus)) {
@@ -186,6 +190,9 @@ public class IContractNewTransactionServiceImpl extends ServiceImpl<ContractMapp
                 entity = BeanUtil.copyProperties(interfaceDataMap, ContractEntity.class,"id","accountDate","estimateGPSExpense","payableInsuranceAmount");
             }
 
+            if (StringUtils.isNotEmpty(sourceSystemCode)) {
+                entity.setSystemCode(sourceSystemCode);
+            }
             ContractChangeSaveDTO tmpDto = BeanUtil.copyProperties(interfaceDataMap, ContractChangeSaveDTO.class,"id","accountDate");
 
             if(SceneEnum.HTQZ.getCode().equals(sceneCode)){
