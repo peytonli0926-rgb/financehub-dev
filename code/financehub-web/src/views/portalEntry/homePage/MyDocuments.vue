@@ -70,7 +70,27 @@ const sourceSystemNames = {
 }
 const content = (row) => row?.messageContent || {}
 const sourceSystemName = (row) => sourceSystemNames[row?.systemCode || content(row).source_system] || content(row).systemName || content(row).system_name || row?.systemCode || content(row).source_system || '-'
-const eventName = (row) => content(row).event_name || content(row).sourceEventCode || content(row).sceneName || content(row).scene_name || (row.sceneCode === 'HTQZ' ? '起租' : row.sceneCode)
+const eventNames = {
+  C005: '到并核销租金', C043: '前期逾期留购价',
+  CR000: '收到现金折扣', CR001: '收取保证金', CR003: '购入租赁资产', CR005: '到并核销租金',
+  CR006: '款项无法确认', CR007: '人工明确款项用途', CR008: '收到款项核销', CR025: '支付资产管理费',
+  CR029: '退回平台合作方提前结清贴息金额', CR033: '退回的分润费', CR036: '支付银行手续费',
+  CR040: '抵押服务费', CR041: '支付通联手续费', CR043: '前期逾期留购价', CR044: '渠道商分成结算', CR056: '合作方提前结清',
+  RF001: '普通退款', RF002: '保证金退款', RF003: '未确认款退款',
+  SC001: '厂商贴息确认', SC002: '平台贴息确认', SC003: '提前结清贴息冲回',
+  OD001: '本金转逾期', OD002: '利息转逾期', OD003: '留购价转逾期', OD004: '逾期罚息确认',
+  TS001: '租金计划调整', TS002: '租金信息变更', TS003: '结清', TS004: '起租后GPS加装',
+  TS005: '留购价反向', TS006: '费用减免租金', TS007: '费用减免留购价', TS008: '天津车辆处置结清',
+  TS009: '提前留购', TS010: '尾款调整租金', TS011: '车辆处置', TS012: '车辆买断',
+  AA001: '项目承租人发生变更', AA002: '因辅助核算项目挂错，调整相关科目',
+  OT001: '内部资金调拨', OT002: '头寸调拨', OT003: '季度结息', OT004: '季度结息',
+  OT005: '多支付分润费挂账', OT006: '金额记错，调整相关科目', OT007: '调整违约金分成',
+  OT008: '促销核准后，补差合作方分润费'
+}
+const eventName = (row) => {
+  const value = content(row).event_name || content(row).sourceEventCode || content(row).sceneName || content(row).scene_name || (row.sceneCode === 'HTQZ' ? '起租' : row.sceneCode)
+  return eventNames[value] || value
+}
 const customerName = (row) => content(row).customer_name || content(row).clientName || content(row).client_name || '-'
 const contractCode = (row) => row?.contractCode || content(row).contract_no || content(row).contractCode || '-'
 const dateOnly = (value) => value ? String(value).slice(0, 10) : '-'

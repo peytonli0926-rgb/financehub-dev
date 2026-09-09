@@ -54,10 +54,10 @@
         </if>
 
         <if test="param.businessDate!=null">
-            and to_char(t.business_date,'YYYY-MM-DD') <![CDATA[=]]> to_char(to_date(#{param.businessDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+            and date(t.business_date) <![CDATA[=]]> date(#{param.businessDate})
         </if>
         <if test="param.accountDate!=null">
-            and to_char(t.account_date,'YYYY-MM-DD') <![CDATA[=]]> to_char(to_date(#{param.accountDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+            and date(t.account_date) <![CDATA[=]]> date(#{param.accountDate})
         </if>
         <if test="param.orgIdList != null and param.orgIdList.size > 0">
             and t.org_id in

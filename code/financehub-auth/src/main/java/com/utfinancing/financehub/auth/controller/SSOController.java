@@ -156,7 +156,7 @@ public class SSOController {
         String token = SecurityUtils.getToken(request);
 
         if (ADMINTOKEN.equals(token)) {
-            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("permission.txt");
+            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("permission-all.txt");
             String fileContent = IoUtil.readUtf8(resourceAsStream);
             JSONObject jsonObject = JSONObject.parseObject(fileContent);
             return R.ok(jsonObject);

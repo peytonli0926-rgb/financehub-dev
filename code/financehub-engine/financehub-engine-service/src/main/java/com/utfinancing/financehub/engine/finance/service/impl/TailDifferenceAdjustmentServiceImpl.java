@@ -154,10 +154,10 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
             queryWrapper.in(TailDifferenceAdjustmentEntity::getOrgId, queryDTO.getOrgIdList());
         }
         if (ObjectUtil.isNotNull(queryDTO.getAccountDate())) {
-            queryWrapper.apply("to_char(account_date,'YYYY-MM-DD')={0}", DateUtil.format(queryDTO.getAccountDate(), "yyyy-MM-dd"));
+            queryWrapper.apply("date(account_date)={0}", DateUtil.format(queryDTO.getAccountDate(), "yyyy-MM-dd"));
         }
         if (ObjectUtil.isNotNull(queryDTO.getBusinessDate())) {
-            queryWrapper.apply("to_char(business_date,'YYYY-MM-DD')={0}", DateUtil.format(queryDTO.getBusinessDate(), "yyyy-MM-dd"));
+            queryWrapper.apply("date(business_date)={0}", DateUtil.format(queryDTO.getBusinessDate(), "yyyy-MM-dd"));
         }
         if (ObjectUtil.isNotNull(queryDTO.getId())) {
             queryWrapper.in(TailDifferenceAdjustmentEntity::getId, queryDTO.getId());

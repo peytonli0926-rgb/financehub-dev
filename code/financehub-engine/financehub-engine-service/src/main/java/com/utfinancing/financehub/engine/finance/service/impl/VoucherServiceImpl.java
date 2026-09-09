@@ -801,7 +801,8 @@ public class VoucherServiceImpl extends MPJBaseServiceImpl<VoucherMapper, Vouche
         VoucherEntrySaveDTO entrySaveDTO = new VoucherEntrySaveDTO();
         entrySaveDTO.setFundType(sceneVoucherEntryDTO.getFundType());
         entrySaveDTO.setRelateBankFlag(sceneVoucherEntryDTO.getRelateBankFlag());
-        entrySaveDTO.setBankAccount(interfaceDataDTO.getBankNo());
+        String entryBankAccount = sceneVoucherEntryDTO.getBankAccount();
+        entrySaveDTO.setBankAccount(StringUtils.isNotEmpty(entryBankAccount) ? entryBankAccount : interfaceDataDTO.getBankNo());
         entrySaveDTO.setCashAttribute(sceneVoucherEntryDTO.getCashAttribute());
         entrySaveDTO.setVoucherSummary(sceneVoucherEntryDTO.getVoucherSummary());
         entrySaveDTO.setAssistFlags(sceneVoucherEntryDTO.getAssistFlags());
@@ -849,7 +850,7 @@ public class VoucherServiceImpl extends MPJBaseServiceImpl<VoucherMapper, Vouche
         // detail subject from the actual bank account instead of eg_account.
         if ("bank_deposits".equals(entrySaveDTO.getFundType())
                 || "bank_deposit".equals(entrySaveDTO.getFundType())) {
-            setAccountCodeAndName(entrySaveDTO, interfaceDataDTO.getBankNo(), sceneVoucherEntryDTO.getFundType());
+            setAccountCodeAndName(entrySaveDTO, entrySaveDTO.getBankAccount(), sceneVoucherEntryDTO.getFundType());
         } else {
             //查询科目编码及科目名称
             AccountDTO accountDTO = accountService.getAccountByFundType(interfaceDataDTO.getBusinessCode(), sceneVoucherEntryDTO.getFundType());

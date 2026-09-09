@@ -1,0 +1,107 @@
+{
+  "endpoint": "http://127.0.0.1:8202/retail-leaseback/payment/execute",
+  "lifecycleContract": {
+    "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+    "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "leaseStartOrderId": "HTQZ-20260903-0001"
+  },
+  "cases": [
+    {
+      "name": "投放起租01-购入租赁资产", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-01", "eventCode": "购入租赁资产", "businessDate": "2026-09-03 09:30:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000001",
+        "currency": "CNY", "paymentMethod": "BANK_TRANSFER", "assetStage": "COMPLETED", "paymentAmount": 120000.00, "initialPaymentAmount": 20000.00
+      },
+      "expectedEntries": ["借1541001=120000", "贷1002.01=120000", "借1002.01=20000", "贷15310301=20000"]
+    },
+    {
+      "name": "初始费用02-支付资产管理费", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-02", "eventCode": "支付资产管理费", "businessDate": "2026-09-04 09:00:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000002",
+        "currency": "CNY", "paymentAmount": 1060.00
+      },
+      "expectedEntries": ["借220211=1000", "借222118=60", "贷1002.12=1060"]
+    },
+    {
+      "name": "初始费用03-支付银行手续费", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-03", "eventCode": "支付银行手续费", "businessDate": "2026-09-04 09:30:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000001", "currency": "CNY", "paymentAmount": 25.00
+      },
+      "expectedEntries": ["借642101=25", "贷1002.01=25"]
+    },
+    {
+      "name": "初始费用04-抵押服务费", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-04", "eventCode": "抵押服务费", "businessDate": "2026-09-05 10:00:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000004",
+        "currency": "CNY", "paymentAmount": 530.00, "untaxedAmount": 500.00
+      },
+      "expectedEntries": ["借64210409=500", "借222118=30", "贷1004.06=530"]
+    },
+    {
+      "name": "正常存续05-支付通联手续费", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-05", "eventCode": "支付通联手续费", "businessDate": "2026-10-03 10:00:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000001",
+        "currency": "CNY", "paymentAmount": 53.00, "untaxedAmount": 50.00
+      },
+      "expectedEntries": ["借64210401=50", "借222118=3", "贷1002.01=53"]
+    },
+    {
+      "name": "正常存续06-渠道商分成结算", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-06", "eventCode": "渠道商分成结算", "businessDate": "2027-03-03 10:00:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000002", "currency": "CNY", "paymentAmount": 8000.00
+      },
+      "expectedEntries": ["借224113=8000", "贷1002.12=8000"]
+    },
+    {
+      "name": "提前结清07-退回平台合作方提前结清贴息金额", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-07", "eventCode": "退回平台合作方提前结清贴息金额", "businessDate": "2027-06-20 10:00:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000003",
+        "currency": "CNY", "paymentAmount": 5000.00, "refundAmount": 500.00, "offsetAmount": 1000.00, "bankPaymentAmount": 3500.00
+      },
+      "expectedEntries": ["借220212=5000", "贷220212=500", "贷112503=1000", "贷1004.01=3500"]
+    },
+    {
+      "name": "提前结清08-合作方提前结清", "positive": true,
+      "request": {
+        "orderId": "HXZL-PC-202609-0001-PAY-08", "eventCode": "合作方提前结清", "businessDate": "2027-06-20 10:30:00",
+        "contractCode": "HXZL-PC-202609-0001", "clientCode": "CUST-PC-000001", "clientName": "张华",
+        "orgId": "HXZL001", "orgName": "华夏金融租赁有限公司", "bankAccountNo": "1000000000000000003",
+        "currency": "CNY", "paymentAmount": 10600.00, "interestAmount": 10000.00
+      },
+      "expectedEntries": ["借1004.01=10600", "贷15310401=10000", "贷15311101=600"]
+    },
+    {
+      "name": "反例-未同步银行账号", "positive": false,
+      "request": {"orderId":"HXZL-PC-202609-0001-NEG-01","eventCode":"支付银行手续费","businessDate":"2026-09-07 11:00:00","contractCode":"HXZL-PC-202609-0001","clientCode":"CUST-PC-000001","clientName":"张华","orgId":"HXZL001","orgName":"华夏金融租赁有限公司","bankAccountNo":"9999999999999999999","paymentAmount":25.00},
+      "expectedError": "银行账号未同步或已停用"
+    },
+    {
+      "name": "反例-价税合计不平", "positive": false,
+      "request": {"orderId":"HXZL-PC-202609-0001-NEG-02","eventCode":"抵押服务费","businessDate":"2026-09-07 11:10:00","contractCode":"HXZL-PC-202609-0001","clientCode":"CUST-PC-000001","clientName":"张华","orgId":"HXZL001","orgName":"华夏金融租赁有限公司","bankAccountNo":"1000000000000000001","paymentAmount":1000.00,"untaxedAmount":900.00},
+      "expectedError": "paymentAmount=untaxedAmount+untaxedAmount*"
+    },
+    {
+      "name": "反例-事件未配置付款值映射", "positive": false,
+      "request": {"orderId":"HXZL-PC-202609-0001-NEG-03","eventCode":"不存在的付款事件","businessDate":"2026-09-07 11:20:00","contractCode":"HXZL-PC-202609-0001","clientCode":"CUST-PC-000001","clientName":"张华","orgId":"HXZL001","orgName":"华夏金融租赁有限公司","bankAccountNo":"1000000000000000001","paymentAmount":25.00},
+      "expectedError": "[eventCode]"
+    },
+    {
+      "name": "反例-购入资产支付方式非法", "positive": false,
+      "request": {"orderId":"HXZL-PC-202609-0001-NEG-05","eventCode":"购入租赁资产","businessDate":"2026-09-07 11:40:00","contractCode":"HXZL-PC-202609-0001","clientCode":"CUST-PC-000001","clientName":"张华","orgId":"HXZL001","orgName":"华夏金融租赁有限公司","bankAccountNo":"1000000000000000001","paymentMethod":"CASH","assetStage":"COMPLETED","paymentAmount":1000.00},
+      "expectedError": "BANK_TRANSFER"
+    }
+  ]
+}

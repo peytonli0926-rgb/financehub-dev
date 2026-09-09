@@ -115,6 +115,7 @@ public class RuleUtil {
         for (SceneVoucherEntryDTO entryDTO: voucherEntryDTOS){
             SceneVoucherEntryDTO resultEntry = BeanUtil.copyProperties(entryDTO, SceneVoucherEntryDTO.class);
             resultEntry.setVoucherSummary(executeScriptString(entryDTO.getVoucherSummary(), dataMap)); //凭证摘要
+            resultEntry.setBankAccount(executeScriptString(entryDTO.getBankAccount(), dataMap));
             resultEntry.setAssistFlags(entryDTO.getAssistFlags());
             //凭证行判定条件
             List<SceneVoucherConditionDTO> conditionDTOList = entryDTO.getConditionList();

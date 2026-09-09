@@ -75,8 +75,8 @@ VALUES
 INSERT INTO eg_scene_voucher_entry
  (id,scene_voucher_id,fund_type,relate_bank_flag,voucher_summary,create_by,create_time,update_by,update_time,del_flag,cash_attribute_flag,assist_flags)
 VALUES
- (202609071408001,202609071300008,'stamp_duty_expense','0','计提印花税费用','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','0','1'),
- (202609071408002,202609071300008,'stamp_duty_payable','0','计提应交印花税','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','0','1');
+ (202609071408001,202609071300008,'stamp_duty_expense','0','''计提印花税费用''','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','0','1'),
+ (202609071408002,202609071300008,'stamp_duty_payable','0','''计提应交印花税''','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','0','1');
 
 INSERT INTO eg_scene_voucher_condition
  (id,scene_voucher_entry_id,serial,script_condition,dondition_description,script_amount,amount_description,debit_credit_type,

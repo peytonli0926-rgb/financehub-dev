@@ -1,8 +1,9 @@
 export default {
   hidden: false,
-  title: '计量引擎',
+  title: '租赁业务',
   icon: '',
   name: 'rentBusiness',
+  redirect: '/rentBusiness/index',
   sort: 3
 }
 /*export const rentMenuList = [

@@ -3,7 +3,7 @@ import { ElTag } from 'element-plus'
 import { dictMappingLabel, toThousands, dictMappingToArray } from '@/utils'
 
 export default {
-  hidden: false,
+  hidden: true,
   title: 'TA重分类',
   icon: '',
   name: 'TaRearrange'

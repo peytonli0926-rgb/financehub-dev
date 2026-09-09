@@ -179,6 +179,7 @@ public class RetailLeasebackPaymentService {
     private Map<String, Object> toRuleData(RetailLeasebackPaymentDTO dto, String sceneCode, String paymentEventCode,
                                            BigDecimal configuredTaxRate) {
         Map<String, Object> data = new HashMap<>();
+        String eventDisplayName = RetailLeasebackEventNames.displayName(paymentEventCode, dto.getEventCode());
         data.put("systemCode", SystemEnum.CYCXT.getCode());
         data.put("sourceSystemCode", "RETAIL_FINANCE_LEASE");
         data.put("systemName", "零售融资租赁业务系统");
@@ -187,7 +188,8 @@ public class RetailLeasebackPaymentService {
         // sceneCode 和内部事件码均来自值映射配置，接口事件值保持为来源系统原值。
         data.put("sceneCode", sceneCode);
         data.put("sceneName", "付款");
-        data.put("sourceEventCode", dto.getEventCode());
+        data.put("sourceEventOriginal", dto.getEventCode());
+        data.put("sourceEventCode", eventDisplayName);
         data.put("eventCode", paymentEventCode);
         data.put("paymentEventCode", paymentEventCode);
         data.put("orderId", dto.getOrderId());
@@ -222,7 +224,7 @@ public class RetailLeasebackPaymentService {
         data.put("leaseMethod", "回租");
         // “我的单据”只依赖所有来源系统均可适配的通用业务字段。
         data.put("source_system", "RETAIL_FINANCE_LEASE");
-        data.put("event_name", dto.getEventCode());
+        data.put("event_name", eventDisplayName);
         data.put("customer_no", dto.getClientCode());
         data.put("customer_name", dto.getClientName());
         data.put("contract_no", dto.getContractCode());

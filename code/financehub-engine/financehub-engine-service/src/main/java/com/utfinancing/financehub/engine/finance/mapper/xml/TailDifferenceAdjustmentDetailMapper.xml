@@ -69,6 +69,29 @@
         group by t.contract_code, t.client_code, t.org_id, t.business_code
     </sql>
     <insert id="initInsertData">
+        INSERT INTO
+        eg_tail_difference_adjustment_detail (
+        org_id,
+        business_code,
+        contract_code,
+        client_code,
+        account_code,
+        account_name,
+        account_balance,
+        receivable_rent,
+        receivable_residual_value,
+        payable_device,
+        payable_other,
+        contract_status,
+        overdue_days,
+        rental_income_after_total,
+        rental_income_after_lease_total,
+        business_date,
+        create_time,
+        lease_date_end,
+        tax_rate,
+        receive_sum
+        )
         WITH filtered_temp AS (
             SELECT
                 org_id,
@@ -122,29 +145,6 @@
             and tm.business_code = #{param.businessCode}
             group by tm.org_id,  tm.contract_code, tm.client_code, tm.business_code
         )
-        INSERT INTO
-        eg_tail_difference_adjustment_detail (
-        org_id,
-        business_code,
-        contract_code,
-        client_code,
-        account_code,
-        account_name,
-        account_balance,
-        receivable_rent,
-        receivable_residual_value,
-        payable_device,
-        payable_other,
-        contract_status,
-        overdue_days,
-        rental_income_after_total,
-        rental_income_after_lease_total,
-        business_date,
-        create_time,
-        lease_date_end,
-        tax_rate,
-        receive_sum
-        )
         SELECT
         -- 明确列出需要的列，避免使用 a.*
         a.org_id,
@@ -162,7 +162,7 @@
         l.overdue_days,
         CASE WHEN '博远' = ec.special_flag THEN l.rental_income_after_total END AS rental_income_after_total,
         CASE WHEN '博远' != ec.special_flag THEN l.rental_income_after_total END AS rental_income_after_lease_total,
-        #{param.businessDate}::timestamp,
+        cast(#{param.businessDate} as datetime),
         CURRENT_TIMESTAMP,
         ec.lease_date_end,
         ec.tax_rate,
@@ -387,7 +387,7 @@
         t1.contract_status,
         t1.lease_date_end,
         t1.tax_rate,
-        string_agg(voucher_ids, ',') AS voucher_ids,
+        group_concat(voucher_ids separator ',') AS voucher_ids,
         sum(coalesce(t1.account_balance, 0)) as account_balance,
         sum(coalesce(t1.receivable_rent, 0)) as receivable_rent,
         sum(coalesce(t1.receivable_residual_value, 0)) as receivable_residual_value,
@@ -407,7 +407,7 @@
         and t1.account_balance != 0
         and t.id = #{param.tailDifferenceAdjustmentId}
         <if test="param.contractCode!=null and param.contractCode!=''">
-            and t1.contract_code like concat('%', #{param.contractCode}::text, '%')
+            and t1.contract_code like concat('%', #{param.contractCode}, '%')
         </if>
         <if test="param.contractStatus!=null and param.contractStatus!=''">
             and t1.contract_status = #{param.contractStatus}

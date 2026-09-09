@@ -3,7 +3,7 @@ import { ElTag } from 'element-plus'
 import { dictMappingToArray, toThousands, dictMappingLabel } from '@/utils'
 
 export default {
-  hidden: true,
+  hidden: false,
   title: '尾差调整',
   icon: '',
   name: 'endAdjust'
