@@ -74,6 +74,25 @@
         </el-tab-pane>
 
         <el-tab-pane :label="`科目余额（${balanceRows.length}）`" name="balances">
+          <div v-if="settlementCheck.visible" class="settlement-check">
+            <div class="settlement-check-title">
+              <strong>结清校验</strong>
+              <span>取最后一笔交易后的合同科目余额</span>
+            </div>
+            <div class="settlement-check-item" :class="settlementCheck.assetPassed ? 'passed' : 'failed'">
+              <span>资产类科目</span>
+              <strong>{{ settlementCheck.assetPassed ? '全部为 0.00' : `${settlementCheck.nonZeroAssetCount} 项未清零` }}</strong>
+              <small>未清余额绝对值合计 ¥ {{ money(settlementCheck.assetBalance) }}</small>
+            </div>
+            <div class="settlement-check-item" :class="settlementCheck.profitLossPassed ? 'passed' : 'failed'">
+              <span>损益类科目</span>
+              <strong>{{ settlementCheck.profitLossPassed ? '保留累计损益' : '累计损益为 0.00' }}</strong>
+              <small>余额绝对值合计 ¥ {{ money(settlementCheck.profitLossBalance) }}</small>
+            </div>
+            <el-tag :type="settlementCheck.passed ? 'success' : 'danger'" effect="dark">
+              {{ settlementCheck.passed ? '结清校验通过' : '结清校验未通过' }}
+            </el-tag>
+          </div>
           <TableTitle title="合同科目发生额与余额" desc="按交易事件汇总发生额并逐笔结转余额；未发生的发生额显示 0.00" />
           <el-table :data="balanceRows" border stripe max-height="620" empty-text="暂无合同科目余额">
             <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
@@ -175,6 +194,7 @@ const byBusinessDateDesc = rows => [...(rows || [])].sort((left, right) => {
 const vouchers = computed(() => byBusinessDateDesc(detail.value.vouchers))
 const balanceRows = computed(() => byBusinessDateDesc(detail.value.balances))
 const balanceSubjects = [
+  { label: '融资租赁资产成本', amount: 'leaseAssetCostAmount', balance: 'leaseAssetCostBalance' },
   { label: '融资租赁资产', amount: 'leaseAssetMovableLeasebackAmount', balance: 'leaseAssetMovableLeasebackBalance' },
   { label: '应收租赁本金', amount: 'leasePrincipalReceivableAmount', balance: 'leasePrincipalReceivableBalance' },
   { label: '应收租赁利息', amount: 'leaseInterestReceivableAmount', balance: 'leaseInterestReceivableBalance' },
@@ -192,8 +212,40 @@ const balanceSubjects = [
   { label: '应付车辆管理费', amount: 'vehicleManagementFeePayableAmount', balance: 'vehicleManagementFeePayableBalance' },
   { label: '印花税费用', amount: 'stampDutyExpenseAmount', balance: 'stampDutyExpenseBalance' },
   { label: '应交印花税', amount: 'stampDutyPayableAmount', balance: 'stampDutyPayableBalance' }
+  ,{ label: '逾期本金', amount: 'overdueLeasePrincipalAmount', balance: 'overdueLeasePrincipalBalance' }
+  ,{ label: '逾期利息', amount: 'overdueLeaseInterestAmount', balance: 'overdueLeaseInterestBalance' }
+  ,{ label: '逾期利息增值税', amount: 'overdueLeaseInterestVatAmount', balance: 'overdueLeaseInterestVatBalance' }
+  ,{ label: '逾期留购价', amount: 'overdueResidualValueAmount', balance: 'overdueResidualValueBalance' }
+  ,{ label: '逾期留购价增值税', amount: 'overdueResidualValueVatAmount', balance: 'overdueResidualValueVatBalance' }
+  ,{ label: '贴息待收进项税', amount: 'inputVatReceivableAmount', balance: 'inputVatReceivableBalance' }
+  ,{ label: '逾期罚息收入', amount: 'penaltyInterestIncomeAmount', balance: 'penaltyInterestIncomeBalance' }
 ]
 const activeBalanceSubjects = computed(() => balanceSubjects.filter(subject => balanceRows.value.some(row => Number(row[subject.amount] || 0) !== 0 || Number(row[subject.balance] || 0) !== 0)))
+const assetBalanceFields = [
+  'leaseAssetCostBalance', 'leaseAssetMovableLeasebackBalance', 'leaseAssetConstructionLeasebackBalance',
+  'leasePrincipalReceivableBalance', 'leaseInterestReceivableBalance', 'leaseInterestVatReceivableBalance',
+  'residualValueReceivableBalance', 'residualValueVatReceivableBalance',
+  'overdueLeasePrincipalBalance', 'overdueLeaseInterestBalance', 'overdueLeaseInterestVatBalance',
+  'overdueResidualValueBalance', 'overdueResidualValueVatBalance',
+  'vehicleProfitSharingReceivableBalance', 'inputVatReceivableBalance'
+]
+const profitLossBalanceFields = [
+  'leaseInterestIncomeBalance', 'penaltyInterestIncomeBalance', 'earlyTerminationIncomeBalance',
+  'earlySettlementPenaltyIncomeBalance', 'vehicleProjectServiceFeeExpenseBalance',
+  'stampDutyExpenseBalance', 'bankServiceFeeExpenseBalance', 'paymentChannelFeeExpenseBalance',
+  'mortgageServiceFeeExpenseBalance', 'leaseReceivableImpairmentLossBalance'
+]
+const settlementCheck = computed(() => {
+  const status = model.value.contractStatus || contract.value.contractStatus || ''
+  const visible = String(status).includes('结清') && balanceRows.value.length > 0
+  const terminal = balanceRows.value[0] || {}
+  const nonZeroAssetCount = assetBalanceFields.filter(key => Math.abs(Number(terminal[key] || 0)) >= 0.005).length
+  const assetBalance = assetBalanceFields.reduce((sum, key) => sum + Math.abs(Number(terminal[key] || 0)), 0)
+  const profitLossBalance = profitLossBalanceFields.reduce((sum, key) => sum + Math.abs(Number(terminal[key] || 0)), 0)
+  const assetPassed = nonZeroAssetCount === 0
+  const profitLossPassed = profitLossBalance >= 0.005
+  return { visible, nonZeroAssetCount, assetBalance, profitLossBalance, assetPassed, profitLossPassed, passed: assetPassed && profitLossPassed }
+})
 const contractCode = computed(() => model.value.contractCode || contract.value.contractCode || '--')
 const schedulePlans = computed(() => plans.value.filter(row => Number(row.periods) > 0))
 const accrualPlans = computed(() => plans.value.filter(row => row.periods == null || Number(row.rentalIncome || 0) !== 0))
@@ -258,5 +310,5 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.contract-detail{min-height:100%;padding:16px;color:#253247;background:#f3f5f8}.load-error{margin-bottom:12px}.contract-header{display:flex;min-height:108px;padding:20px 26px;color:#fff;background:linear-gradient(115deg,#97000d,#cf0717 52%,#e83d49);border-radius:8px;box-shadow:0 8px 22px rgba(157,0,15,.14);align-items:center;justify-content:space-between}.header-kicker{margin-bottom:6px;font-size:12px;opacity:.78;letter-spacing:1.5px}.contract-title-row{display:flex;align-items:center;gap:18px}.contract-title-row h1{margin:0;font-size:26px}.contract-tags{display:flex;gap:7px}.contract-tags :deep(.el-tag){color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45)}.header-subtitle{display:flex;margin-top:10px;font-size:13px;align-items:center;gap:10px;opacity:.92}.header-subtitle i{width:3px;height:3px;background:#fff;border-radius:50%;opacity:.7}.header-status{display:flex;min-width:300px;padding-left:28px;border-left:1px solid rgba(255,255,255,.28);flex-direction:column}.header-status span,.header-status small{font-size:12px;opacity:.78}.header-status strong{margin:7px 0 5px;font-size:17px}.summary-grid{display:grid;margin:12px 0;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.summary-card{position:relative;min-height:86px;padding:15px 17px;overflow:hidden;background:#fff;border:1px solid #e8ebf0;border-radius:7px}.summary-card:before{position:absolute;top:17px;left:0;width:3px;height:24px;background:#c7ccd5;content:''}.summary-card.accent:before{background:#d70817}.summary-card span,.summary-card small{display:block;color:#8993a4;font-size:12px}.summary-card strong{display:block;margin:8px 0 5px;overflow:hidden;font-size:19px;white-space:nowrap;text-overflow:ellipsis}.summary-card.accent strong,.income-value{color:#d70817}.detail-card{border:1px solid #e5e9ef;border-radius:7px}.detail-card :deep(.el-card__body){padding:0 18px 18px}.detail-tabs :deep(.el-tabs__header){margin:0}.detail-tabs :deep(.el-tabs__nav-wrap){padding:0 4px}.detail-tabs :deep(.el-tabs__item){height:52px;padding:0 21px;font-size:14px}.detail-tabs :deep(.el-tabs__item.is-active){color:#d70817;font-weight:600}.detail-tabs :deep(.el-tabs__active-bar){height:3px;background:#d70817}.tab-body{padding-top:4px}.info-section{margin-top:14px}.info-section :deep(.section-heading){margin-bottom:10px;padding-left:9px;color:#1e2c42;border-left:3px solid #d70817;font-size:15px;font-weight:600}.info-section :deep(.el-descriptions__label){width:126px;color:#737f91;background:#f8f9fb!important;font-weight:400}.info-section :deep(.el-descriptions__content){color:#1f2d42;font-weight:500}.structure-banner{display:grid;margin:16px 0 20px;padding:22px 24px;background:#f8f9fb;border:1px solid #e7eaf0;border-radius:7px;grid-template-columns:1fr 36px 1fr 36px 1fr 36px 1fr;align-items:center}.structure-banner div{display:flex;min-height:68px;padding:12px 14px;background:#fff;border:1px solid #e6e9ee;border-radius:6px;flex-direction:column;justify-content:center}.structure-banner span{color:#8690a1;font-size:12px}.structure-banner strong{margin-top:8px;font-size:18px}.structure-banner .highlight{border-color:#efb4ba}.structure-banner .highlight strong{color:#d70817}.structure-banner>b{color:#b7bec9;font-size:22px;text-align:center}.table-toolbar{display:flex;min-height:58px;padding:10px 2px;align-items:center;justify-content:space-between}.table-toolbar :deep(strong){display:block;margin-bottom:4px;font-size:15px}.table-toolbar :deep(span){color:#8b95a5;font-size:12px}.table-toolbar :deep(.toolbar-total){color:#d70817;font-size:14px}.balance-detail{padding:12px 28px;background:#f7f9fc}.scene-code{display:block;margin-top:3px;color:#929cab}.positive{color:#15803d}.negative{color:#d70817}@media(max-width:1500px){.summary-grid{grid-template-columns:repeat(3,1fr)}.detail-tabs :deep(.el-tabs__item){padding:0 14px}}@media(max-width:1100px){.contract-header{align-items:flex-start;flex-direction:column;gap:18px}.header-status{padding-left:0;border:0}.summary-grid{grid-template-columns:repeat(2,1fr)}.structure-banner{grid-template-columns:1fr;gap:8px}.structure-banner>b{transform:rotate(90deg)}}
+.contract-detail{min-height:100%;padding:16px;color:#253247;background:#f3f5f8}.load-error{margin-bottom:12px}.contract-header{display:flex;min-height:108px;padding:20px 26px;color:#fff;background:linear-gradient(115deg,#97000d,#cf0717 52%,#e83d49);border-radius:8px;box-shadow:0 8px 22px rgba(157,0,15,.14);align-items:center;justify-content:space-between}.header-kicker{margin-bottom:6px;font-size:12px;opacity:.78;letter-spacing:1.5px}.contract-title-row{display:flex;align-items:center;gap:18px}.contract-title-row h1{margin:0;font-size:26px}.contract-tags{display:flex;gap:7px}.contract-tags :deep(.el-tag){color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45)}.header-subtitle{display:flex;margin-top:10px;font-size:13px;align-items:center;gap:10px;opacity:.92}.header-subtitle i{width:3px;height:3px;background:#fff;border-radius:50%;opacity:.7}.header-status{display:flex;min-width:300px;padding-left:28px;border-left:1px solid rgba(255,255,255,.28);flex-direction:column}.header-status span,.header-status small{font-size:12px;opacity:.78}.header-status strong{margin:7px 0 5px;font-size:17px}.summary-grid{display:grid;margin:12px 0;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.summary-card{position:relative;min-height:86px;padding:15px 17px;overflow:hidden;background:#fff;border:1px solid #e8ebf0;border-radius:7px}.summary-card:before{position:absolute;top:17px;left:0;width:3px;height:24px;background:#c7ccd5;content:''}.summary-card.accent:before{background:#d70817}.summary-card span,.summary-card small{display:block;color:#8993a4;font-size:12px}.summary-card strong{display:block;margin:8px 0 5px;overflow:hidden;font-size:19px;white-space:nowrap;text-overflow:ellipsis}.summary-card.accent strong,.income-value{color:#d70817}.detail-card{border:1px solid #e5e9ef;border-radius:7px}.detail-card :deep(.el-card__body){padding:0 18px 18px}.detail-tabs :deep(.el-tabs__header){margin:0}.detail-tabs :deep(.el-tabs__nav-wrap){padding:0 4px}.detail-tabs :deep(.el-tabs__item){height:52px;padding:0 21px;font-size:14px}.detail-tabs :deep(.el-tabs__item.is-active){color:#d70817;font-weight:600}.detail-tabs :deep(.el-tabs__active-bar){height:3px;background:#d70817}.tab-body{padding-top:4px}.info-section{margin-top:14px}.info-section :deep(.section-heading){margin-bottom:10px;padding-left:9px;color:#1e2c42;border-left:3px solid #d70817;font-size:15px;font-weight:600}.info-section :deep(.el-descriptions__label){width:126px;color:#737f91;background:#f8f9fb!important;font-weight:400}.info-section :deep(.el-descriptions__content){color:#1f2d42;font-weight:500}.structure-banner{display:grid;margin:16px 0 20px;padding:22px 24px;background:#f8f9fb;border:1px solid #e7eaf0;border-radius:7px;grid-template-columns:1fr 36px 1fr 36px 1fr 36px 1fr;align-items:center}.structure-banner div{display:flex;min-height:68px;padding:12px 14px;background:#fff;border:1px solid #e6e9ee;border-radius:6px;flex-direction:column;justify-content:center}.structure-banner span{color:#8690a1;font-size:12px}.structure-banner strong{margin-top:8px;font-size:18px}.structure-banner .highlight{border-color:#efb4ba}.structure-banner .highlight strong{color:#d70817}.structure-banner>b{color:#b7bec9;font-size:22px;text-align:center}.settlement-check{display:grid;margin:16px 0 6px;padding:14px 16px;background:#f8fafc;border:1px solid #dfe4eb;border-radius:7px;grid-template-columns:1.2fr 1fr 1fr auto;gap:12px;align-items:center}.settlement-check-title{display:flex;flex-direction:column}.settlement-check-title span,.settlement-check-item small{margin-top:4px;color:#8791a1;font-size:12px}.settlement-check-item{padding:10px 12px;background:#fff;border-left:3px solid #d70817;border-radius:4px}.settlement-check-item span,.settlement-check-item strong{display:block}.settlement-check-item.passed{border-left-color:#16a34a}.settlement-check-item.failed{border-left-color:#d70817}.table-toolbar{display:flex;min-height:58px;padding:10px 2px;align-items:center;justify-content:space-between}.table-toolbar :deep(strong){display:block;margin-bottom:4px;font-size:15px}.table-toolbar :deep(span){color:#8b95a5;font-size:12px}.table-toolbar :deep(.toolbar-total){color:#d70817;font-size:14px}.balance-detail{padding:12px 28px;background:#f7f9fc}.scene-code{display:block;margin-top:3px;color:#929cab}.positive{color:#15803d}.negative{color:#d70817}@media(max-width:1500px){.summary-grid{grid-template-columns:repeat(3,1fr)}.detail-tabs :deep(.el-tabs__item){padding:0 14px}.settlement-check{grid-template-columns:1fr 1fr}}@media(max-width:1100px){.contract-header{align-items:flex-start;flex-direction:column;gap:18px}.header-status{padding-left:0;border:0}.summary-grid{grid-template-columns:repeat(2,1fr)}.structure-banner{grid-template-columns:1fr;gap:8px}.structure-banner>b{transform:rotate(90deg)}}
 </style>

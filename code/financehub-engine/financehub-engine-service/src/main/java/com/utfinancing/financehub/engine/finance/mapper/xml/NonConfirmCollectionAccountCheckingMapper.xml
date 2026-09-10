@@ -1031,6 +1031,7 @@
 
     <!--未确认收款-对账表-确认对账按钮-确认对账/分页查询 -->
     <select id="selectNonConfirmAccountChecking" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultMap="BaseResultMap">
+        <bind name="offset" value="(params.pageNum - 1) * params.pageSize"/>
         with non_confirm_sum as (
         select
             business_date,
@@ -1465,10 +1466,11 @@
         </if>
         order by
             table2.business_date, table2.ebank_serial_number
-        limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+        limit #{params.pageSize} offset #{offset}
     </select>
 
     <select id="selectLastAccountChecking" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultMap="BaseResultMap">
+        <bind name="offset" value="(params.pageNum - 1) * params.pageSize"/>
         select
             account_checking_month,
             collection_accounts_bank,
@@ -1525,7 +1527,7 @@
             </if>
         order by
             business_happen_date, ebank_serial_number
-        limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+        limit #{params.pageSize} offset #{offset}
     </select>
 
     <select id="selectLastAccountCheckingCount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmAccountCheckingDTO" resultType="java.lang.Integer">

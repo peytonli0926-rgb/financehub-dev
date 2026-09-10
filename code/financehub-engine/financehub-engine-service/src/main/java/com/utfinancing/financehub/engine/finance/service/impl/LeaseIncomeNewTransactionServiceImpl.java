@@ -90,8 +90,9 @@ public class LeaseIncomeNewTransactionServiceImpl implements ILeaseIncomeNewTran
             }
             // 收益计提金额
             commonMap.put("incomeAccural", entity.getRentalIncomeOnBalance());
-            // 收益计提调整额 凭证中未使用,接口表中有该字段
-            commonMap.put("incomeAdjust", entity.getOverdueAdjustmentAmount());
+            // 分润费分摊额：冲减合同应收息中已经包含的分润收入
+            commonMap.put("incomeAdjust", entity.getProfitSharingAllocationAmount() == null
+                    ? BigDecimal.ZERO : entity.getProfitSharingAllocationAmount());
             // 表外计提金额
             commonMap.put("incomeOther", entity.getRentalIncomeOffBalance());
             commonMap.put(RuleConstant.IS_SUBMIT, isSubmit);
@@ -171,8 +172,9 @@ public class LeaseIncomeNewTransactionServiceImpl implements ILeaseIncomeNewTran
             }
             // 收益计提金额
             commonMap.put("incomeAccural", entity.getRentalIncomeOnBalance() == null ? new BigDecimal(0) : entity.getRentalIncomeOnBalance());
-            // 收益计提调整额 凭证中未使用,接口表中有该字段
-            commonMap.put("incomeAdjust", entity.getOverdueAdjustmentAmount() == null ? new BigDecimal(0) : entity.getOverdueAdjustmentAmount());
+            // 分润费分摊额：冲减合同应收息中已经包含的分润收入
+            commonMap.put("incomeAdjust", entity.getProfitSharingAllocationAmount() == null
+                    ? BigDecimal.ZERO : entity.getProfitSharingAllocationAmount());
             // 表外计提金额
             commonMap.put("incomeOther", entity.getRentalIncomeOffBalance() == null ? new BigDecimal(0) : entity.getRentalIncomeOffBalance());
             commonMap.put(RuleConstant.IS_SUBMIT, isSubmit);

@@ -71,11 +71,11 @@ const sourceSystemNames = {
 const content = (row) => row?.messageContent || {}
 const sourceSystemName = (row) => sourceSystemNames[row?.systemCode || content(row).source_system] || content(row).systemName || content(row).system_name || row?.systemCode || content(row).source_system || '-'
 const eventNames = {
-  C005: '到并核销租金', C043: '前期逾期留购价',
-  CR000: '收到现金折扣', CR001: '收取保证金', CR003: '购入租赁资产', CR005: '到并核销租金',
+  C005: '收到并核销租金', C043: '前期逾期留购价',
+  CR000: '收到现金折扣', CR001: '收取保证金', CR003: '购入租赁资产', CR005: '收到并核销租金',
   CR006: '款项无法确认', CR007: '人工明确款项用途', CR008: '收到款项核销', CR025: '支付资产管理费',
   CR029: '退回平台合作方提前结清贴息金额', CR033: '退回的分润费', CR036: '支付银行手续费',
-  CR040: '抵押服务费', CR041: '支付通联手续费', CR043: '前期逾期留购价', CR044: '渠道商分成结算', CR056: '合作方提前结清',
+  CR040: '抵押服务费', CR041: '支付通联手续费', CR043: '前期逾期留购价', CR044: '渠道商分成结算', CR056: '合作方提前结清', CR060: '支付印花税',
   RF001: '普通退款', RF002: '保证金退款', RF003: '未确认款退款',
   SC001: '厂商贴息确认', SC002: '平台贴息确认', SC003: '提前结清贴息冲回',
   OD001: '本金转逾期', OD002: '利息转逾期', OD003: '留购价转逾期', OD004: '逾期罚息确认',

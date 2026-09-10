@@ -12,7 +12,7 @@ final class RetailLeasebackEventNames {
                 case "CR000": return "收到现金折扣";
                 case "CR001": return "收取保证金";
                 case "CR003": return "购入租赁资产";
-                case "CR005": return "到并核销租金";
+                case "CR005": return "收到并核销租金";
                 case "CR006": return "款项无法确认";
                 case "CR007": return "人工明确款项用途";
                 case "CR008": return "收到款项核销";
@@ -25,6 +25,7 @@ final class RetailLeasebackEventNames {
                 case "CR043": return "前期逾期留购价";
                 case "CR044": return "渠道商分成结算";
                 case "CR056": return "合作方提前结清";
+                case "CR060": return "支付印花税";
                 case "RF001": return "普通退款";
                 case "RF002": return "保证金退款";
                 case "RF003": return "未确认款退款";

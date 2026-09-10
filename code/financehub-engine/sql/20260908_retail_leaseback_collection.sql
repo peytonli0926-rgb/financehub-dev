@@ -6,10 +6,10 @@ DELETE FROM eg_field_mapping WHERE id BETWEEN 202609075000001 AND 20260907500002
 INSERT INTO eg_field_mapping
  (id,system_code,field_code,field_name,source_value,target_value,default_value,create_by,create_time,update_by,update_time,del_flag,target_field_code)
 VALUES
- (202609075000001,'CYCXT','eventCode','收款业务事件','收到现金折扣,C000,CR000,收取保证金,收到保证金,C001,CR001,到并核销租金,收到租金,C005,CR005,款项无法确认,款项无法确认款,C006,CR006,人工明确款项用途,明确不明款项用途,C007,CR007,收到款项核销,款项核销,C008,CR008,退回的分润费,收到退回分润费,C033,CR033,前期逾期留购价,收到前期逾期留购价,C043,CR043','CYC_COLLECTION',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','sceneCode'),
+ (202609075000001,'CYCXT','eventCode','收款业务事件','收到现金折扣,C000,CR000,收取保证金,收到保证金,C001,CR001,收到并核销租金,到并核销租金,收到租金,C005,CR005,款项无法确认,款项无法确认款,C006,CR006,人工明确款项用途,明确不明款项用途,C007,CR007,收到款项核销,款项核销,C008,CR008,退回的分润费,收到退回分润费,C033,CR033,前期逾期留购价,收到前期逾期留购价,C043,CR043','CYC_COLLECTION',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','sceneCode'),
  (202609075000002,'CYCXT','eventCode','收到现金折扣','收到现金折扣,C000,CR000','CR000',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),
  (202609075000003,'CYCXT','eventCode','收取保证金','收取保证金,收到保证金,C001,CR001','CR001',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),
- (202609075000004,'CYCXT','eventCode','到并核销租金','到并核销租金,收到租金,C005,CR005','CR005',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),
+ (202609075000004,'CYCXT','eventCode','收到并核销租金','收到并核销租金,到并核销租金,收到租金,C005,CR005','CR005',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),
  (202609075000005,'CYCXT','eventCode','款项无法确认','款项无法确认,款项无法确认款,C006,CR006','CR006',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),
  (202609075000006,'CYCXT','eventCode','人工明确款项用途','人工明确款项用途,明确不明款项用途,C007,CR007','CR007',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),
  (202609075000007,'CYCXT','eventCode','收到款项核销','收到款项核销,款项核销,C008,CR008','CR008',NULL,'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','collectionEventCode'),

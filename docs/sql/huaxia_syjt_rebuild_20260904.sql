@@ -49,7 +49,9 @@ VALUES
 (2096000100000000019,2096000100000000001,'unearned_lease_interest','0',NULL,NULL,'表外收益转表内','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1'),
 (2096000100000000020,2096000100000000001,'lease_interest_income','0',NULL,NULL,'表外收益转表内','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1'),
 (2096000100000000021,2096000100000000001,'off_balance_offset','0',NULL,NULL,'表外收益转表内','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1'),
-(2096000100000000022,2096000100000000001,'off_balance_lease_interest_receivable','0',NULL,NULL,'表外收益转表内','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1');
+(2096000100000000022,2096000100000000001,'off_balance_lease_interest_receivable','0',NULL,NULL,'表外收益转表内','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1'),
+(2096000100000000023,2096000100000000001,'lease_interest_income','0',NULL,NULL,'冲减平台方分润费计提的收入','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1'),
+(2096000100000000024,2096000100000000001,'unearned_lease_interest','0',NULL,NULL,'冲减平台方分润费计提的收入','local-admin',NOW(),'local-admin',NOW(),'0','0','0,1');
 
 INSERT INTO eg_scene_voucher_condition
 (id, scene_voucher_entry_id, serial, script_condition, dondition_description, script_amount,
@@ -66,4 +68,6 @@ VALUES
 (2096000100000000119,2096000100000000019,9,'{收益计提接口表.表外转表内金额}!=0','表外转表内非零','{收益计提接口表.表外转表内金额}','表外转表内','DR','local-admin',NOW(),'local-admin',NOW(),'0'),
 (2096000100000000120,2096000100000000020,10,'{收益计提接口表.表外转表内金额}!=0','表外转表内非零','{收益计提接口表.表外转表内金额}','表外转表内','CR','local-admin',NOW(),'local-admin',NOW(),'0'),
 (2096000100000000121,2096000100000000021,11,'{收益计提接口表.表外转表内金额}!=0','表外转表内非零','{收益计提接口表.表外转表内金额}','表外转表内','DR','local-admin',NOW(),'local-admin',NOW(),'0'),
-(2096000100000000122,2096000100000000022,12,'{收益计提接口表.表外转表内金额}!=0','表外转表内非零','{收益计提接口表.表外转表内金额}','表外转表内','CR','local-admin',NOW(),'local-admin',NOW(),'0');
+(2096000100000000122,2096000100000000022,12,'{收益计提接口表.表外转表内金额}!=0','表外转表内非零','{收益计提接口表.表外转表内金额}','表外转表内','CR','local-admin',NOW(),'local-admin',NOW(),'0'),
+(2096000100000000123,2096000100000000023,13,'{收益计提接口表.收益计提调整额}>0','存在当期分润费收入冲减额','{收益计提接口表.收益计提调整额}','冲减平台方分润费计提的收入','DR','local-admin',NOW(),'local-admin',NOW(),'0'),
+(2096000100000000124,2096000100000000024,14,'{收益计提接口表.收益计提调整额}>0','存在当期分润费收入冲减额','{收益计提接口表.收益计提调整额}','冲减平台方分润费计提的收入','CR','local-admin',NOW(),'local-admin',NOW(),'0');

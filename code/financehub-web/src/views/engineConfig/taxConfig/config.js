@@ -2,6 +2,29 @@ import { h } from 'vue'
 import { ElTag } from 'element-plus'
 import { dictMappingToArray, dictMappingLabel } from '@/utils'
 
+const taxFundTypeLabels = {
+  stamp_duty: '印花税',
+  tax_general: '通用税率'
+}
+
+const getTaxFundTypeOptions = (dictData) => {
+  const options = dictMappingToArray(dictData, 'sys_cash_type').map((item) => ({
+    ...item,
+    label: taxFundTypeLabels[item.value] || item.label
+  }))
+
+  Object.entries(taxFundTypeLabels).forEach(([value, label]) => {
+    if (!options.some((item) => item.value === value)) {
+      options.push({ value, label })
+    }
+  })
+
+  return options
+}
+
+const getTaxFundTypeLabel = (dictData, value) =>
+  taxFundTypeLabels[value] || dictMappingLabel(dictData, 'sys_cash_type', value)
+
 export default {
   hidden: false,
   title: '税号配置',
@@ -85,7 +108,7 @@ export const optionsConfig = (router, dictData = {}) => ({
     label: '金额类型',
     search: true,
     type: 'select',
-    option: dictMappingToArray(dictData, 'sys_cash_type'),
+    option: getTaxFundTypeOptions(dictData),
     rules: [{
       required: true,
       message: '请输入金额类型',
@@ -98,7 +121,7 @@ export const optionsConfig = (router, dictData = {}) => ({
       EDIT: true
     },
     render (row) {
-      return (row.fundType && h(ElTag, () => dictMappingLabel(dictData, 'sys_cash_type', row.fundType))) || ''
+      return (row.fundType && h(ElTag, () => getTaxFundTypeLabel(dictData, row.fundType))) || ''
     }
   },
   {

@@ -8,6 +8,8 @@ import com.utfinancing.financehub.engine.finance.model.dto.SelectDetailsByPageDT
 import com.utfinancing.financehub.engine.finance.model.vo.LeaseIncomeDetailsVO;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,6 +27,13 @@ public interface LeaseIncomeDetailsMapper extends BaseMapper<LeaseIncomeDetailsE
     List<LeaseIncomeDetailsVO> selectDetailsByCondition(@Param("param") LeaseIncomeDetailsQueryDTO queryDTO);
 
     List<LeaseIncomeDetailsEntity> selectDetailsByPage(@Param("param") SelectDetailsByPageDTO queryDTO);
+
+    BigDecimal selectProfitSharingAllocation(@Param("contractCode") String contractCode,
+                                             @Param("orgId") String orgId,
+                                             @Param("businessDate") Date businessDate);
+
+    BigDecimal selectProfitSharingTotalAmount(@Param("contractCode") String contractCode,
+                                              @Param("orgId") String orgId);
 
     /**
      * 收益计提数据校验

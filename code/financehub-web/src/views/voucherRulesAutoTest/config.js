@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '凭证规则自动测试',
   icon: '',
   name: 'voucherRulesAutoTestMain'

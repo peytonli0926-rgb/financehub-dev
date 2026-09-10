@@ -109,6 +109,9 @@ public class LeaseIncomeDetailsVO implements Serializable{
     @ApiModelProperty(value = "当月逾期调整额")
     private BigDecimal overdueAdjustmentAmount;
 
+    @ApiModelProperty(value = "当月分润费分摊额（不含税）")
+    private BigDecimal profitSharingAllocationAmount;
+
     @ApiModelProperty(value = "合计入账金额")
     private BigDecimal totalRecordedAmount;
 

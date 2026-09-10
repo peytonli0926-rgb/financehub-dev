@@ -320,9 +320,14 @@ public class ContractBalanceServiceImpl extends ServiceImpl<ContractBalanceMappe
             return;
         }
         // 接口重试/重新执行时同一张凭证不能重复累计余额。
-        if (this.lambdaQuery().eq(ContractBalanceEntity::getVoucherId, voucherDTO.getId()).exists()
-                || contractBalanceTempService.lambdaQuery()
-                .eq(ContractBalanceTempEntity::getVoucherId, voucherDTO.getId()).exists()) {
+        boolean formalBalanceExists = this.lambdaQuery()
+                .eq(ContractBalanceEntity::getVoucherId, voucherDTO.getId()).exists();
+        boolean temporaryBalanceExists = contractBalanceTempService.lambdaQuery()
+                .eq(ContractBalanceTempEntity::getVoucherId, voucherDTO.getId()).exists();
+        // 未提交凭证重复生成时跳过临时余额；提交凭证时不能被临时余额拦截，
+        // insertContractBalance 会删除临时余额并将本次发生额写入正式余额。
+        if (formalBalanceExists || (!YesOrNoEnum.YES.getCode().equals(voucherDTO.getIsSubmit())
+                && temporaryBalanceExists)) {
             log.info("凭证{}已更新合同余额，本次跳过", voucherDTO.getId());
             return;
         }

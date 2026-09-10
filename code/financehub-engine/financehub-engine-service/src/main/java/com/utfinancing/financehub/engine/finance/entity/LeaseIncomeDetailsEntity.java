@@ -127,6 +127,9 @@ public class LeaseIncomeDetailsEntity extends Model<LeaseIncomeDetailsEntity> {
     //当月逾期调整额
     private BigDecimal overdueAdjustmentAmount;
 
+    // 当月分润费分摊额（不含税），用于冲减合同应收息中包含的分润收入
+    private BigDecimal profitSharingAllocationAmount;
+
     //合计入账金额
     private BigDecimal totalRecordedAmount;
 

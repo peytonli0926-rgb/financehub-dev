@@ -3,7 +3,7 @@ import { ElTag } from 'element-plus'
 import { dictMappingToArray, dictMappingLabel } from '@/utils'
 
 export default {
-  hidden: false,
+  hidden: true,
   title: '凭证录入',
   icon: '',
   name: 'customVoucherIndex',

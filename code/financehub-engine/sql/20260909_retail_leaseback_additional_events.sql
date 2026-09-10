@@ -104,7 +104,7 @@ VALUES
  (202609096000009,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_interest','153109','应收融资租赁款-逾期利息','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
  (202609096000010,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_interest_vat','153114','应收融资租赁款-逾期利息增值税','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
  (202609096000011,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','penalty_interest_income','604103','租赁收入-延期收款收入','收入','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
- (202609096000012,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_lease_interest','15320201','未实现融资收益-利息','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
+ (202609096000012,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_lease_interest','15320201','未实现融资收益_利息（动产项目）_回租','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000013,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_lease_interest_vat','15320501','未实现融资收益-利息增值税','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000014,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_residual_value','15320401','未实现融资收益-留购价','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000015,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_residual_value_vat','15320601','未实现融资收益-留购价增值税','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),

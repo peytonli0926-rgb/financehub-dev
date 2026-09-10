@@ -49,6 +49,20 @@ VALUES
 UPDATE eg_business SET scene_count=3,update_by='retail-profit-sharing-config',update_time=NOW()
 WHERE business_code='CYC_RETAIL_LEASEBACK' AND del_flag='0';
 
+-- 分润费确认使用的三个科目及其正常余额方向。
+UPDATE eg_account
+SET account_name='未实现融资收益_利息（动产项目）_回租',debit_credit_type='CR',
+    update_by='retail-profit-sharing-config',update_time=NOW()
+WHERE business_code='CYC_RETAIL_LEASEBACK' AND fund_type='unearned_lease_interest' AND del_flag='0';
+UPDATE eg_account
+SET account_name='其他应收款_待收增值税进项税',debit_credit_type='DR',
+    update_by='retail-profit-sharing-config',update_time=NOW()
+WHERE business_code='CYC_RETAIL_LEASEBACK' AND fund_type='input_vat_receivable' AND del_flag='0';
+UPDATE eg_account
+SET account_name='应付账款_应付车辆分润费',debit_credit_type='CR',
+    update_by='retail-profit-sharing-config',update_time=NOW()
+WHERE business_code='CYC_RETAIL_LEASEBACK' AND fund_type='vehicle_profit_sharing_payable' AND del_flag='0';
+
 INSERT INTO eg_scene_fields
  (id,scene_id,scene_code,scene_name,field_name,field_code,data_type,create_by,create_time,update_by,update_time,del_flag)
 VALUES
@@ -78,17 +92,20 @@ VALUES
 INSERT INTO eg_scene_voucher_entry
  (id,scene_voucher_id,fund_type,relate_bank_flag,voucher_summary,create_by,create_time,update_by,update_time,del_flag,cash_attribute_flag,assist_flags)
 VALUES
- (202609072400001,202609072300001,'vehicle_profit_sharing_receivable','0','应收车辆清分款','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0','0','0,1'),
- (202609072400002,202609072300001,'vehicle_profit_sharing_payable','0','应付车辆分润费','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0','0','1');
+ (202609072400001,202609072300001,'unearned_lease_interest','0','未实现融资收益_利息（动产项目）_回租','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0','0','0,1'),
+ (202609072400002,202609072300001,'input_vat_receivable','0','其他应收款_待收增值税进项税','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0','0','0,1'),
+ (202609072400003,202609072300001,'vehicle_profit_sharing_payable','0','应付账款_应付车辆分润费','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0','0','1');
 
 INSERT INTO eg_scene_voucher_condition
  (id,scene_voucher_entry_id,serial,script_condition,dondition_description,script_amount,amount_description,debit_credit_type,
   create_by,create_time,update_by,update_time,del_flag)
 VALUES
- (202609072500001,202609072400001,1,"profitSharingEventCode == 'FRF_CONFIRM' && profitSharingAmount > 0",'起租日确认应收分润款','profitSharingAmount','分润费金额','DR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
- (202609072500002,202609072400002,1,"profitSharingEventCode == 'FRF_CONFIRM' && profitSharingAmount > 0",'起租日确认应付分润费','profitSharingAmount','分润费金额','CR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
- (202609072500003,202609072400002,2,"profitSharingEventCode == 'FRF_REFUND' && profitSharingAmount > 0",'退回应付分润费','profitSharingAmount','退回金额','DR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
- (202609072500004,202609072400001,2,"profitSharingEventCode == 'FRF_REFUND' && profitSharingAmount > 0",'退回应收车辆清分款','profitSharingAmount','退回金额','CR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0');
+ (202609072500001,202609072400001,1,"profitSharingEventCode == 'FRF_CONFIRM' && profitSharingAmount > 0",'确认分润费不含税金额',"noTaxAmount(profitSharingAmount,businessCode,'tax_general')",'分润费不含税金额','DR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
+ (202609072500002,202609072400002,2,"profitSharingEventCode == 'FRF_CONFIRM' && profitSharingAmount > 0",'确认分润费待收进项税',"profitSharingAmount-noTaxAmount(profitSharingAmount,businessCode,'tax_general')",'分润费进项税额','DR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
+ (202609072500003,202609072400003,3,"profitSharingEventCode == 'FRF_CONFIRM' && profitSharingAmount > 0",'确认应付车辆分润费','profitSharingAmount','分润费含税金额','CR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
+ (202609072500004,202609072400003,1,"profitSharingEventCode == 'FRF_REFUND' && profitSharingAmount > 0",'退回应付车辆分润费','profitSharingAmount','退回含税金额','DR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
+ (202609072500005,202609072400002,2,"profitSharingEventCode == 'FRF_REFUND' && profitSharingAmount > 0",'退回待收进项税',"profitSharingAmount-noTaxAmount(profitSharingAmount,businessCode,'tax_general')",'退回进项税额','CR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0'),
+ (202609072500006,202609072400001,3,"profitSharingEventCode == 'FRF_REFUND' && profitSharingAmount > 0",'退回分润费不含税金额',"noTaxAmount(profitSharingAmount,businessCode,'tax_general')",'退回不含税金额','CR','retail-profit-sharing-config',NOW(),'retail-profit-sharing-config',NOW(),'0');
 
 COMMIT;
 

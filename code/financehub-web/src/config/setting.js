@@ -79,6 +79,49 @@ export default {
       menuType: 3,
       sort: 0,
       menu: 'home'
+    },
+    {
+      children: [
+        {
+          children: [],
+          elements: [
+            { name: 'income_btn_import' },
+            { name: 'income_btn_export' },
+            { name: 'income_btn_month' },
+            { name: 'income_btn_voucher' },
+            { name: 'income_btn_delete' },
+            { name: 'income_btn_submit' },
+            { name: 'income_btn_withdraw' },
+            { name: 'income_btn_view' },
+            { name: 'income_btn_viewVoucher' }
+          ],
+          menuType: 3,
+          sort: 0,
+          menu: 'incomeProvisionAccessIndex'
+        },
+        {
+          children: [],
+          elements: [
+            { name: 'incomeDetail_btn_viewVoucher' },
+            { name: 'incomeDetail_btn_view' },
+            { name: 'incomeDetail_btn_export' }
+          ],
+          menuType: 3,
+          sort: 0,
+          menu: 'incomeProvisionAccessDetail'
+        },
+        {
+          children: [],
+          elements: [],
+          menuType: 3,
+          sort: 0,
+          menu: 'incomeProvisionAccessPlan'
+        }
+      ],
+      elements: [],
+      menuType: 3,
+      sort: 0,
+      menu: 'incomeProvisionAccess'
     }
   ],
   // 默认首页页面

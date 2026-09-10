@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '租金剩余本金、保证金明细表',
   icon: '',
   name: 'remainRentalDetails'

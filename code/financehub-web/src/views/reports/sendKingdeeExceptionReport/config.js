@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '传送金蝶异常报表',
   icon: '',
   name: 'sendKingdeeExceptionReport'

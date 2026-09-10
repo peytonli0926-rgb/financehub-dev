@@ -53,4 +53,7 @@ public class RepaymentPlanVO extends RepaymentPlanSaveDTO implements Serializabl
     @ApiModelProperty("归还本金")
     private BigDecimal recyclePrincipalAmount;
 
+    @ApiModelProperty("分润费分摊额")
+    private BigDecimal profitSharingAllocationAmount;
+
 }

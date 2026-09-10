@@ -46,7 +46,10 @@ public class RetailLeasebackStampDutyService {
         if (StrUtil.isBlank(triggerOrderId) || StrUtil.isBlank(contractCode)) return;
         String orderId = triggerOrderId + "-AUTO-JTYS";
         boolean exists = rawTransactionDataService.lambdaQuery()
-                .eq(RawTransactionDataEntity::getOrderId, orderId)
+                .and(query -> query.eq(RawTransactionDataEntity::getOrderId, orderId)
+                        .or(nested -> nested.eq(RawTransactionDataEntity::getContractCode, contractCode)
+                                .eq(RawTransactionDataEntity::getSceneCode, STAMP_DUTY_SCENE)
+                                .eq(RawTransactionDataEntity::getMessageStatus, RawMessageStatusEnum.SUCCESS.getCode())))
                 .eq(RawTransactionDataEntity::getDelFlag, "0").exists();
         if (exists) return;
 

@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '债务重组业务',
   icon: '',
   name: 'debtRestructuringBusiness',

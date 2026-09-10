@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '资金占用成本明细',
   icon: '',
   name: 'costBreakdownCapOccup'

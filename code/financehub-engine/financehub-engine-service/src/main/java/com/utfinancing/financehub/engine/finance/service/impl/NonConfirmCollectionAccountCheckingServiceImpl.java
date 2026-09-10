@@ -206,6 +206,13 @@ public class NonConfirmCollectionAccountCheckingServiceImpl
                     nonConfirmCollectionAccountCheckingEntityList, QueryNonConfirmAccountCheckingOutputDTO.class);
         } else {
             // 判断查询的对账月份与当前日期是否为同一月（或者上一月），如果为同一月，则优先查询是否已经存在已确认对账记录，如果没有则进行实时对账查询
+            // An empty active summary table cannot produce a real-time reconciliation result.
+            long activeSummaryCount = nonConfirmCollectionSumService.count(
+                    Wrappers.<NonConfirmCollectionSumEntity>lambdaQuery()
+                            .eq(NonConfirmCollectionSumEntity::getDelFlag, "0"));
+            if (activeSummaryCount == 0) {
+                return new Page<>(params.getPageNum(), params.getPageSize(), 0);
+            }
             boolean isSameMonth = StringUtils.equals(params.getCheckingMonth(), DateUtil.format(DateUtil.date(), "yyyy-MM"));
             boolean isLastMonth = StringUtils.equals(params.getCheckingMonth(), lastCheckingMonth);
             if (isSameMonth || isLastMonth) {

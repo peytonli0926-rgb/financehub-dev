@@ -11,7 +11,6 @@ import '@toystory/lotso/dist/style.css'
 
 import App from './App.vue'
 import ContractBusinessDetail from '@/views/searchBusiness/contractBusinessDetail/index.vue'
-import RentBusinessWorkbench from '@/views/rentBusiness/index/index.vue'
 
 // vuex
 import store from '@/store'
@@ -88,21 +87,6 @@ const frameOptions = {
           component: ContractBusinessDetail,
           hidden: true,
           meta: { title: '合同详情' }
-        }
-      ]
-    },
-    {
-      path: '/rentBusiness',
-      name: 'rentBusinessWorkbenchBootstrap',
-      component: Layout,
-      hidden: true,
-      children: [
-        {
-          path: '/rentBusiness/index',
-          name: 'rentBusinessIndex',
-          component: RentBusinessWorkbench,
-          hidden: true,
-          meta: { title: '租赁业务工作台' }
         }
       ]
     }

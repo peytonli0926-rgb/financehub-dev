@@ -1,7 +1,7 @@
 
 import { dictMappingToArray, toThousands, dictMappingLabel } from '@/utils'
 export default {
-  hidden: false,
+  hidden: true,
   title: '财务入库出库报表',
   icon: '',
   name: 'warehousingDevice'

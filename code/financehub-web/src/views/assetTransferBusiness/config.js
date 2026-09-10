@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '资产转让业务',
   icon: '',
   name: 'assetTransferBusiness',

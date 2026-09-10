@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '科目对账表',
   icon: '',
   name: 'accountReconciliation'

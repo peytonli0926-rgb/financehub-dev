@@ -1,249 +1,202 @@
 <template>
   <div class="lease-workbench">
-    <header class="page-header">
-      <div class="header-copy">
-        <div class="kicker"><span></span> 租赁业务</div>
+    <section class="workbench-hero">
+      <div class="hero-copy">
         <h1>业务处理工作台</h1>
-        <p>围绕收款和月末核算集中办理华夏金租核心业务</p>
+        <span class="title-mark"></span>
+        <p>围绕收款、尾差、减值、收益、税务等关键环节，提供高效、可视、可追溯的业务处理能力。</p>
       </div>
-      <div class="header-summary">
-        <strong>6</strong>
-        <span>项核心功能</span>
+
+      <div class="architecture" aria-hidden="true">
+        <div class="building building-back"></div>
+        <div class="building building-front"></div>
       </div>
-    </header>
 
-    <main class="process-list">
-      <section v-for="stream in workstreams" :key="stream.title" class="process-section">
-        <div class="section-intro">
-          <div class="section-icon">{{ stream.icon }}</div>
-          <div>
-            <span class="section-label">{{ stream.label }}</span>
-            <h2>{{ stream.title }}</h2>
-            <p>{{ stream.description }}</p>
-          </div>
-        </div>
+      <div class="hero-slogan">
+        <span>金融赋能产业</span>
+        <span>服务创造价值</span>
+        <i></i>
+      </div>
+    </section>
 
-        <div class="process-flow">
-          <template v-for="(item, index) in stream.items" :key="item.path">
-            <button type="button" class="process-card" @click="openFunction(item.path)">
-              <div class="card-heading">
-                <span class="step-number">{{ item.step }}</span>
-                <span class="enter-link">进入办理 <b>→</b></span>
-              </div>
-              <div class="card-icon">{{ item.icon }}</div>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.description }}</p>
-            </button>
-            <div v-if="index < stream.items.length - 1" class="flow-arrow" aria-hidden="true">→</div>
-          </template>
-        </div>
-      </section>
+    <main class="function-grid">
+      <button
+        v-for="item in functions"
+        :key="item.path"
+        type="button"
+        class="function-card"
+        :class="`theme-${item.theme}`"
+        @click="openFunction(item.path)"
+      >
+        <span class="function-icon">
+          <el-icon><component :is="item.icon" /></el-icon>
+        </span>
+        <h2>{{ item.title }}</h2>
+        <p>
+          <span>{{ item.description[0] }}</span>
+          <span>{{ item.description[1] }}</span>
+        </p>
+        <span class="enter-button" :aria-label="`进入${item.title}`">
+          <el-icon><Right /></el-icon>
+        </span>
+        <span class="card-wave" aria-hidden="true"></span>
+      </button>
     </main>
 
-    <div class="workbench-note">
-      <span>业务办理结果统一进入凭证处理流程</span>
-      <span class="note-divider"></span>
-      <span>数据口径以财务中台为准</span>
-    </div>
+    <footer class="workbench-footer">
+      <span>© 2025 华夏金融租赁有限公司</span>
+      <i></i>
+      <span>租赁业务管理系统&nbsp;&nbsp;V1.0</span>
+      <div class="footer-values">
+        <span>专业</span><span>高效</span><span>稳健</span><span>共赢</span>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
+import { Coin, DataAnalysis, Operation, Right, Tickets, TrendCharts } from '@element-plus/icons-vue'
 import { useRouter } from '@toystory/lotso'
 
 const { router } = useRouter()
 
-const workstreams = [
-  {
-    label: '日常业务',
-    title: '收款处理',
-    description: '从来款认领到业务核销，完整跟踪收款处理进度',
-    icon: '收',
-    items: [
-      { step: '01', title: '未确认收款', description: '核对银行来款并完成业务认领', path: '/rentBusiness/nonConfirmCollectionSum', icon: '款' },
-      { step: '02', title: '核销', description: '办理租赁业务核销及凭证处理', path: '/rentBusiness/verification', icon: '核' },
-      { step: '03', title: '核销回款', description: '查询与跟踪核销回款明细', path: '/rentBusiness/verificationIncome', icon: '回' }
-    ]
-  },
-  {
-    label: '月末业务',
-    title: '核算处理',
-    description: '完成收益、税费和科目余额调整，保障月末核算准确',
-    icon: '算',
-    items: [
-      { step: '01', title: '收益计提', description: '生成并管理租赁收益计提结果', path: '/measurementEngine/incomeProvision', icon: '益' },
-      { step: '02', title: '税费', description: '办理增值税对账、转出及退回', path: '/rentBusiness/valueAddedTax', icon: '税' },
-      { step: '03', title: '尾差调整', description: '处理合同科目余额尾差并生成凭证', path: '/rentBusiness/endAdjust', icon: '差' }
-    ]
-  }
+const functions = [
+  { title: '未确认收款', description: ['核对银行来款', '完成收款认领'], path: '/rentBusiness/nonConfirmCollectionSum', icon: Coin, theme: 'rose' },
+  { title: '尾差调整', description: ['处理合同尾差', '生成调整凭证'], path: '/rentBusiness/endAdjust', icon: Operation, theme: 'blue' },
+  { title: '减值计提', description: ['执行减值计提', '生成计提凭证'], path: '/measurementEngine/impairmentBusiness', icon: DataAnalysis, theme: 'amber' },
+  { title: '收益计提', description: ['计算租赁收益', '生成计提凭证'], path: '/incomeProvisionAccess/incomeProvision', icon: TrendCharts, theme: 'green' },
+  { title: '税务报表', description: ['生成税务报表', '完成申报准备'], path: '/rentBusiness/valueAddedTax', icon: Tickets, theme: 'violet' }
 ]
 
-const openFunction = (path) => router.push(path)
+const openFunction = path => {
+  router.push(path)
+}
 </script>
 
 <style scoped lang="scss">
-$red: #d70d18;
-$dark: #252b35;
-$muted: #77808e;
-$line: #e7eaf0;
+$ink: #111c2f;
+$muted: #748198;
+$line: #e4eaf2;
 
 .lease-workbench {
-  min-height: 100%;
-  padding: 20px 24px 26px;
-  color: $dark;
-  background: #f4f6f8;
-}
-
-.page-header {
-  position: relative;
   display: flex;
-  min-height: 112px;
-  padding: 24px 30px;
+  min-height: calc(100vh - 116px);
+  padding: 0 34px;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid $line;
-  border-radius: 8px;
-  box-shadow: 0 3px 12px rgba(31, 38, 50, 0.04);
-  align-items: center;
-  justify-content: space-between;
+  color: $ink;
+  background: radial-gradient(circle at 78% 10%, rgba(225, 237, 249, 0.58), transparent 25%), linear-gradient(180deg, #fbfdff 0%, #fff 42%);
+  flex-direction: column;
 }
 
-.page-header::after {
+.workbench-hero { position: relative; min-height: 178px; padding: 44px 12px 12px; overflow: hidden; }
+.hero-copy { position: relative; z-index: 2; }
+.hero-copy h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: 2px; line-height: 1.25; }
+.title-mark { display: block; width: 31px; height: 4px; margin: 12px 0; background: #e60012; border-radius: 2px; }
+.hero-copy p { margin: 0; color: $muted; font-size: 14px; letter-spacing: 0.5px; }
+
+.hero-slogan {
   position: absolute;
-  top: 0;
+  z-index: 2;
+  top: 54px;
+  right: 12px;
+  display: flex;
+  color: #9ba8bc;
+  font-size: 14px;
+  letter-spacing: 4px;
+  line-height: 2;
+  flex-direction: column;
+}
+
+.hero-slogan i { width: 28px; height: 1px; margin-top: 6px; background: #cbd3df; }
+.architecture { position: absolute; top: 16px; right: 116px; width: 410px; height: 160px; opacity: 0.36; transform: skewY(-3deg); }
+
+.building {
+  position: absolute;
   right: 0;
-  width: 210px;
-  height: 100%;
-  background: linear-gradient(135deg, transparent 38%, rgba(215, 13, 24, 0.045));
-  content: '';
+  bottom: -23px;
+  border: 1px solid rgba(160, 186, 211, 0.48);
+  background-color: rgba(237, 245, 252, 0.72);
+  background-image: repeating-linear-gradient(90deg, rgba(143, 173, 201, 0.33) 0 1px, transparent 1px 13px), repeating-linear-gradient(0deg, rgba(173, 197, 218, 0.23) 0 1px, transparent 1px 16px);
+  clip-path: polygon(14% 10%, 100% 0, 100% 100%, 0 100%, 0 26%);
+  box-shadow: inset 0 0 42px rgba(255, 255, 255, 0.92);
 }
 
-.header-copy { position: relative; z-index: 1; }
-.kicker { display: flex; color: $red; font-size: 12px; font-weight: 600; letter-spacing: 1px; align-items: center; }
-.kicker span { width: 18px; height: 3px; margin-right: 8px; background: $red; }
-.page-header h1 { margin: 8px 0 5px; font-size: 25px; font-weight: 600; letter-spacing: 1px; }
-.page-header p { margin: 0; color: $muted; font-size: 13px; }
+.building-back { right: 154px; width: 188px; height: 143px; opacity: 0.75; transform: skewX(-10deg); }
+.building-front { width: 260px; height: 118px; background-image: repeating-linear-gradient(90deg, rgba(105, 148, 186, 0.4) 0 3px, transparent 3px 22px), repeating-linear-gradient(0deg, rgba(171, 196, 219, 0.32) 0 1px, transparent 1px 18px); transform: skewX(-7deg); }
 
-.header-summary {
+.function-grid {
   position: relative;
-  z-index: 1;
-  display: flex;
-  min-width: 138px;
-  padding: 10px 18px;
-  background: #fff7f7;
-  border-left: 3px solid $red;
-  border-radius: 4px;
-  align-items: baseline;
-}
-
-.header-summary strong { margin-right: 8px; color: $red; font-size: 30px; line-height: 1; }
-.header-summary span { color: #656d79; font-size: 12px; }
-.process-list { display: grid; margin-top: 14px; gap: 14px; }
-
-.process-section {
+  z-index: 3;
   display: grid;
-  min-height: 236px;
-  padding: 22px;
-  background: #fff;
-  border: 1px solid $line;
-  border-radius: 8px;
-  grid-template-columns: 235px minmax(0, 1fr);
-  gap: 24px;
-  align-items: stretch;
+  margin: 8px 0 24px;
+  grid-template-columns: repeat(5, minmax(170px, 1fr));
+  gap: 16px;
 }
 
-.section-intro {
-  display: flex;
-  padding: 18px 20px;
-  background: #fafbfc;
-  border-radius: 7px;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.section-icon {
-  display: flex;
-  width: 42px;
-  height: 42px;
-  margin-bottom: 20px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
-  background: $red;
-  border-radius: 6px;
-  align-items: center;
-  justify-content: center;
-}
-
-.section-label { color: $red; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
-.section-intro h2 { margin: 6px 0 9px; font-size: 20px; font-weight: 600; }
-.section-intro p { margin: 0; color: $muted; font-size: 12px; line-height: 1.7; }
-.process-flow { display: flex; min-width: 0; align-items: stretch; }
-
-.process-card {
-  display: flex;
-  min-width: 0;
-  padding: 18px 19px;
-  color: inherit;
+.function-card {
+  --theme: #e64b57;
+  --theme-rgb: 230, 75, 87;
+  position: relative;
+  min-height: 326px;
+  padding: 28px 24px 26px;
+  overflow: hidden;
+  color: $ink;
   text-align: left;
-  background: #fff;
+  background: linear-gradient(155deg, #fff 12%, rgba(var(--theme-rgb), 0.035) 100%);
   border: 1px solid $line;
-  border-radius: 7px;
+  border-radius: 9px;
+  box-shadow: 0 7px 24px rgba(27, 46, 72, 0.045);
   cursor: pointer;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-  flex: 1;
-  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.process-card:hover { border-color: #e7959a; box-shadow: 0 7px 18px rgba(37, 43, 53, 0.08); transform: translateY(-2px); }
-.card-heading { display: flex; margin-bottom: 18px; align-items: center; justify-content: space-between; }
-.step-number { color: #a5abb5; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
-.enter-link { color: #9299a4; font-size: 11px; opacity: 0; transition: opacity 0.18s ease; }
-.enter-link b { color: $red; font-size: 15px; font-weight: 400; }
-.process-card:hover .enter-link { opacity: 1; }
+.function-card:hover,
+.function-card:focus-visible { border-color: rgba(var(--theme-rgb), 0.35); box-shadow: 0 14px 30px rgba(28, 47, 75, 0.11); outline: none; transform: translateY(-4px); }
+.theme-blue { --theme: #347ed5; --theme-rgb: 52, 126, 213; }
+.theme-amber { --theme: #bd7b18; --theme-rgb: 189, 123, 24; }
+.theme-green { --theme: #07966a; --theme-rgb: 7, 150, 106; }
+.theme-violet { --theme: #7841cf; --theme-rgb: 120, 65, 207; }
 
-.card-icon {
-  display: flex;
-  width: 38px;
-  height: 38px;
-  margin-bottom: 14px;
-  color: $red;
-  font-size: 16px;
-  font-weight: 600;
-  background: #fff1f2;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
+.function-icon { position: relative; z-index: 2; display: flex; width: 72px; height: 72px; color: var(--theme); background: rgba(var(--theme-rgb), 0.11); border-radius: 12px; align-items: center; justify-content: center; }
+.function-icon :deep(.el-icon) { font-size: 39px; }
+.function-card h2 { position: relative; z-index: 2; margin: 23px 0 18px; font-size: 21px; font-weight: 700; letter-spacing: 0.5px; }
+.function-card p { position: relative; z-index: 2; margin: 0; color: #718097; font-size: 14px; line-height: 1.75; }
+.function-card p span { display: block; }
+
+.enter-button { position: absolute; z-index: 3; bottom: 42px; left: 24px; display: flex; width: 43px; height: 43px; color: var(--theme); background: rgba(var(--theme-rgb), 0.11); border-radius: 50%; align-items: center; justify-content: center; transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease; }
+.enter-button :deep(.el-icon) { font-size: 22px; }
+.function-card:hover .enter-button { color: #fff; background: var(--theme); transform: translateX(4px); }
+
+.card-wave { position: absolute; right: -36px; bottom: -75px; width: 130%; height: 145px; background: rgba(var(--theme-rgb), 0.075); border-radius: 50% 50% 0 0 / 38% 38% 0 0; transform: rotate(-7deg); }
+.card-wave::after { position: absolute; top: -16px; left: -15%; width: 120%; height: 100%; background: rgba(255, 255, 255, 0.52); border-radius: 50% 50% 0 0 / 38% 38% 0 0; content: ''; }
+
+.workbench-footer { display: flex; min-height: 54px; margin: auto -34px 0; padding: 0 42px; color: #8b96a8; font-size: 11px; border-top: 1px solid #e8edf3; align-items: center; }
+.workbench-footer > i { width: 1px; height: 12px; margin: 0 12px; background: #d8dee7; }
+.footer-values { display: flex; margin-left: auto; gap: 18px; }
+
+@media (max-width: 1280px) {
+  .lease-workbench { padding-right: 24px; padding-left: 24px; }
+  .function-grid { gap: 11px; }
+  .function-card { min-height: 300px; padding-right: 18px; padding-left: 18px; }
+  .enter-button { left: 18px; }
+  .hero-slogan { display: none; }
+  .workbench-footer { margin-right: -24px; margin-left: -24px; }
 }
 
-.process-card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
-.process-card p { margin: 0; color: $muted; font-size: 12px; line-height: 1.55; }
-.flow-arrow { display: flex; width: 34px; color: #c7cbd2; font-size: 19px; align-items: center; justify-content: center; }
-
-.workbench-note {
-  display: flex;
-  margin-top: 14px;
-  padding: 2px 4px;
-  color: #9399a3;
-  font-size: 11px;
-  align-items: center;
-  justify-content: flex-end;
+@media (max-width: 1050px) {
+  .function-grid { grid-template-columns: repeat(3, 1fr); }
+  .function-card { min-height: 286px; }
 }
 
-.note-divider { width: 1px; height: 11px; margin: 0 12px; background: #d8dbe0; }
-
-@media (max-width: 1200px) {
-  .process-section { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; }
-  .process-card { padding: 16px; }
-  .flow-arrow { width: 24px; }
-}
-
-@media (max-width: 900px) {
-  .lease-workbench { padding: 14px; }
-  .process-section { grid-template-columns: 1fr; }
-  .section-intro { flex-direction: row; align-items: center; justify-content: flex-start; }
-  .section-icon { margin: 0 14px 0 0; }
-  .process-flow { display: grid; gap: 10px; }
-  .flow-arrow { display: none; }
+@media (max-width: 760px) {
+  .lease-workbench { min-height: 100%; padding: 0 16px; overflow: visible; }
+  .workbench-hero { min-height: 164px; padding-top: 34px; }
+  .hero-copy h1 { font-size: 28px; }
+  .hero-copy p { max-width: 88%; line-height: 1.7; }
+  .architecture { right: -150px; opacity: 0.22; }
+  .function-grid { grid-template-columns: 1fr; }
+  .function-card { min-height: 260px; }
+  .workbench-footer { margin-right: -16px; margin-left: -16px; padding: 0 20px; }
+  .footer-values { display: none; }
 }
 </style>

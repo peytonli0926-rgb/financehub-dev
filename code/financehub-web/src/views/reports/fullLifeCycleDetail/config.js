@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '收益全生命周期明细表',
   icon: '',
   name: 'fullLifeCycleDetail'

@@ -47,6 +47,8 @@ public class RepaymentPlanExcel implements Serializable {
     private BigDecimal differentAmount;
     @Excel(name = "租赁收益", cellType = Excel.ColumnType.NUMERIC)
     private BigDecimal rentalIncome;
+    @Excel(name = "分润费分摊额", cellType = Excel.ColumnType.NUMERIC)
+    private BigDecimal profitSharingAllocationAmount;
     @Excel(name = "XIRR(实际利率)", cellType = Excel.ColumnType.NUMERIC)
     private BigDecimal xirrRate;
     @Excel(name = "回笼情况")

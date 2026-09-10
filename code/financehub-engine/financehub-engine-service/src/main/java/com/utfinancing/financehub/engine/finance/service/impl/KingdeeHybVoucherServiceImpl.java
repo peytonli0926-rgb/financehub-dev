@@ -639,7 +639,7 @@ public class KingdeeHybVoucherServiceImpl extends ServiceImpl<KingdeeHybVoucherM
             commonMap.put("isAccrual", YesOrNoEnum.YES.getDesc());
             // 收益计提金额
             commonMap.put("incomeAccural", incomeAccural);
-            // 收益计提调整额 凭证中未使用,接口表中有该字段
+            // 金蝶汇总未提供分润费收入冲减额，默认不冲减
             commonMap.put("incomeAdjust", BigDecimal.ZERO);
             // 表外计提金额
             commonMap.put("incomeOther", BigDecimal.ZERO);

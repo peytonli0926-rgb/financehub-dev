@@ -56,27 +56,19 @@
             FROM eg_non_confirm_collection_sum t1
             where t1.del_flag = '0'
         ),
-        t3 as (
-            SELECT
-                ebank_number ,
-                unnest(STRING_TO_ARRAY(ebank_serial_number, ',')) as ebank_serial_number
-            FROM eg_non_confirm_collection_sum t1
-            WHERE del_flag = '0'
-                AND ebank_serial_number IS NOT NULL
-                AND ebank_serial_number != ''
-        ),
         t2 AS (
             SELECT
-                t3.ebank_number,
+                t1.ebank_number,
                 SUM(coalesce (ebcrr.claim_amount, 0)) AS claim_amount,
-                STRING_AGG(distinct ebcrr.org_id, ',') AS org_id,
-                STRING_AGG(distinct ebcrr.org_name, ',') AS org_name
-            FROM t3
+                GROUP_CONCAT(distinct ebcrr.org_id separator ',') AS org_id,
+                GROUP_CONCAT(distinct ebcrr.org_name separator ',') AS org_name
+            FROM eg_non_confirm_collection_sum t1
             LEFT JOIN eg_business_claim_repayment_record ebcrr ON
-                ebcrr.ebank_serial_number = t3.ebank_serial_number
+                FIND_IN_SET(ebcrr.ebank_serial_number, t1.ebank_serial_number) > 0
                 AND ebcrr.del_flag = '0'
                 AND ebcrr.process_status IN ('3', '4')
-            GROUP BY t3.ebank_number
+            WHERE t1.del_flag = '0'
+            GROUP BY t1.ebank_number
         )
         SELECT
             count(1)
@@ -85,13 +77,13 @@
         WHERE
         1=1
         <if test="params.ebankNumber != null and params.ebankNumber != ''">
-            and t1.ebank_number like concat('%', #{params.ebankNumber}::text, '%')
+            and t1.ebank_number like concat('%', #{params.ebankNumber}, '%')
         </if>
         <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-            and t1.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+            and t1.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
         </if>
         <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-            and t1.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+            and t1.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
         </if>
         <if test="params.notZero != null and params.notZero == '1'.toString()">
             and coalesce(t1.bank_amount, 0) != coalesce(t2.claim_amount,0)
@@ -101,6 +93,7 @@
         </if>
     </select>
     <select id="selectNonConfirmCollectionSumByPage" parameterType="com.utfinancing.financehub.engine.finance.model.dto.NonConfirmCollectionSumQueryDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.SelectNonConfirmCollectionSumByPageDTO">
+        <bind name="offset" value="(params.pageNum - 1) * params.pageSize"/>
         WITH t1 as (
             select
                 t1.id,
@@ -123,27 +116,19 @@
             FROM eg_non_confirm_collection_sum t1
             where t1.del_flag = '0'
         ),
-        t3 as (
-            SELECT
-                ebank_number ,
-                unnest(STRING_TO_ARRAY(ebank_serial_number, ',')) as ebank_serial_number
-            FROM eg_non_confirm_collection_sum t1
-            WHERE del_flag = '0'
-                AND ebank_serial_number IS NOT NULL
-                AND ebank_serial_number != ''
-        ),
         t2 AS (
             SELECT
-                t3.ebank_number,
+                t1.ebank_number,
                 SUM(coalesce (ebcrr.claim_amount, 0)) AS claim_amount,
-                STRING_AGG(distinct ebcrr.org_id, ',') AS org_id,
-                STRING_AGG(distinct ebcrr.org_name, ',') AS org_name
-            FROM t3
+                GROUP_CONCAT(distinct ebcrr.org_id separator ',') AS org_id,
+                GROUP_CONCAT(distinct ebcrr.org_name separator ',') AS org_name
+            FROM eg_non_confirm_collection_sum t1
             LEFT JOIN eg_business_claim_repayment_record ebcrr ON
-                ebcrr.ebank_serial_number = t3.ebank_serial_number
+                FIND_IN_SET(ebcrr.ebank_serial_number, t1.ebank_serial_number) > 0
                 AND ebcrr.del_flag = '0'
                 AND ebcrr.process_status IN ('3', '4')
-            GROUP BY t3.ebank_number
+            WHERE t1.del_flag = '0'
+            GROUP BY t1.ebank_number
         )
         SELECT
             t1.id,
@@ -171,16 +156,16 @@
         WHERE
             1=1
             <if test="params.ebankNumber != null and params.ebankNumber != ''">
-                and t1.ebank_number like concat('%', #{params.ebankNumber}::text, '%')
+                and t1.ebank_number like concat('%', #{params.ebankNumber}, '%')
             </if>
             <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-                and t1.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+                and t1.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
             </if>
             <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
-                and t1.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+                and t1.business_ebank_number like concat('%', #{params.businessEbankNumber}, '%')
             </if>
             <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-                and t1.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+                and t1.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
             </if>
             <if test="params.notZero != null and params.notZero == '1'.toString()">
                 and coalesce(t1.bank_amount, 0) != coalesce(t2.claim_amount,0)
@@ -189,7 +174,7 @@
                 and coalesce(t1.bank_amount, 0) = coalesce(t2.claim_amount,0)
             </if>
         order by t1.create_time DESC, t1.id DESC
-        limit #{params.pageSize} offset (#{params.pageNum}-1) * #{params.pageSize}
+        limit #{params.pageSize} offset #{offset}
     </select>
 
     <select id="selectClaimRecordForModifyEbank" parameterType="com.utfinancing.financehub.engine.finance.model.dto.SelectClaimRecordForModifyEbankDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.BusinessClaimRepaymentRecordDTO">
@@ -206,7 +191,7 @@
             select deduct_batch_no ebank_serial_number, csd.collect_amount bank_amount
             from eg_hy_full_online_bank_batch_no_mapping csd
             where csd.sum_id = #{params.sumId} and csd.del_flag ='0'
-        ) sd on crr.ebank_serial_number = ANY(STRING_TO_ARRAY(sd.ebank_serial_number, ','))
+        ) sd on FIND_IN_SET(crr.ebank_serial_number, sd.ebank_serial_number) > 0
         where crr.process_status in ('3', '4')
             and crr.del_flag = '0'
             and crr.operation_type in ('MANUAL_CLAIM', 'MANUAL_CANCEL_AMOUNT', 'BUSINESS_AUTO_CLAIM')
@@ -280,13 +265,13 @@
         where
             cr.del_flag = '0'
             <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
-                and ccs.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+                and ccs.business_ebank_number like concat('%', #{params.businessEbankNumber}, '%')
             </if>
             <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-                and cr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+                and cr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
             </if>
             <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
             </if>
             <if test="params.businessDateStart != null">
                 and cr.business_date <![CDATA[>=]]> #{params.businessDateStart}
@@ -295,7 +280,7 @@
                 and cr.business_date <![CDATA[<=]]> #{params.businessDateEnd}
             </if>
             <if test="params.clientName != null and params.clientName != ''">
-                and ccs.client_name like concat('%', #{params.clientName}::text, '%')
+                and ccs.client_name like concat('%', #{params.clientName}, '%')
             </if>
             <if test="params.lastChangeDateStart != null">
                 and crg.business_happen_date <![CDATA[>=]]> #{params.lastChangeDateStart}

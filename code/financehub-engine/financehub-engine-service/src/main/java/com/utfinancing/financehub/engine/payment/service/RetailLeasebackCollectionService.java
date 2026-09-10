@@ -119,7 +119,9 @@ public class RetailLeasebackCollectionService {
         switch (event) {
             case "CR000": allowed = set("cashDiscountAmount"); break;
             case "CR001": allowed = set("depositAmount"); break;
-            case "CR005": allowed = set("principalAmount", "interestAmount", "interestTaxAmount", "residualValueAmount", "residualValueTaxAmount"); break;
+            case "CR005": allowed = set("principalAmount", "interestAmount", "interestTaxAmount", "residualValueAmount", "residualValueTaxAmount",
+                    "overduePrincipalAmount", "overdueInterestAmount", "overdueInterestTaxAmount",
+                    "overdueResidualValueAmount", "overdueResidualValueTaxAmount"); break;
             case "CR006": allowed = set("unidentifiedAmount"); break;
             case "CR007":
             case "CR008": allowed = set("depositAmount", "principalAmount", "interestAmount", "interestTaxAmount", "residualValueAmount", "residualValueTaxAmount", "overduePrincipalAmount", "overdueInterestAmount", "overdueInterestTaxAmount", "overdueResidualValueAmount", "overdueResidualValueTaxAmount", "profitSharingRefundAmount"); break;

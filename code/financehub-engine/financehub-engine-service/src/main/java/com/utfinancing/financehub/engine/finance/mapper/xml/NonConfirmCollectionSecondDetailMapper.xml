@@ -71,10 +71,10 @@
                 and csd.operation_type = #{params.operationType}
             </if>
             <if test="params.businessEbankNo != null and params.businessEbankNo != ''">
-                and cs.business_ebank_number like concat('%', #{params.businessEbankNo}::text, '%')
+                and cs.business_ebank_number like concat('%', #{params.businessEbankNo}, '%')
             </if>
             <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-                and cs.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+                and cs.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
             </if>
             <if test="params.processStatus != null and params.processStatus != ''">
                 and csd.process_status = #{params.processStatus}
@@ -156,7 +156,7 @@
         from
             eg_non_confirm_collection_sum cs
         left join eg_business_claim_repayment_record ebcrr
-        on ebcrr.ebank_serial_number = ANY ( STRING_TO_ARRAY(cs.ebank_serial_number, ',')) and ebcrr.del_flag = '0' and ebcrr.batch_no = 1 and ebcrr.process_status in ('3','4')
+        on FIND_IN_SET(ebcrr.ebank_serial_number, cs.ebank_serial_number) > 0 and ebcrr.del_flag = '0' and ebcrr.batch_no = 1 and ebcrr.process_status in ('3','4')
         where cs.del_flag = '0'
             and cs.id = #{params.sumId}
             and ebcrr.batch_no = 1
@@ -179,13 +179,13 @@
     <select id="selectThirdDetailForHy" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageListDataDTO">
         select
             ccs.collection_accounts_bank ,
-            STRING_AGG(ebcrr.org_id, ',') org_id,
-            STRING_AGG(ebcrr.org_name, ',') org_name ,
-            STRING_AGG(ebcrr.scene_code, ',') scene_code,
-            STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+            GROUP_CONCAT(ebcrr.org_id separator ',') org_id,
+            GROUP_CONCAT(ebcrr.org_name separator ',') org_name ,
+            GROUP_CONCAT(ebcrr.scene_code separator ',') scene_code,
+            GROUP_CONCAT(ebcrr.scene_name separator ',') scene_name ,
             nm.online_bank_no business_ebank_number,
-            STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
-            STRING_AGG(ebcrr.system_code, ',') system_code ,
+            GROUP_CONCAT(ebcrr.ebank_serial_number separator ',') ebank_serial_number,
+            GROUP_CONCAT(ebcrr.system_code separator ',') system_code ,
             max(ebcrr.business_date) last_change_date,
             ccs.business_date,
             ccs.currency_type,
@@ -200,11 +200,11 @@
             ccs.bank_summary,
             ccs.comment,
             ccs.client_accounts_bank_no,
-            STRING_AGG(ebcrr.remark , ',') remark
+            GROUP_CONCAT(ebcrr.remark separator ',') remark
         from
             eg_non_confirm_collection_sum ccs
         inner join
-            eg_hy_full_online_bank_batch_no_mapping nm on nm.online_bank_no = ANY(STRING_TO_ARRAY(ccs.business_ebank_number, ',')) and nm.del_flag ='0'
+            eg_hy_full_online_bank_batch_no_mapping nm on FIND_IN_SET(nm.online_bank_no, ccs.business_ebank_number) > 0 and nm.del_flag ='0'
         left join
             eg_business_claim_repayment_record ebcrr on nm.deduct_batch_no = ebcrr.ebank_serial_number and ebcrr.del_flag ='0' and ebcrr.process_status in ('3','4')
         where  ccs.del_flag = '0'
@@ -212,13 +212,13 @@
                 and ccs.id = #{params.sumId}
             </if>
             <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
-                and nm.online_bank_no like concat('%', #{params.businessEbankNumber}::text, '%')
+                and nm.online_bank_no like concat('%', #{params.businessEbankNumber}, '%')
             </if>
             <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-                and ebcrr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+                and ebcrr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
             </if>
             <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
             </if>
             <if test="params.businessDateStart != null">
                 and ccs.business_date <![CDATA[>=]]> #{params.businessDateStart}
@@ -227,7 +227,7 @@
                 and ccs.business_date <![CDATA[<=]]> #{params.businessDateEnd}
             </if>
             <if test="params.clientName != null and params.clientName != ''">
-                and ccs.client_name like concat('%', #{params.clientName}::text, '%')
+                and ccs.client_name like concat('%', #{params.clientName}, '%')
             </if>
         group by
             ccs.collection_accounts_bank,
@@ -262,13 +262,13 @@
     <select id="selectThirdDetailForOther" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageListDataDTO">
         select
             ccs.collection_accounts_bank ,
-            STRING_AGG(ebcrr.org_id, ',') org_id,
-            STRING_AGG(ebcrr.org_name, ',') org_name ,
-            STRING_AGG(ebcrr.scene_code, ',') scene_code,
-            STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+            GROUP_CONCAT(ebcrr.org_id separator ',') org_id,
+            GROUP_CONCAT(ebcrr.org_name separator ',') org_name ,
+            GROUP_CONCAT(ebcrr.scene_code separator ',') scene_code,
+            GROUP_CONCAT(ebcrr.scene_name separator ',') scene_name ,
             ccs.business_ebank_number  ,
-            STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
-            STRING_AGG(ebcrr.system_code, ',') system_code ,
+            GROUP_CONCAT(ebcrr.ebank_serial_number separator ',') ebank_serial_number,
+            GROUP_CONCAT(ebcrr.system_code separator ',') system_code ,
             max(ebcrr.business_date) last_change_date,
             ccs.business_date,
             ccs.currency_type,
@@ -281,7 +281,7 @@
             ccs.bank_summary,
             ccs.comment,
             ccs.client_accounts_bank_no,
-            STRING_AGG(ebcrr.remark , ',') remark
+            GROUP_CONCAT(ebcrr.remark separator ',') remark
         from
             eg_non_confirm_collection_sum ccs
         left join
@@ -291,13 +291,13 @@
                 and ccs.id = #{params.sumId}
             </if>
             <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
-                and ccs.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+                and ccs.business_ebank_number like concat('%', #{params.businessEbankNumber}, '%')
             </if>
             <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-                and ebcrr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+                and ebcrr.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
             </if>
             <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+                and ccs.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
             </if>
             <if test="params.businessDateStart != null">
                 and ccs.business_date <![CDATA[>=]]> #{params.businessDateStart}
@@ -306,7 +306,7 @@
                 and ccs.business_date <![CDATA[<=]]> #{params.businessDateEnd}
             </if>
             <if test="params.clientName != null and params.clientName != ''">
-                and ccs.client_name like concat('%', #{params.clientName}::text, '%')
+                and ccs.client_name like concat('%', #{params.clientName}, '%')
             </if>
         group by
             ccs.collection_accounts_bank,
@@ -339,17 +339,18 @@
     </select>
 
     <select id="selectThirdDetailData" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageListDataDTO">
+        <bind name="offset" value="(params.pageNum - 1) * params.pageSize"/>
         with hy_record as (
             select
                 ccs.id,
                 ccs.collection_accounts_bank ,
-                STRING_AGG(ebcrr.org_id, ',') org_id,
-                STRING_AGG(ebcrr.org_name, ',') org_name ,
-                STRING_AGG(ebcrr.scene_code, ',') scene_code,
-                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                GROUP_CONCAT(ebcrr.org_id separator ',') org_id,
+                GROUP_CONCAT(ebcrr.org_name separator ',') org_name ,
+                GROUP_CONCAT(ebcrr.scene_code separator ',') scene_code,
+                GROUP_CONCAT(ebcrr.scene_name separator ',') scene_name ,
                 nm.online_bank_no business_ebank_number,
-                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
-                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                GROUP_CONCAT(ebcrr.ebank_serial_number separator ',') ebank_serial_number,
+                GROUP_CONCAT(ebcrr.system_code separator ',') system_code ,
                 max(ebcrr.business_date) last_change_date,
                 ccs.business_date,
                 ccs.currency_type,
@@ -362,7 +363,7 @@
                 ccs.bank_summary,
                 ccs.comment,
                 ccs.client_accounts_bank_no,
-                STRING_AGG(ebcrr.remark , ';') remark
+                GROUP_CONCAT(ebcrr.remark separator ';') remark
             from
                 eg_non_confirm_collection_sum ccs
             inner join
@@ -383,19 +384,19 @@
                 ccs.bank_summary,
                 ccs.comment,
                 ccs.client_accounts_bank_no,
-                coalesce(nm.collect_amount,0)
+                nm.collect_amount
         ),
         other_record as (
             select
                 ccs.id,
                 ccs.collection_accounts_bank ,
-                STRING_AGG(ebcrr.org_id, ',') org_id,
-                STRING_AGG(ebcrr.org_name, ',') org_name ,
-                STRING_AGG(ebcrr.scene_code, ',') scene_code,
-                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                GROUP_CONCAT(ebcrr.org_id separator ',') org_id,
+                GROUP_CONCAT(ebcrr.org_name separator ',') org_name ,
+                GROUP_CONCAT(ebcrr.scene_code separator ',') scene_code,
+                GROUP_CONCAT(ebcrr.scene_name separator ',') scene_name ,
                 ccs.business_ebank_number  ,
-                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
-                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                GROUP_CONCAT(ebcrr.ebank_serial_number separator ',') ebank_serial_number,
+                GROUP_CONCAT(ebcrr.system_code separator ',') system_code ,
                 max(ebcrr.business_date) last_change_date,
                 ccs.business_date,
                 ccs.currency_type,
@@ -408,7 +409,7 @@
                 ccs.bank_summary,
                 ccs.comment,
                 ccs.client_accounts_bank_no,
-                STRING_AGG(ebcrr.remark , ';') remark
+                GROUP_CONCAT(ebcrr.remark separator ';') remark
             from
                 eg_non_confirm_collection_sum ccs
             left join
@@ -511,13 +512,13 @@
             and re.id = #{params.sumId}
         </if>
         <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
-            and re.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+            and re.business_ebank_number like concat('%', #{params.businessEbankNumber}, '%')
         </if>
         <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-            and re.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+            and re.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
         </if>
         <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-            and re.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+            and re.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
         </if>
         <if test="params.businessDateStart != null">
             and re.business_date <![CDATA[>=]]> #{params.businessDateStart}
@@ -526,7 +527,7 @@
             and re.business_date <![CDATA[<=]]> #{params.businessDateEnd}
         </if>
         <if test="params.clientName != null and params.clientName != ''">
-            and re.client_name like concat('%', #{params.clientName}::text, '%')
+            and re.client_name like concat('%', #{params.clientName}, '%')
         </if>
         <if test="params.lastChangeDateStart != null">
             and re.last_change_date <![CDATA[>=]]> #{params.lastChangeDateStart}
@@ -541,7 +542,7 @@
             and re.remain_non_confirm_amount = 0
         </if>
         order by last_change_date desc, business_ebank_number asc
-        limit #{params.pageSize} offset (#{params.pageNum} - 1) * #{params.pageSize}
+        limit #{params.pageSize} offset #{offset}
     </select>
 
     <select id="selectThirdDetailDataCount" parameterType="com.utfinancing.financehub.engine.finance.model.dto.QueryThirdDetailPageDataDTO" resultType="java.lang.Integer">
@@ -549,13 +550,13 @@
             select
                 ccs.id,
                 ccs.collection_accounts_bank ,
-                STRING_AGG(ebcrr.org_id, ',') org_id,
-                STRING_AGG(ebcrr.org_name, ',') org_name ,
-                STRING_AGG(ebcrr.scene_code, ',') scene_code,
-                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                GROUP_CONCAT(ebcrr.org_id separator ',') org_id,
+                GROUP_CONCAT(ebcrr.org_name separator ',') org_name ,
+                GROUP_CONCAT(ebcrr.scene_code separator ',') scene_code,
+                GROUP_CONCAT(ebcrr.scene_name separator ',') scene_name ,
                 nm.online_bank_no business_ebank_number,
-                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
-                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                GROUP_CONCAT(ebcrr.ebank_serial_number separator ',') ebank_serial_number,
+                GROUP_CONCAT(ebcrr.system_code separator ',') system_code ,
                 max(ebcrr.business_date) last_change_date,
                 ccs.business_date,
                 ccs.currency_type,
@@ -568,7 +569,7 @@
                 ccs.bank_summary,
                 ccs.comment,
                 ccs.client_accounts_bank_no,
-                STRING_AGG(ebcrr.remark , ';') remark
+                GROUP_CONCAT(ebcrr.remark separator ';') remark
             from
                 eg_non_confirm_collection_sum ccs
             inner join
@@ -589,19 +590,19 @@
                 ccs.bank_summary,
                 ccs.comment,
                 ccs.client_accounts_bank_no,
-                coalesce(nm.collect_amount,0)
+                nm.collect_amount
         ),
         other_record as (
             select
                 ccs.id,
                 ccs.collection_accounts_bank ,
-                STRING_AGG(ebcrr.org_id, ',') org_id,
-                STRING_AGG(ebcrr.org_name, ',') org_name ,
-                STRING_AGG(ebcrr.scene_code, ',') scene_code,
-                STRING_AGG(ebcrr.scene_name, ',') scene_name ,
+                GROUP_CONCAT(ebcrr.org_id separator ',') org_id,
+                GROUP_CONCAT(ebcrr.org_name separator ',') org_name ,
+                GROUP_CONCAT(ebcrr.scene_code separator ',') scene_code,
+                GROUP_CONCAT(ebcrr.scene_name separator ',') scene_name ,
                 ccs.business_ebank_number  ,
-                STRING_AGG(ebcrr.ebank_serial_number, ',') ebank_serial_number,
-                STRING_AGG(ebcrr.system_code, ',') system_code ,
+                GROUP_CONCAT(ebcrr.ebank_serial_number separator ',') ebank_serial_number,
+                GROUP_CONCAT(ebcrr.system_code separator ',') system_code ,
                 max(ebcrr.business_date) last_change_date,
                 ccs.business_date,
                 ccs.currency_type,
@@ -614,7 +615,7 @@
                 ccs.bank_summary,
                 ccs.comment,
                 ccs.client_accounts_bank_no,
-                STRING_AGG(ebcrr.remark , ';') remark
+                GROUP_CONCAT(ebcrr.remark separator ';') remark
             from
                 eg_non_confirm_collection_sum ccs
             left join
@@ -696,13 +697,13 @@
             and re.id = #{params.sumId}
         </if>
         <if test="params.businessEbankNumber != null and params.businessEbankNumber != ''">
-            and re.business_ebank_number like concat('%', #{params.businessEbankNumber}::text, '%')
+            and re.business_ebank_number like concat('%', #{params.businessEbankNumber}, '%')
         </if>
         <if test="params.ebankSerialNumber != null and params.ebankSerialNumber != ''">
-            and re.ebank_serial_number like concat('%', #{params.ebankSerialNumber}::text, '%')
+            and re.ebank_serial_number like concat('%', #{params.ebankSerialNumber}, '%')
         </if>
         <if test="params.collectionAccountsBankNo != null and params.collectionAccountsBankNo != ''">
-            and re.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}::text, '%')
+            and re.collection_accounts_bank_no like concat('%', #{params.collectionAccountsBankNo}, '%')
         </if>
         <if test="params.businessDateStart != null">
             and re.business_date <![CDATA[>=]]> #{params.businessDateStart}
@@ -711,7 +712,7 @@
             and re.business_date <![CDATA[<=]]> #{params.businessDateEnd}
         </if>
         <if test="params.clientName != null and params.clientName != ''">
-            and re.client_name like concat('%', #{params.clientName}::text, '%')
+            and re.client_name like concat('%', #{params.clientName}, '%')
         </if>
         <if test="params.lastChangeDateStart != null">
             and re.last_change_date <![CDATA[>=]]> #{params.lastChangeDateStart}

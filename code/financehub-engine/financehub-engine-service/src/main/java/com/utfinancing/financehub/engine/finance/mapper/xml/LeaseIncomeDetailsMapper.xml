@@ -30,6 +30,7 @@
                     <result column="lease_date_end" property="leaseDateEnd" />
                     <result column="previous_paid_period" property="previousPaidPeriod" />
                     <result column="overdue_adjustment_amount" property="overdueAdjustmentAmount" />
+                    <result column="profit_sharing_allocation_amount" property="profitSharingAllocationAmount" />
                     <result column="total_recorded_amount" property="totalRecordedAmount" />
                     <result column="confirmed_actual_receipt" property="confirmedActualReceipt" />
                     <result column="accrued" property="accrued" />
@@ -64,6 +65,7 @@
             id, business_date, account_date, lease_income_id, system_code, contract_code, client_code, client_name, org_id, business_type, business_code,
             business_name, contract_status, currency_type, tax_rate, xirr_rate, unrealized_revenue, rental_income_before_total, rental_income,
             rental_income_after_total, overdue_days, overdue_earnings, lease_date_start, lease_date_end, previous_paid_period, overdue_adjustment_amount,
+            profit_sharing_allocation_amount,
             total_recorded_amount, confirmed_actual_receipt, accrued, income_provision_method, is_generate_voucher, exception_type, invoicing_flag,
             voucher_id, del_flag, create_by, create_time, update_by, update_time, ta_amount, last_repayment_date, next_repayment_date, history_overdue,
             paid_interest, confirmed_income, paid_handling_fees, other_income, financial_contract_status, cash_change,
@@ -99,6 +101,7 @@
         <result column="lease_date_end" property="leaseDateEnd" />
         <result column="previous_paid_period" property="previousPaidPeriod" />
         <result column="overdue_adjustment_amount" property="overdueAdjustmentAmount" />
+        <result column="profit_sharing_allocation_amount" property="profitSharingAllocationAmount" />
         <result column="total_recorded_amount" property="totalRecordedAmount" />
         <result column="confirmed_actual_receipt" property="confirmedActualReceipt" />
         <result column="accrued" property="accrued" />
@@ -143,7 +146,8 @@
             a.id, a.business_date, a.account_date, a.lease_income_id, a.system_code, a.contract_code, a.client_code, ecli.client_name, a.org_id,
             a.business_type, a.business_code, a.business_name, a.contract_status, a.currency_type, a.tax_rate, a.xirr_rate, a.unrealized_revenue,
             a.rental_income_before_total, a.rental_income, a.rental_income_after_total, a.overdue_days, a.overdue_earnings, a.lease_date_start,
-            a.lease_date_end, a.previous_paid_period, a.overdue_adjustment_amount, a.total_recorded_amount, a.confirmed_actual_receipt, a.accrued,
+            a.lease_date_end, a.previous_paid_period, a.overdue_adjustment_amount, a.profit_sharing_allocation_amount,
+            a.total_recorded_amount, a.confirmed_actual_receipt, a.accrued,
             a.income_provision_method, a.is_generate_voucher, a.exception_type, a.invoicing_flag, a.voucher_id, a.del_flag, a.create_by, a.create_time,
             a.update_by, a.update_time, a.ta_amount, a.observed, a.observed_expiration_date, a.history_overdue, a.paid_interest, a.confirmed_income,
             a.paid_handling_fees, a.other_income, a.financial_contract_status, a.rental_income_on_balance, a.rental_income_off_balance,
@@ -263,6 +267,55 @@
             </foreach>
         </if>
         order by contract_code
+    </select>
+
+    <select id="selectProfitSharingAllocation" resultType="java.math.BigDecimal">
+        with monthly_income as (
+          select cast(plan_date_period as char) period,
+                 sum(coalesce(rental_income, 0)) income_amount
+          from eg_repayment_plan
+          where contract_code = #{contractCode}
+            and org_id = #{orgId}
+            and del_flag = '0'
+          group by plan_date_period
+          having sum(coalesce(rental_income, 0)) &gt; 0
+        ), income_weight as (
+          select coalesce(sum(income_amount), 0) total_income,
+                 coalesce(sum(case when period = date_format(#{businessDate}, '%Y%m')
+                                   then income_amount else 0 end), 0) current_income,
+                 max(period) last_period
+          from monthly_income
+        ), profit_sharing as (
+          select greatest(0, coalesce(-sum(b.unearned_lease_interest_amount), 0)) total_amount
+          from eg_voucher v
+          join eg_contract_balance b on b.voucher_id = v.id and b.del_flag = '0'
+          where v.contract_code = #{contractCode}
+            and v.org_id = #{orgId}
+            and v.scene_code = 'CYC_PROFIT_SHARING_CONFIRM'
+            and v.del_flag = '0'
+        )
+        select case
+                 when ps.total_amount &lt;= 0 or iw.total_income &lt;= 0 or iw.current_income &lt;= 0 then 0
+                 when date_format(#{businessDate}, '%Y%m') = iw.last_period then
+                   ps.total_amount - (
+                     select coalesce(sum(round(ps.total_amount * mi.income_amount / iw.total_income, 2)), 0)
+                     from monthly_income mi
+                     where mi.period &lt; iw.last_period
+                   )
+                 else round(ps.total_amount * iw.current_income / iw.total_income, 2)
+               end
+        from profit_sharing ps
+        cross join income_weight iw
+    </select>
+
+    <select id="selectProfitSharingTotalAmount" resultType="java.math.BigDecimal">
+        select greatest(0, coalesce(-sum(b.unearned_lease_interest_amount), 0))
+        from eg_voucher v
+        join eg_contract_balance b on b.voucher_id = v.id and b.del_flag = '0'
+        where v.contract_code = #{contractCode}
+          and v.org_id = #{orgId}
+          and v.scene_code = 'CYC_PROFIT_SHARING_CONFIRM'
+          and v.del_flag = '0'
     </select>
     <select id="selectDetailsByCondition"
             resultType="com.utfinancing.financehub.engine.finance.model.vo.LeaseIncomeDetailsVO">

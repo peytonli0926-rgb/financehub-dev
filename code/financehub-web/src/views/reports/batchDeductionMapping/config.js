@@ -1,5 +1,5 @@
 export default {
-  hidden: false,
+  hidden: true,
   title: '批扣映射表',
   icon: '',
   name: 'batchDeductionMapping'

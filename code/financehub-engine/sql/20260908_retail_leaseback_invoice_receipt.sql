@@ -86,8 +86,8 @@ INSERT INTO eg_account
   client_flag,contract_flag,assist_flags,settlement_type,check_flag)
 VALUES
  (202609074600001,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','input_vat_receivable',
-  '123105','其他应收款-待收增值税进项税','资产','retail-invoice-config',NOW(),
-  'retail-invoice-config',NOW(),'0','CR','0','1','1','intra','0');
+  '123105','其他应收款_待收增值税进项税','资产','retail-invoice-config',NOW(),
+  'retail-invoice-config',NOW(),'0','DR','0','1','1','intra','0');
 
 DELETE c FROM eg_scene_voucher_condition c
 JOIN eg_scene_voucher_entry e ON e.id=c.scene_voucher_entry_id

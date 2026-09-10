@@ -57,6 +57,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -455,16 +456,54 @@ public class LeaseIncomeServiceImpl extends ServiceImpl<LeaseIncomeMapper, Lease
             result.stream().forEach(e -> {
                 e.setRecaptureStatus(RecaptureStatusEnum.getDescByCode(e.getRecaptureStatus()));
             });
+            populateProfitSharingAllocation(result, queryDTO.getOrgId());
             return result;
         }
 
         List<RepaymentPlanVO> repaymentPlanVOS = repaymentPlanService.selectByContractCode(contractCode);
-        if (repaymentPlanVOS != null && repaymentPlanVOS.isEmpty()) {
+        if (repaymentPlanVOS != null && !repaymentPlanVOS.isEmpty()) {
             repaymentPlanVOS.stream().forEach(e -> {
                 e.setRecaptureStatus(RecaptureStatusEnum.getDescByCode(e.getRecaptureStatus()));
             });
+            populateProfitSharingAllocation(repaymentPlanVOS, queryDTO.getOrgId());
         }
         return repaymentPlanVOS;
+    }
+
+    /**
+     * 按偿还计划中各期实际利率收益的占比分摊分润费，最后一个收益节点承接舍入尾差。
+     */
+    private void populateProfitSharingAllocation(List<RepaymentPlanVO> plans, String fallbackOrgId) {
+        plans.forEach(plan -> plan.setProfitSharingAllocationAmount(BigDecimal.ZERO));
+        Map<String, List<RepaymentPlanVO>> plansByOrg = plans.stream()
+                .filter(plan -> StringUtils.isNotBlank(plan.getOrgId()) || StringUtils.isNotBlank(fallbackOrgId))
+                .collect(Collectors.groupingBy(plan -> StringUtils.isNotBlank(plan.getOrgId())
+                        ? plan.getOrgId() : fallbackOrgId, LinkedHashMap::new, Collectors.toList()));
+
+        plansByOrg.forEach((orgId, orgPlans) -> {
+            BigDecimal totalAmount = Optional.ofNullable(detailsMapper.selectProfitSharingTotalAmount(
+                    orgPlans.get(0).getContractCode(), orgId)).orElse(BigDecimal.ZERO);
+            List<RepaymentPlanVO> incomePlans = orgPlans.stream()
+                    .filter(plan -> Optional.ofNullable(plan.getRentalIncome()).orElse(BigDecimal.ZERO)
+                            .compareTo(BigDecimal.ZERO) > 0)
+                    .collect(Collectors.toList());
+            BigDecimal totalIncome = incomePlans.stream()
+                    .map(RepaymentPlanVO::getRentalIncome)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalAmount.compareTo(BigDecimal.ZERO) <= 0 || totalIncome.compareTo(BigDecimal.ZERO) <= 0) {
+                return;
+            }
+
+            BigDecimal allocated = BigDecimal.ZERO;
+            for (int index = 0; index < incomePlans.size(); index++) {
+                RepaymentPlanVO plan = incomePlans.get(index);
+                BigDecimal currentAmount = index == incomePlans.size() - 1
+                        ? totalAmount.subtract(allocated)
+                        : totalAmount.multiply(plan.getRentalIncome()).divide(totalIncome, 2, RoundingMode.HALF_UP);
+                plan.setProfitSharingAllocationAmount(currentAmount);
+                allocated = allocated.add(currentAmount);
+            }
+        });
     }
 
     @Override
@@ -705,7 +744,7 @@ public class LeaseIncomeServiceImpl extends ServiceImpl<LeaseIncomeMapper, Lease
 
     @Override
     @Async
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
     public void generateAsync(LeaseIncomeQueryDTO queryDTO) {
         log.info("收益计提 start");
         long startTime = System.currentTimeMillis();
@@ -1919,6 +1958,13 @@ public class LeaseIncomeServiceImpl extends ServiceImpl<LeaseIncomeMapper, Lease
             leaseIncomeDetailsEntity.setTotalRecordedAmount(NumberUtil.add(leaseIncomeDetailsEntity.getRentalIncome(),
                     leaseIncomeDetailsEntity.getOverdueAdjustmentAmount()));
         }
+
+        BigDecimal profitSharingAllocation = Optional.ofNullable(detailsMapper.selectProfitSharingAllocation(
+                contractEntity.getContractCode(), entity.getOrgId(), planDateLastDay)).orElse(BigDecimal.ZERO);
+        leaseIncomeDetailsEntity.setProfitSharingAllocationAmount(profitSharingAllocation);
+        leaseIncomeDetailsEntity.setTotalRecordedAmount(
+                Optional.ofNullable(leaseIncomeDetailsEntity.getTotalRecordedAmount()).orElse(BigDecimal.ZERO)
+                        .subtract(profitSharingAllocation));
 
         leaseIncomeDetailsEntity.setInvoicingFlag(contractEntity.getInvoicingFlag());
         leaseIncomeDetailsEntity.setIntableTransferOuttableAmount(intableTransferOuttableAmount);
