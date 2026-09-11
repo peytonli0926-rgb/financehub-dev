@@ -92,6 +92,10 @@ public class RepaymentPlanEntity extends Model<RepaymentPlanEntity> {
     //租赁收入
     private BigDecimal rentalIncome;
 
+    // 分润费分摊额仅用于查询展示，不落偿还计划表
+    @TableField(exist = false)
+    private BigDecimal profitSharingAllocationAmount;
+
     //表内租赁收入
     private BigDecimal rentalIncomeOnBalance;
 

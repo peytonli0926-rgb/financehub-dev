@@ -189,7 +189,7 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
         if (CollectionUtils.isNotEmpty(collect)) {
             throw new ServiceException("存在已提交或已生成凭证的尾差调整数据，不可以再次生成数据");
         }
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+        CompletableFuture<Void> future = runAsyncWithApplicationClassLoader(() -> {
             asyncInitData(queryDTO);
         });
         return Boolean.TRUE;
@@ -228,15 +228,13 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
             }
             queryDTO.setAccountCodeList(accountCodeList);
             List<AccountEntity> accountEntityList = iAccountService.lambdaQuery().in(AccountEntity::getAccountCode, accountCodeList).list();
-            //生成合同余额表临时数据
-            iTailDifferenceAdjustmentDetailService.truncateContractBalanceTempData();
-            iTailDifferenceAdjustmentDetailService.generateContractBalanceTempData(queryDTO);
             accountEntityList.forEach(a -> {
                 queryDTO.setBusinessCode(a.getBusinessCode());
                 queryDTO.setAccountCode(a.getAccountCode());
                 queryDTO.setAccountName(a.getAccountName());
                 queryDTO.setFundTypeBalance(a.getFundType() + "_balance");
                 queryDTO.setFundTypeAmount(a.getFundType() + "_amount");
+                validateBalanceField(queryDTO.getFundTypeBalance(), a);
                 //先生成数据
                 iTailDifferenceAdjustmentDetailService.initInsertData(queryDTO);
                 //更新日期
@@ -287,8 +285,12 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
             log.info("尾差跑数据共用时：{}", DateUtil.between(startDateTime, endDateTime, DateUnit.SECOND));
         } catch (Exception e) {
             log.error("TailDifferenceAdjustmentService asyncInitData fail!", e);
+            if (taskId != null) {
+                iDataExecutionTaskService.errorTask(taskId, DataExecutionTaskStatusEnum.FAILED.getCode(), 0, 1, e.getMessage());
+            }
             throw new ServiceException(e.getMessage());
-        } finally {
+        }
+        if (taskId != null) {
             iDataExecutionTaskService.finishedTask(taskId, DataExecutionTaskStatusEnum.SUCCESS.getCode(), 0, 0);
         }
         return Boolean.TRUE;
@@ -327,7 +329,7 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
         if (CollectionUtils.isEmpty(idList)) {
             throw new ServiceException("请至少勾选一条数据提交");
         }
-        CompletableFuture.runAsync(() -> {
+        runAsyncWithApplicationClassLoader(() -> {
             iVoucherService.deleteByBatchIdList(idList, BatchTypeEnum.WCTZ.getCode());
             List<TailDifferenceAdjustmentEntity> adjustmentEntityList = this.listByIds(idList);
             List<ApproveDTO> approveDTOList = Lists.newArrayList();
@@ -406,13 +408,20 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
                 throw new ServiceException("处理状态为已录入的才可以生成凭证");
             }
         });
-        CompletableFuture.runAsync(() -> {
+        runAsyncWithApplicationClassLoader(() -> {
             //先删除未提交数据
             LambdaQueryWrapper<TailDifferenceAdjustmentDetailEntity> adjustmentEntityQueryWrapper = new LambdaQueryWrapper<>();
             adjustmentEntityQueryWrapper.in(TailDifferenceAdjustmentDetailEntity::getTailDifferenceAdjustmentId,idList);
             adjustmentEntityQueryWrapper.eq(TailDifferenceAdjustmentDetailEntity::getDelFlag,YesOrNoEnum.NO.getCode());
             List<TailDifferenceAdjustmentDetailEntity> list = iTailDifferenceAdjustmentDetailService.list(adjustmentEntityQueryWrapper);
-            asnyDeleteVoucher(list.stream().map(TailDifferenceAdjustmentDetailEntity::getVoucherIds).filter(StringUtils::isNotEmpty).map(Long::parseLong).collect(Collectors.toList()));
+            asnyDeleteVoucher(list.stream()
+                    .map(TailDifferenceAdjustmentDetailEntity::getVoucherIds)
+                    .filter(StringUtils::isNotEmpty)
+                    .flatMap(voucherIds -> Arrays.stream(voucherIds.split(",")))
+                    .map(String::trim)
+                    .filter(StringUtils::isNotEmpty)
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList()));
             generateVoucher(idList, isSubmit);
         }).whenComplete((v, e) -> {
             // 执行成功，更新任务状态
@@ -433,7 +442,7 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
             return Boolean.TRUE;
         }
         List<Map<String, Object>> voucherMapList = Lists.newArrayList();
-        Map<String, AccountEntity> accountEntityMap = getAccountCodeMap();
+        Map<String, AccountEntity> accountEntityMap = getBusinessAccountMap();
         //是否到期是否到期isOverdued：按合同+签约主体查合同表到期日，1.判断到期日>当前日期，则赋值否；2.判断到期日<=当前日期，则赋值是
         List<String> contractCodeList = detailEntityList.stream().map(TailDifferenceAdjustmentDetailEntity::getContractCode).distinct().collect(Collectors.toList());
         List<String> orgIdList = detailEntityList.stream().map(TailDifferenceAdjustmentDetailEntity::getOrgId).distinct().collect(Collectors.toList());
@@ -472,7 +481,11 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
             executeCommonDTO.setIsOverdued(isOverDued);
             executeCommonDTO.setIsSubmit(isSubmit);
             Map<String, Object> dataMap = BeanUtil.beanToMap(executeCommonDTO);
-            String fundType = accountEntityMap.get(v.getAccountCode()).getFundType() + "_balance";
+            AccountEntity account = accountEntityMap.get(v.getBusinessCode() + "-" + v.getAccountCode());
+            if (account == null) {
+                throw new ServiceException("未找到尾差科目配置：" + v.getBusinessCode() + "-" + v.getAccountCode());
+            }
+            String fundType = account.getFundType() + "_balance";
             dataMap.put(fundType, v.getAccountBalance());
             if (null != v.getRentalIncomeAfterTotal() && v.getRentalIncomeAfterTotal().compareTo(BigDecimal.ZERO) > 0) {
                 dataMap.put("remainingAmortizationAmount", v.getRentalIncomeAfterTotal());
@@ -558,15 +571,35 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
         return accountEntityMap;
     }
 
-    public Map<String, AccountEntity> getAccountCodeMap() {
-        List<AccountEntity> accountEntityList = iAccountService.list().stream().collect(Collectors.toList());
+    public Map<String, AccountEntity> getBusinessAccountMap() {
+        List<AccountEntity> accountEntityList = iAccountService.lambdaQuery()
+                .eq(AccountEntity::getDelFlag, YesOrNoEnum.NO.getCode()).list();
         Map<String, AccountEntity> accountEntityMap = Maps.newHashMap();
         if (CollectionUtils.isNotEmpty(accountEntityList)) {
-            accountEntityMap = accountEntityList.stream().collect(Collectors.groupingBy(v -> v.getAccountCode(), Collectors.collectingAndThen(
+            accountEntityMap = accountEntityList.stream().collect(Collectors.groupingBy(v -> v.getBusinessCode() + "-" + v.getAccountCode(), Collectors.collectingAndThen(
                     Collectors.maxBy(Comparator.comparingLong(AccountEntity::getId)),
                     Optional::get)));
         }
         return accountEntityMap;
+    }
+
+    private void validateBalanceField(String balanceField, AccountEntity account) {
+        StringBuilder propertyName = new StringBuilder();
+        boolean upperNext = false;
+        for (char value : balanceField.toCharArray()) {
+            if (value == '_') {
+                upperNext = true;
+            } else {
+                propertyName.append(upperNext ? Character.toUpperCase(value) : value);
+                upperNext = false;
+            }
+        }
+        boolean exists = Arrays.stream(ContractBalanceLatestEntity.class.getDeclaredFields())
+                .anyMatch(field -> field.getName().contentEquals(propertyName));
+        if (!exists) {
+            throw new ServiceException("尾差科目对应的余额字段不存在：" + account.getBusinessCode() + "-"
+                    + account.getAccountCode() + "-" + balanceField);
+        }
     }
 
 
@@ -630,9 +663,23 @@ public class TailDifferenceAdjustmentServiceImpl extends ServiceImpl<TailDiffere
         if (CollectionUtils.isEmpty(voucherIdList)) {
             return;
         }
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+        CompletableFuture<Void> future = runAsyncWithApplicationClassLoader(() -> {
             // 异步任务的代码
             iVoucherService.deleteByIdList(voucherIdList);
+        });
+    }
+
+    private CompletableFuture<Void> runAsyncWithApplicationClassLoader(Runnable runnable) {
+        ClassLoader applicationClassLoader = Thread.currentThread().getContextClassLoader();
+        return CompletableFuture.runAsync(() -> {
+            Thread currentThread = Thread.currentThread();
+            ClassLoader originalClassLoader = currentThread.getContextClassLoader();
+            try {
+                currentThread.setContextClassLoader(applicationClassLoader);
+                runnable.run();
+            } finally {
+                currentThread.setContextClassLoader(originalClassLoader);
+            }
         });
     }
 

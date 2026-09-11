@@ -13,6 +13,7 @@ import com.utfinancing.financehub.engine.finance.entity.*;
 import com.utfinancing.financehub.engine.finance.mapper.VehicleBusinessModelMapper;
 import com.utfinancing.financehub.engine.finance.mapper.ContractMapper;
 import com.utfinancing.financehub.engine.finance.mapper.ContractBalanceMapper;
+import com.utfinancing.financehub.engine.finance.mapper.LeaseIncomeDetailsMapper;
 import com.utfinancing.financehub.engine.finance.mapper.RepaymentPlanMapper;
 import com.utfinancing.financehub.engine.finance.mapper.VoucherMapper;
 import com.utfinancing.financehub.engine.finance.model.vo.VehicleLifecycleVO;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,6 +36,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
 @Service
@@ -48,6 +52,7 @@ public class VehicleBusinessModelServiceImpl
     private final ContractBalanceMapper contractBalanceMapper;
     private final VoucherMapper voucherMapper;
     private final RawTransactionDataMapper rawTransactionDataMapper;
+    private final LeaseIncomeDetailsMapper leaseIncomeDetailsMapper;
 
     @Override
     public void saveOrUpdateFromLeaseStart(Map<String, Object> data) {
@@ -192,6 +197,7 @@ public class VehicleBusinessModelServiceImpl
                 .eq(RepaymentPlanEntity::getContractCode, code)
                 .eq(RepaymentPlanEntity::getDelFlag, "0")
                 .orderByAsc(RepaymentPlanEntity::getPlanDate, RepaymentPlanEntity::getId));
+        populateProfitSharingAllocation(plans, model != null ? model.getOrgId() : contract.getOrgId());
         if (model != null && !plans.isEmpty() && plans.get(0).getXirrRate() != null) {
             model.setXirrRate(plans.get(0).getXirrRate());
         }
@@ -210,6 +216,40 @@ public class VehicleBusinessModelServiceImpl
         vo.setBalances(buildLifecycleBalances(vouchers, rawBalances));
         vo.setVouchers(vouchers);
         return vo;
+    }
+
+    /**
+     * 按各收益节点的实际利率收益占比分摊分润费，末个节点承接舍入尾差。
+     */
+    private void populateProfitSharingAllocation(List<RepaymentPlanEntity> plans, String fallbackOrgId) {
+        plans.forEach(plan -> plan.setProfitSharingAllocationAmount(BigDecimal.ZERO));
+        Map<String, List<RepaymentPlanEntity>> plansByOrg = plans.stream()
+                .filter(plan -> StrUtil.isNotBlank(plan.getOrgId()) || StrUtil.isNotBlank(fallbackOrgId))
+                .collect(Collectors.groupingBy(plan -> StrUtil.isNotBlank(plan.getOrgId())
+                        ? plan.getOrgId() : fallbackOrgId, LinkedHashMap::new, Collectors.toList()));
+
+        plansByOrg.forEach((orgId, orgPlans) -> {
+            BigDecimal totalAmount = Optional.ofNullable(leaseIncomeDetailsMapper.selectProfitSharingTotalAmount(
+                    orgPlans.get(0).getContractCode(), orgId)).orElse(BigDecimal.ZERO);
+            List<RepaymentPlanEntity> incomePlans = orgPlans.stream()
+                    .filter(plan -> Optional.ofNullable(plan.getRentalIncome()).orElse(BigDecimal.ZERO)
+                            .compareTo(BigDecimal.ZERO) > 0)
+                    .collect(Collectors.toList());
+            BigDecimal totalIncome = incomePlans.stream()
+                    .map(RepaymentPlanEntity::getRentalIncome)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalAmount.compareTo(BigDecimal.ZERO) <= 0 || totalIncome.compareTo(BigDecimal.ZERO) <= 0) return;
+
+            BigDecimal allocated = BigDecimal.ZERO;
+            for (int index = 0; index < incomePlans.size(); index++) {
+                RepaymentPlanEntity plan = incomePlans.get(index);
+                BigDecimal currentAmount = index == incomePlans.size() - 1
+                        ? totalAmount.subtract(allocated)
+                        : totalAmount.multiply(plan.getRentalIncome()).divide(totalIncome, 2, RoundingMode.HALF_UP);
+                plan.setProfitSharingAllocationAmount(currentAmount);
+                allocated = allocated.add(currentAmount);
+            }
+        });
     }
 
     /**

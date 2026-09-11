@@ -127,7 +127,7 @@
         </el-tab-pane>
 
         <el-tab-pane :label="`收益计提明细（${accrualPlans.length}）`" name="income">
-          <TableTitle title="XIRR 收益计提明细" desc="包含月末计提和还款日收益摊销节点" :total="`计划收益合计：¥ ${money(incomeTotal)}`" />
+          <TableTitle title="XIRR 收益计提明细" desc="包含月末计提和还款日收益摊销节点" :total="`计划收益合计：¥ ${money(incomeTotal)}；分润费合计：¥ ${money(profitSharingTotal)}`" />
           <el-table :data="accrualPlans" border stripe max-height="540" empty-text="暂无收益计提明细">
             <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
             <el-table-column prop="planDate" label="计提日期" width="115" fixed="left" />
@@ -136,6 +136,7 @@
             <MoneyColumn label="期初摊余成本" prop="openingAmortizedCost" width="145" />
             <MoneyColumn label="本期现金流" prop="cashFlow" width="130" />
             <el-table-column label="本期 XIRR 收益" width="145" align="right"><template #default="{ row }"><b class="income-value">{{ money(row.rentalIncome) }}</b></template></el-table-column>
+            <MoneyColumn label="分润费分摊额" prop="profitSharingAllocationAmount" width="145" />
             <MoneyColumn label="本期以前累计" prop="rentalIncomeBeforeTotal" width="140" />
             <MoneyColumn label="本期以后待摊" prop="rentalIncomeAfterTotal" width="140" />
             <MoneyColumn label="期末摊余成本" prop="endingAmortizedCost" width="145" />
@@ -251,6 +252,7 @@ const schedulePlans = computed(() => plans.value.filter(row => Number(row.period
 const accrualPlans = computed(() => plans.value.filter(row => row.periods == null || Number(row.rentalIncome || 0) !== 0))
 const plannedRentTotal = computed(() => schedulePlans.value.reduce((sum, row) => sum + Number(row.rentAmount || 0), 0))
 const incomeTotal = computed(() => accrualPlans.value.reduce((sum, row) => sum + Number(row.rentalIncome || 0), 0))
+const profitSharingTotal = computed(() => accrualPlans.value.reduce((sum, row) => sum + Number(row.profitSharingAllocationAmount || 0), 0))
 const sourceLabels = {
   RETAIL_FINANCE_LEASE: '零售融资租赁',
   CYCXT: '零售融资租赁',

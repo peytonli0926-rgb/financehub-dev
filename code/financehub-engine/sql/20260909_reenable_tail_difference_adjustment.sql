@@ -1,5 +1,26 @@
 -- Re-enable the original tail-difference adjustment feature for the MySQL runtime.
 
+CREATE TABLE IF NOT EXISTS eg_data_execution_task (
+    id BIGINT NOT NULL,
+    system_code VARCHAR(32),
+    status VARCHAR(32),
+    task_start_time DATETIME,
+    task_end_time DATETIME,
+    business_date_start DATETIME,
+    business_date_end DATETIME,
+    data_size INT,
+    data_success_size INT,
+    data_failed_size INT,
+    error_message TEXT,
+    create_by VARCHAR(32),
+    create_time DATETIME,
+    update_by VARCHAR(32),
+    update_time DATETIME,
+    del_flag CHAR(1) DEFAULT '0',
+    PRIMARY KEY (id),
+    INDEX idx_data_execution_task_running (system_code, status, del_flag)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='业务系统数据执行任务表';
+
 CREATE TABLE IF NOT EXISTS eg_tail_difference_adjustment (
     id BIGINT NOT NULL,
     org_id VARCHAR(100) NOT NULL,

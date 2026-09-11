@@ -69,122 +69,74 @@
         group by t.contract_code, t.client_code, t.org_id, t.business_code
     </sql>
     <insert id="initInsertData">
-        INSERT INTO
-        eg_tail_difference_adjustment_detail (
-        org_id,
-        business_code,
-        contract_code,
-        client_code,
-        account_code,
-        account_name,
-        account_balance,
-        receivable_rent,
-        receivable_residual_value,
-        payable_device,
-        payable_other,
-        contract_status,
-        overdue_days,
-        rental_income_after_total,
-        rental_income_after_lease_total,
-        business_date,
-        create_time,
-        lease_date_end,
-        tax_rate,
-        receive_sum
-        )
-        WITH filtered_temp AS (
-            SELECT
-                org_id,
-                contract_code,
-                #{param.accountCode} AS account_code,
-                #{param.accountName} AS account_name,
-                sum(COALESCE(${param.fundTypeBalance}, 0)) AS account_balance,
-                sum(COALESCE(receivable_rent_balance, 0)) AS receivable_rent,
-                sum(COALESCE(receivable_residual_value_balance, 0)) AS receivable_residual_value,
-                sum(COALESCE(payable_device_balance, 0)) AS payable_device,
-                sum(COALESCE(payable_other_balance, 0)) AS payable_other,
-                sum(COALESCE(receive_sum_balance, 0)) AS receive_sum_balance
-            FROM
-            eg_tdad_contract_balance_temp
-            GROUP BY
-            org_id,
-            contract_code
-            <if test="param.minAccountBalance!=null and param.maxAccountBalance!=null">
-                HAVING 1 = 1
-                <if test="param.minAccountBalance!=null ">
-                    AND SUM(${param.fundTypeBalance}) <![CDATA[>=]]> -1
-                </if>
-                <if test="param.maxAccountBalance!=null">
-                    AND SUM(${param.fundTypeBalance}) <![CDATA[<=]]> 1
-                </if>
-                and SUM(${param.fundTypeBalance}) <![CDATA[<>]]> 0
-            </if>
-        ),
-        main_temp AS (
-            SELECT
-            tm.org_id,
-            tm.business_code,
-            tm.contract_code,
-            tm.client_code,
-            #{param.accountCode} AS account_code,
-            #{param.accountName} AS account_name,
-            sum(COALESCE(tm.${param.fundTypeBalance}, 0)) AS account_balance,
-            sum(COALESCE(tm.receivable_rent_balance, 0)) AS receivable_rent,
-            sum(COALESCE(tm.receivable_residual_value_balance, 0)) AS receivable_residual_value,
-            sum(COALESCE(tm.payable_device_balance, 0)) AS payable_device,
-            sum(COALESCE(tm.payable_other_balance, 0)) AS payable_other
-            FROM
-            eg_tdad_contract_balance_temp tm
-            JOIN
-            filtered_temp tm1
-            ON
-            tm.org_id = tm1.org_id
-            AND tm.contract_code = tm1.contract_code
-            WHERE
-            tm.${param.fundTypeBalance} <![CDATA[<>]]> 0
-            and tm.business_code = #{param.businessCode}
-            group by tm.org_id,  tm.contract_code, tm.client_code, tm.business_code
+        INSERT INTO eg_tail_difference_adjustment_detail (
+            org_id, business_code, contract_code, client_code, account_code, account_name,
+            account_balance, receivable_rent, receivable_residual_value, payable_device,
+            payable_other, contract_status, overdue_days, rental_income_after_total,
+            rental_income_after_lease_total, business_date, create_time, lease_date_end,
+            tax_rate, receive_sum
         )
         SELECT
-        -- 明确列出需要的列，避免使用 a.*
-        a.org_id,
-        ec.business_code,
-        a.contract_code,
-        ec.client_code,
-        a.account_code,
-        a.account_name,
-        a.account_balance,
-        a.receivable_rent,
-        a.receivable_residual_value,
-        a.payable_device,
-        a.payable_other,
-        ec.contract_status,
-        l.overdue_days,
-        CASE WHEN '博远' = ec.special_flag THEN l.rental_income_after_total END AS rental_income_after_total,
-        CASE WHEN '博远' != ec.special_flag THEN l.rental_income_after_total END AS rental_income_after_lease_total,
-        cast(#{param.businessDate} as datetime),
-        CURRENT_TIMESTAMP,
-        ec.lease_date_end,
-        ec.tax_rate,
-        a.receive_sum_balance
-        FROM
-        filtered_temp a
-        LEFT JOIN
-        eg_contract_month ec
-        ON
-        ec.contract_code = a.contract_code
-        AND ec.org_id = a.org_id
-        AND ec.del_flag = '0'
-        LEFT JOIN
-        eg_lease_income_details l
-        ON
-        ec.business_code = l.business_code
-        AND a.contract_code = l.client_code
-        AND a.org_id = l.org_id
-        AND l.business_date = #{param.businessDate}
-        where
-            a.account_balance != 0
-            and ec.business_code = #{param.businessCode}
+            b.org_id,
+            b.business_code,
+            b.contract_code,
+            COALESCE(c.client_code, MAX(b.client_code)),
+            #{param.accountCode},
+            #{param.accountName},
+            SUM(COALESCE(b.${param.fundTypeBalance}, 0)),
+            SUM(COALESCE(b.lease_principal_receivable_balance, 0)
+                + COALESCE(b.lease_interest_receivable_balance, 0)
+                + COALESCE(b.lease_interest_vat_receivable_balance, 0)),
+            SUM(COALESCE(b.residual_value_receivable_balance, 0)
+                + COALESCE(b.residual_value_vat_receivable_balance, 0)),
+            SUM(COALESCE(b.supplier_payable_balance, 0)),
+            SUM(COALESCE(b.unidentified_receipts_balance, 0)),
+            c.contract_status,
+            l.overdue_days,
+            CASE WHEN '博远' = c.special_flag THEN l.rental_income_after_total END,
+            CASE WHEN COALESCE(c.special_flag, '') != '博远' THEN l.rental_income_after_total END,
+            CAST(#{param.businessDate} AS DATETIME),
+            CURRENT_TIMESTAMP,
+            c.lease_date_end,
+            c.tax_rate,
+            SUM(COALESCE(b.lease_principal_receivable_balance, 0)
+                + COALESCE(b.lease_interest_receivable_balance, 0)
+                + COALESCE(b.lease_interest_vat_receivable_balance, 0)
+                + COALESCE(b.residual_value_receivable_balance, 0)
+                + COALESCE(b.residual_value_vat_receivable_balance, 0))
+        FROM eg_contract_balance_latest b
+        LEFT JOIN (
+            SELECT ec.*
+            FROM eg_contract ec
+            JOIN (
+                SELECT contract_code, org_id, MAX(id) id
+                FROM eg_contract
+                WHERE del_flag = '0'
+                GROUP BY contract_code, org_id
+            ) latest ON latest.id = ec.id
+        ) c ON c.contract_code = b.contract_code AND c.org_id = b.org_id
+        LEFT JOIN (
+            SELECT contract_code, org_id, MAX(overdue_days) overdue_days,
+                   MAX(rental_income_after_total) rental_income_after_total
+            FROM eg_lease_income_details
+            WHERE del_flag = '0'
+              AND DATE_FORMAT(business_date, '%Y-%m') = DATE_FORMAT(#{param.businessDate}, '%Y-%m')
+            GROUP BY contract_code, org_id
+        ) l ON l.contract_code = b.contract_code AND l.org_id = b.org_id
+        WHERE b.del_flag = '0'
+          AND b.business_code = #{param.businessCode}
+        <if test="param.orgIdList != null and param.orgIdList.size() > 0">
+          AND b.org_id IN
+          <foreach collection="param.orgIdList" item="orgId" separator="," open="(" close=")">
+            #{orgId}
+          </foreach>
+        </if>
+        GROUP BY b.org_id, b.business_code, b.contract_code, c.client_code,
+                 c.contract_status, c.special_flag, c.lease_date_end, c.tax_rate,
+                 l.overdue_days, l.rental_income_after_total
+        HAVING SUM(COALESCE(b.${param.fundTypeBalance}, 0)) != 0
+           AND SUM(COALESCE(b.${param.fundTypeBalance}, 0)) &gt;= COALESCE(#{param.minAccountBalance}, -1)
+           AND SUM(COALESCE(b.${param.fundTypeBalance}, 0)) &lt;= COALESCE(#{param.maxAccountBalance}, 1)
     </insert>
     <insert id="generateContractBalanceTempData">
         insert
