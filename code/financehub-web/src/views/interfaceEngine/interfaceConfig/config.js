@@ -3,10 +3,10 @@ import { ElTag } from 'element-plus'
 import { dictMappingToArray, dictMappingLabel } from '@/utils'
 
 export default {
-  hidden: false,
+  hidden: true,
   title: '接口配置',
   icon: '',
-  name: 'interfaceConfig'
+  name: 'interfaceConfigLegacy'
 }
 
 export const optionsConfig = (router, dictData = {}) => ({

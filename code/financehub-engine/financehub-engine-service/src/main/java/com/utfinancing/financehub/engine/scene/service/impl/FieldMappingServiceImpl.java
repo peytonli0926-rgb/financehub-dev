@@ -82,6 +82,10 @@ public class FieldMappingServiceImpl extends ServiceImpl<FieldMappingMapper, Fie
     @Override
     public IPage<FieldMappingVO> selectPage(FieldMappingQueryDTO queryDTO) {
         LambdaQueryWrapper<FieldMappingEntity> queryWrapper = Wrappers.<FieldMappingEntity>lambdaQuery();
+        // The configuration page represents source values mapped to voucher scenes.
+        // Event-specific mappings are runtime implementation details and must not
+        // be presented as voucher-template targets.
+        queryWrapper.eq(FieldMappingEntity::getTargetFieldCode, "sceneCode");
         queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getSystemCode()), FieldMappingEntity::getSystemCode, queryDTO.getSystemCode());
         queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getFieldCode()), FieldMappingEntity::getFieldCode, queryDTO.getSystemCode());
         queryWrapper.like(StrUtil.isNotBlank(queryDTO.getFieldName()), FieldMappingEntity::getFieldName, queryDTO.getFieldName());

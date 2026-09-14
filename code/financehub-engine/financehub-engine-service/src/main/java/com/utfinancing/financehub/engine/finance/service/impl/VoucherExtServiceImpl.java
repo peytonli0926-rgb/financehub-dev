@@ -115,7 +115,9 @@ public class VoucherExtServiceImpl implements IVoucherExtService {
         }
         entrySaveDTO.setDebitCreditType(sceneVoucherConditionDTO.getDebitCreditType());
         //查询科目编码及科目名称
-        AccountDTO accountDTO = accountService.getAccountByFundTypeFromRedis(interfaceDataDTO.getBusinessCode(), sceneVoucherEntryDTO.getFundType());
+        String accountBusinessCode = StringUtils.isNotEmpty(interfaceDataDTO.getAccountingBusinessCode())
+                ? interfaceDataDTO.getAccountingBusinessCode() : interfaceDataDTO.getBusinessCode();
+        AccountDTO accountDTO = accountService.getAccountByFundTypeFromRedis(accountBusinessCode, sceneVoucherEntryDTO.getFundType());
 
         entrySaveDTO.setAccountCode(accountDTO.getAccountCode());
         entrySaveDTO.setAccountName(accountDTO.getAccountName());

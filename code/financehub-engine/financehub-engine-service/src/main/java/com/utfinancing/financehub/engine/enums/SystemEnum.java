@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
  * 系统类型
  */
 public enum SystemEnum {
+    RETAIL_FINANCE_LEASE("RETAIL_FINANCE_LEASE", "零售融资租赁业务系统"),
     CWZT("FINHUB", "财务中台"),
     TYPT("TYPT", "统一平台"),
     XWXT("XWXT", "小微系统"),

@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 public class InterfaceDataDTO implements Serializable{
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty(value = "凭证科目配置变体")
+    private String accountingBusinessCode;
+
     @ApiModelProperty(value = "ID")
     private Long id;
 

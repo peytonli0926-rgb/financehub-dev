@@ -3,6 +3,7 @@ package com.utfinancing.financehub.engine.rule.constant;
 import io.swagger.annotations.ApiModelProperty;
 
 public interface RuleConstant {
+    String FIELD_ACCOUNTING_BUSINESS_CODE = "accountingBusinessCode";
     String DEFAULT_BUSINESS_CODE = "default"; //默认业务编码
 
     String FIELD_ID = "id"; //默认业务编码

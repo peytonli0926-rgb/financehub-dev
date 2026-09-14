@@ -159,6 +159,7 @@ public class InterfaceDataServiceImpl extends ServiceImpl<InterfaceDataMapper, I
         dto.setActualClientName(MapUtil.getStr(dataMap, RuleConstant.ACTUAL_CLIENT_NAME));
         // modify by zhangli.chen for DTO中新增小微业务系统入参vendorPoolType（保证金池类型） on 20250616
         dto.setVendorPoolType(MapUtil.getStr(dataMap, RuleConstant.VENDOR_POOL_TYPE));
+        dto.setAccountingBusinessCode(MapUtil.getStr(dataMap, RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
         //凭证日期
         LocalDate voucherDate = periodCodeService.generateVoucherDate(dto);
         if (null != voucherDate) {

@@ -1439,6 +1439,10 @@ public class RuleServiceImpl implements IRuleService {
         String contractCodeM = MapUtil.getStr(dataMap, RuleConstant.FIELD_CONTRACT_CODE_M);
         String contractCode = MapUtil.getStr(dataMap, RuleConstant.FIELD_CONTRACT_CODE);
         String systemCode = MapUtil.getStr(dataMap, RuleConstant.FIELD_SYSTEM_CODE);
+        String mappedSceneCode = MapUtil.getStr(dataMap, RuleConstant.FIELD_SCENE_CODE);
+        if (SceneEnum.HTQZ.getCode().equals(mappedSceneCode)) {
+            prepareLeaseStartAccountingVariant(dataMap, systemCode, sceneCodeOriginal);
+        }
         //开票系统需要替换掉合同编码包含"-A","-1"的合同
         if (SystemEnum.KPXT.getCode().equals(systemCode)
                 && StringUtils.isNotEmpty(contractCode)
@@ -1457,6 +1461,137 @@ public class RuleServiceImpl implements IRuleService {
                 dataMap.put(RuleConstant.FIELD_BUSINESS_CODE, BusinessEnum.ZLYW.getCode());
             }
         }
+    }
+
+    /**
+     * Selects an account mapping set without changing the real business code.
+     * The extra fields also make mutually-exclusive start-event rules explicit,
+     * so one canonical amount type is configured only once in each template.
+     */
+    private void prepareLeaseStartAccountingVariant(Map<String, Object> dataMap,
+                                                     String systemCode,
+                                                     String sceneCodeOriginal) {
+        // The interface contract uses snake_case field codes. Accept camelCase
+        // aliases as well so upstream systems can migrate without producing a
+        // silently non-executable condition.
+        copyLeaseStartAlias(dataMap, "asset_category", "assetCategory");
+        copyLeaseStartAlias(dataMap, "start_event_variant", "startEventVariant");
+        copyLeaseStartAlias(dataMap, "principal_offset_type", "principalOffsetType");
+        copyLeaseStartAlias(dataMap, "accounting_variant", "accountingVariant");
+        copyLeaseStartAlias(dataMap, "lease_principal_net", "leasePrincipalNet");
+        copyLeaseStartAlias(dataMap, "lease_interest_net", "leaseInterestNet");
+        copyLeaseStartAlias(dataMap, "residual_value_net", "residualValueNet");
+        copyLeaseStartAlias(dataMap, "lease_interest_vat", "leaseInterestVat");
+        copyLeaseStartAlias(dataMap, "residual_value_vat", "residualValueVat");
+        copyLeaseStartAlias(dataMap, "received_fee_unamortized_net", "receivedFeeUnamortizedNet");
+        copyLeaseStartAlias(dataMap, "unreceived_fee_net", "unreceivedFeeNet");
+        copyLeaseStartAlias(dataMap, "unreceived_fee_unamortized_net", "unreceivedFeeUnamortizedNet");
+        copyLeaseStartAlias(dataMap, "unreceived_fee_vat", "unreceivedFeeVat");
+        copyLeaseStartAlias(dataMap, "unreceived_fee_unamortized_vat", "unreceivedFeeUnamortizedVat");
+        copyLeaseStartAlias(dataMap, "unreceived_fee_gross", "unreceivedFeeGross");
+        copyLeaseStartAlias(dataMap, "fee_unamortized_net_total", "feeUnamortizedNetTotal");
+        copyLeaseStartAlias(dataMap, "service_fee_net", "serviceFeeNet");
+        copyLeaseStartAlias(dataMap, "service_fee_vat", "serviceFeeVat");
+        copyLeaseStartAlias(dataMap, "operating_asset_cost_net", "operatingAssetCostNet");
+        copyLeaseStartAlias(dataMap, "customer_finance_net", "customerFinanceNet");
+
+        String sourceSystem = firstNonBlank(systemCode,
+                MapUtil.getStr(dataMap, "source_system"),
+                MapUtil.getStr(dataMap, "sourceSystem"));
+        String rawEvent = firstNonBlank(MapUtil.getStr(dataMap, "event_code"),
+                MapUtil.getStr(dataMap, "eventCode"), sceneCodeOriginal);
+        String leaseMethod = firstNonBlank(MapUtil.getStr(dataMap, "lease_method"),
+                MapUtil.getStr(dataMap, "leaseMethod"), MapUtil.getStr(dataMap, "returnType"));
+        String leaseCategory = firstNonBlank(MapUtil.getStr(dataMap, "lease_category"),
+                MapUtil.getStr(dataMap, "leaseCategory"), MapUtil.getStr(dataMap, "leaseType"));
+        String assetCategory = firstNonBlank(MapUtil.getStr(dataMap, "asset_category"),
+                MapUtil.getStr(dataMap, "assetCategory"), MapUtil.getStr(dataMap, "business_line"),
+                MapUtil.getStr(dataMap, "businessPlate"));
+
+        if (StringUtils.isNotEmpty(sourceSystem)) {
+            dataMap.put("source_system", sourceSystem);
+        }
+        if (StringUtils.isNotEmpty(rawEvent)) {
+            dataMap.put("event_code", rawEvent);
+        }
+
+        String eventVariant = normalizeLeaseStartEvent(rawEvent);
+        if (StringUtils.isNotEmpty(eventVariant)) {
+            dataMap.put("start_event_variant", eventVariant);
+        }
+
+        String accountingVariant = firstNonBlank(MapUtil.getStr(dataMap, "accounting_variant"),
+                MapUtil.getStr(dataMap, RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
+        if (StringUtils.isEmpty(accountingVariant) && "FINANCE_LEASE".equals(sourceSystem)) {
+            String assetSuffix = assetCategory != null
+                    && (assetCategory.contains("不动产") || "REAL_ESTATE".equalsIgnoreCase(assetCategory))
+                    ? "REAL_ESTATE" : (assetCategory != null
+                    && (assetCategory.contains("动产") || "MOVABLE".equalsIgnoreCase(assetCategory)) ? "MOVABLE" : null);
+            if (assetSuffix == null) {
+                throw new ServiceException("融资租赁合同起租事件缺少有效资产类别[asset_category]，可选值：REAL_ESTATE、MOVABLE");
+            }
+            if (assetSuffix != null) {
+                boolean leaseback = leaseMethod != null && (leaseMethod.contains("回租")
+                        || "SALE_AND_LEASEBACK".equalsIgnoreCase(leaseMethod)
+                        || "LEASEBACK".equalsIgnoreCase(leaseMethod));
+                accountingVariant = leaseback
+                        ? "ZLYW_LEASEBACK_" + assetSuffix : "ZLYW_DIRECT_" + assetSuffix;
+            }
+            if (StringUtils.isEmpty(MapUtil.getStr(dataMap, "principal_offset_type"))) {
+                dataMap.put("principal_offset_type", "LEASE_ASSET");
+            }
+        } else if (StringUtils.isEmpty(accountingVariant) && "HOUSEHOLD_PV".equals(sourceSystem)) {
+            accountingVariant = leaseCategory != null && (leaseCategory.contains("经营")
+                    || "OPERATING_LEASE".equalsIgnoreCase(leaseCategory))
+                    || "JY003".equals(eventVariant)
+                    ? "JYZL_HOUSEHOLD_PV" : "ZLYW_HOUSEHOLD_PV";
+            if (StringUtils.isEmpty(MapUtil.getStr(dataMap, "principal_offset_type"))) {
+                if ("HY072".equals(eventVariant)) {
+                    dataMap.put("principal_offset_type", "PROJECT_COMPANY_PREPAID");
+                } else if ("HY063".equals(eventVariant)) {
+                    dataMap.put("principal_offset_type", "DEALER_PREPAID");
+                } else {
+                    dataMap.put("principal_offset_type", "LEASE_ASSET");
+                }
+            }
+        } else if (StringUtils.isEmpty(accountingVariant) && "OPERATING_LEASE".equals(sourceSystem)) {
+            accountingVariant = "JYZL_HOUSEHOLD_PV";
+        }
+
+        if (StringUtils.isNotEmpty(accountingVariant)) {
+            dataMap.put("accounting_variant", accountingVariant);
+            dataMap.put(RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE, accountingVariant);
+        }
+    }
+
+    private void copyLeaseStartAlias(Map<String, Object> dataMap, String target, String alias) {
+        if (ObjectUtil.isNull(dataMap.get(target)) && ObjectUtil.isNotNull(dataMap.get(alias))) {
+            dataMap.put(target, dataMap.get(alias));
+        }
+    }
+
+    private String normalizeLeaseStartEvent(String rawEvent) {
+        if (StringUtils.isEmpty(rawEvent)) {
+            return null;
+        }
+        if (rawEvent.contains("HY008") || rawEvent.contains("H008")) return "HY008";
+        if (rawEvent.contains("HY072") || rawEvent.contains("H072")) return "HY072";
+        if (rawEvent.contains("HY063") || rawEvent.contains("H063")) return "HY063";
+        if (rawEvent.contains("JY003") || rawEvent.contains("J003")) return "JY003";
+        if (rawEvent.contains("ZZ005") || rawEvent.contains("Z005")) return "ZZ005";
+        if (rawEvent.contains("ZZ008") || rawEvent.contains("Z008") || rawEvent.contains("Z009")) return "ZZ008";
+        if (rawEvent.contains("HZ002") || rawEvent.contains("H002")) return "HZ002";
+        if (rawEvent.contains("HZ006") || rawEvent.contains("H005") || rawEvent.contains("H006")) return "HZ006";
+        return rawEvent;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (StringUtils.isNotEmpty(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     public void fillValues(Map<String, Object> dataMap) {
