@@ -95,20 +95,20 @@ DELETE FROM eg_account WHERE id BETWEEN 202609096000001 AND 202609096000030;
 INSERT INTO eg_account
  (id,business_code,business_name,fund_type,account_code,account_name,account_category,create_by,create_time,update_by,update_time,del_flag,debit_credit_type,client_flag,contract_flag,assist_flags,settlement_type,check_flag)
 VALUES
- (202609096000001,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','advance_lease_receipts','220301','预收账款-预收租金','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
+ (202609096000001,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','advance_lease_receipts','220302','预收账款_预收租金（动产项目）','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000002,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','customer_deposit_payable','224103','其他应付款-客户押金','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000003,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unidentified_receipts','220309','预收账款-其他预收款','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000006,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','lease_interest_income','604101','租赁收入-利息收入','收入','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000007,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','output_vat_payable','2221010208','应交税费-销项税额-其他服务','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
- (202609096000008,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_principal','153105','应收融资租赁款-逾期本金','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
- (202609096000009,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_interest','153109','应收融资租赁款-逾期利息','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
+ (202609096000008,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_principal','15310601','应收融资租赁款_应收承租人逾期本金（动产项目）_回租','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
+ (202609096000009,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_interest','15311001','应收融资租赁款_应收承租人逾期利息（动产项目）_回租','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
  (202609096000010,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_lease_interest_vat','153114','应收融资租赁款-逾期利息增值税','资产','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','DR','1','0','0,1','intra','0'),
- (202609096000011,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','penalty_interest_income','604103','租赁收入-延期收款收入','收入','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
+ (202609096000011,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','penalty_interest_income','60410401','租赁收入_延期收款收入（动产项目）_回租','收入','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000012,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_lease_interest','15320201','未实现融资收益_利息（动产项目）_回租','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000013,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_lease_interest_vat','15320501','未实现融资收益-利息增值税','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000014,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_residual_value','15320401','未实现融资收益-留购价','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
  (202609096000015,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','unearned_residual_value_vat','15320601','未实现融资收益-留购价增值税','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0'),
- (202609096000016,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','supplier_payable','220201','应付账款-应付融资租赁设备款','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0');
+ (202609096000016,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','supplier_payable','220202','应付账款_应付融资租赁设备款（动产项目）','负债','retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','CR','1','0','0,1','intra','0');
 
 -- 凭证模板：退款1套、贴息确认1套、逾期1套、交易结构变更调增/调减2套。
 INSERT INTO eg_scene_voucher (id,scene_id,source,voucher_type,company,business_date,currency,voucher_summary,create_by,create_time,update_by,update_time,del_flag,script_condition,scene_voucher_name,sub_scene_type) VALUES
@@ -153,12 +153,12 @@ SELECT 202609094001000 + ROW_NUMBER() OVER (ORDER BY t.template_id,p.seq),t.temp
        "contractCode + '-交易结构变更'",'retail-additional-config',NOW(),'retail-additional-config',NOW(),'0','0','0,1'
 FROM (SELECT 202609093000004 template_id UNION ALL SELECT 202609093000005) t
 JOIN (
- SELECT 1 seq,'lease_principal_receivable' fund_type UNION ALL SELECT 2,'lease_asset_movable_leaseback' UNION ALL
+ SELECT 1 seq,'lease_principal_receivable' fund_type UNION ALL SELECT 2,'lease_asset_cost' UNION ALL
  SELECT 3,'lease_interest_receivable' UNION ALL SELECT 4,'unearned_lease_interest' UNION ALL
  SELECT 5,'lease_interest_vat_receivable' UNION ALL SELECT 6,'unearned_lease_interest_vat' UNION ALL
  SELECT 7,'residual_value_receivable' UNION ALL SELECT 8,'unearned_residual_value' UNION ALL
  SELECT 9,'residual_value_vat_receivable' UNION ALL SELECT 10,'unearned_residual_value_vat' UNION ALL
- SELECT 11,'lease_asset_movable_leaseback' UNION ALL SELECT 12,'supplier_payable'
+ SELECT 11,'lease_asset_cost' UNION ALL SELECT 12,'supplier_payable'
 ) p;
 
 INSERT INTO eg_scene_voucher_condition (id,scene_voucher_entry_id,serial,script_condition,dondition_description,script_amount,amount_description,debit_credit_type,create_by,create_time,update_by,update_time,del_flag) VALUES

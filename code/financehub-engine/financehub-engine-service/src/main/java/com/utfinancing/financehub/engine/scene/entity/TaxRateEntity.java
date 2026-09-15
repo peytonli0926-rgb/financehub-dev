@@ -41,6 +41,9 @@ public class TaxRateEntity extends Model<TaxRateEntity> {
     //金额类型
     private String fundType;
 
+    //可选资产类别维度；金额类型不编码动产/不动产
+    private String assetCategory;
+
     //是否有效(0:无效,1:有效)
     private String enableFlag;
 

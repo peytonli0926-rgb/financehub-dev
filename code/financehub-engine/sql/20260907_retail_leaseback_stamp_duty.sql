@@ -62,8 +62,8 @@ INSERT INTO eg_account
  (id,business_code,business_name,fund_type,account_code,account_name,account_category,create_by,create_time,update_by,update_time,
   del_flag,debit_credit_type,client_flag,contract_flag,assist_flags,settlement_type,check_flag)
 VALUES
- (202609071600008,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','stamp_duty_expense','640305','税金及附加-印花税','损益','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','DR','0','1','1','intra','0'),
- (202609071600009,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','stamp_duty_payable','222108','应交税费-应交印花税','负债','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','CR','0','1','1','intra','0');
+ (202609071600008,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','stamp_duty_expense','640503','税金及附加_印花税','损益','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','DR','0','1','1','intra','0'),
+ (202609071600009,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','stamp_duty_payable','222113','应交税费_应交税金-印花税','负债','retail-stamp-duty-config',NOW(),'retail-stamp-duty-config',NOW(),'0','CR','0','1','1','intra','0');
 
 INSERT INTO eg_scene_voucher
  (id,scene_id,source,voucher_type,company,business_date,currency,voucher_summary,create_by,create_time,update_by,update_time,

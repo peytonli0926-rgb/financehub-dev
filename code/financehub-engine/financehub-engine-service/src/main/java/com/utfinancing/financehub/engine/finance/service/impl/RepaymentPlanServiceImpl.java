@@ -1297,10 +1297,8 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         }
 
         LeaseStartTaxContext taxContext = resolveLeaseStartTaxContext(payload);
-        String principalFundType = isRealEstate(payload)
-                ? "lease_principal_real_estate" : "lease_principal_receivable";
         BigDecimal principalTaxFactor = BigDecimal.ONE.add(
-                resolveLeaseStartTaxRate(taxContext, principalFundType));
+                resolveLeaseStartTaxRate(taxContext, "lease_principal_receivable"));
         BigDecimal interestTaxFactor = BigDecimal.ONE.add(
                 resolveLeaseStartTaxRate(taxContext, "lease_interest_receivable"));
         BigDecimal residualTaxFactor = BigDecimal.ONE.add(
@@ -1411,6 +1409,16 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
                 payload.getString("lease_category"), payload.getString("lease_type")));
         String leaseMethod = normalizeLeaseMethod(firstNotBlank(
                 payload.getString("lease_method"), payload.getString("lease_sub_type")));
+        String assetCategory = firstNotBlank(payload.getString("asset_category"),
+                payload.getString("assetCategory"));
+        if (assetCategory != null) {
+            assetCategory = assetCategory.contains("不动产") || assetCategory.contains("REAL_ESTATE")
+                    ? "REAL_ESTATE" : "MOVABLE";
+        } else if ("HOUSEHOLD_PV".equalsIgnoreCase(sourceSystem)
+                || "RETAIL_FINANCE_LEASE".equalsIgnoreCase(sourceSystem)
+                || "OPERATING_LEASE".equalsIgnoreCase(sourceSystem)) {
+            assetCategory = "MOVABLE";
+        }
 
         String businessCode;
         if ("RETAIL_FINANCE_LEASE".equalsIgnoreCase(sourceSystem)) {
@@ -1421,20 +1429,22 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         } else {
             businessCode = "ZLYW";
         }
-        return new LeaseStartTaxContext(businessCode, leaseType, leaseMethod);
+        return new LeaseStartTaxContext(businessCode, leaseType, leaseMethod, assetCategory);
     }
 
     private BigDecimal resolveLeaseStartTaxRate(LeaseStartTaxContext context, String fundType) {
         BigDecimal taxRate = taxRateService.getValidTaxRateByCode(context.businessCode, fundType,
-                context.leaseType, context.leaseMethod);
-        if (taxRate == null && !"tax_general".equals(fundType)) {
+                context.leaseType, context.leaseMethod, context.assetCategory);
+        if (taxRate == null && !"tax_general".equals(fundType)
+                && !"lease_principal_receivable".equals(fundType)) {
             taxRate = taxRateService.getValidTaxRateByCode(context.businessCode, "tax_general",
-                    context.leaseType, context.leaseMethod);
+                    context.leaseType, context.leaseMethod, context.assetCategory);
         }
         if (taxRate == null) {
             throw new ServiceException("起租事件未配置有效税率，业务类型=" + context.businessCode
                     + "，金额类型=" + fundType + "，租赁类型=" + context.leaseType
-                    + "，租赁方式=" + context.leaseMethod);
+                    + "，租赁方式=" + context.leaseMethod
+                    + "，资产类别=" + context.assetCategory);
         }
         return taxRate.max(BigDecimal.ZERO);
     }
@@ -1454,22 +1464,18 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         return "DIRECT_LEASE";
     }
 
-    private boolean isRealEstate(JSONObject payload) {
-        String assetCategory = firstNotBlank(payload.getString("asset_category"),
-                payload.getString("assetCategory"));
-        return assetCategory != null && (assetCategory.contains("REAL_ESTATE")
-                || assetCategory.contains("不动产"));
-    }
-
     private static class LeaseStartTaxContext {
         private final String businessCode;
         private final String leaseType;
         private final String leaseMethod;
+        private final String assetCategory;
 
-        private LeaseStartTaxContext(String businessCode, String leaseType, String leaseMethod) {
+        private LeaseStartTaxContext(String businessCode, String leaseType,
+                                     String leaseMethod, String assetCategory) {
             this.businessCode = businessCode;
             this.leaseType = leaseType;
             this.leaseMethod = leaseMethod;
+            this.assetCategory = assetCategory;
         }
     }
 

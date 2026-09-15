@@ -28,6 +28,9 @@ public class TaxRateVO implements Serializable{
     @ApiModelProperty(value = "金额类型")
     private String fundType;
 
+    @ApiModelProperty(value = "资产类别")
+    private String assetCategory;
+
     @ApiModelProperty(value = "是否有效(0:无效,1:有效)")
     private String enableFlag;
 

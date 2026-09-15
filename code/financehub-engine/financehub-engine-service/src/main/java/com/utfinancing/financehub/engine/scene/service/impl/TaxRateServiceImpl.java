@@ -61,6 +61,11 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
         queryWrapper.eq(TaxRateEntity::getBusinessCode, dto.getBusinessCode());
         queryWrapper.eq(TaxRateEntity::getFundType, dto.getFundType());
         queryWrapper.eq(TaxRateEntity::getLeaseType, dto.getLeaseType());
+        if (StrUtil.isBlank(dto.getAssetCategory())) {
+            queryWrapper.isNull(TaxRateEntity::getAssetCategory);
+        } else {
+            queryWrapper.eq(TaxRateEntity::getAssetCategory, dto.getAssetCategory());
+        }
         if (StrUtil.isBlank(dto.getLeaseSubType())){
             queryWrapper.isNull(TaxRateEntity::getLeaseSubType);
         } else {
@@ -103,6 +108,7 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
         LambdaQueryWrapper<TaxRateEntity> queryWrapper = Wrappers.<TaxRateEntity>lambdaQuery();
         queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getBusinessCode()), TaxRateEntity::getBusinessCode, queryDTO.getBusinessCode());
         queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getFundType()), TaxRateEntity::getFundType, queryDTO.getFundType());
+        queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getAssetCategory()), TaxRateEntity::getAssetCategory, queryDTO.getAssetCategory());
         queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getLeaseType()), TaxRateEntity::getLeaseType, queryDTO.getLeaseType());
         queryWrapper.eq(StrUtil.isNotBlank(queryDTO.getLeaseSubType()), TaxRateEntity::getLeaseSubType, queryDTO.getLeaseSubType());
         queryWrapper.orderByDesc(TaxRateEntity::getCreateTime);
@@ -139,7 +145,14 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
     @Override
     public BigDecimal getValidTaxRateByCode(String businessCode, String fundType,
                                             String leaseType, String leaseMethod) {
-        TaxRateEntity entity = this.getOne(Wrappers.<TaxRateEntity>lambdaQuery()
+        return getValidTaxRateByCode(businessCode, fundType, leaseType, leaseMethod, null);
+    }
+
+    @Override
+    public BigDecimal getValidTaxRateByCode(String businessCode, String fundType,
+                                            String leaseType, String leaseMethod,
+                                            String assetCategory) {
+        LambdaQueryWrapper<TaxRateEntity> query = Wrappers.<TaxRateEntity>lambdaQuery()
                 .eq(TaxRateEntity::getBusinessCode, businessCode)
                 .eq(TaxRateEntity::getFundType, fundType)
                 .eq(TaxRateEntity::getLeaseType, leaseType)
@@ -147,7 +160,16 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
                 .eq(TaxRateEntity::getEnableFlag, EnableFlagEnum.ENABLE.getCode())
                 .eq(TaxRateEntity::getDelFlag, "0")
                 .le(TaxRateEntity::getEnableDate, LocalDate.now())
-                .orderByDesc(TaxRateEntity::getEnableDate), false);
+                .orderByDesc(TaxRateEntity::getEnableDate);
+        if (StrUtil.isBlank(assetCategory)) {
+            query.isNull(TaxRateEntity::getAssetCategory);
+        } else {
+            query.eq(TaxRateEntity::getAssetCategory, assetCategory);
+        }
+        TaxRateEntity entity = this.getOne(query, false);
+        if (entity == null && StrUtil.isNotBlank(assetCategory)) {
+            return getValidTaxRateByCode(businessCode, fundType, leaseType, leaseMethod);
+        }
         if (entity != null) {
             return NumberUtil.div(entity.getTaxRate(), 100);
         }
@@ -174,7 +196,9 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
         List<TaxRateEntity> entityList = this.list(Wrappers.<TaxRateEntity>lambdaQuery()
                 .eq(TaxRateEntity::getEnableFlag, EnableFlagEnum.ENABLE.getCode())
                 .le(TaxRateEntity::getEnableDate, LocalDate.now())
-                .orderByDesc(TaxRateEntity::getBusinessCode, TaxRateEntity::getFundType, TaxRateEntity::getLeaseType, TaxRateEntity::getLeaseSubType));
+                .orderByDesc(TaxRateEntity::getBusinessCode, TaxRateEntity::getFundType,
+                        TaxRateEntity::getLeaseType, TaxRateEntity::getLeaseSubType,
+                        TaxRateEntity::getAssetCategory));
         //业务编码
         List<BusinessDTO> businessDTOList = businessService.queryAll();
         Map<String, String> businessMap = businessDTOList.stream().collect(Collectors.toMap(e->e.getBusinessCode(), e->e.getBusinessName()));
@@ -188,12 +212,18 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
         // 华夏金租税率按“租赁类型 + 租赁方式”配置，leaseSubType 字段承载租赁方式。
         R<List<SysDictData>> leaseSubTypeR = remoteDictService.listDictData(DictTypeEnum.LEASE_METHOD.getCode());
         Map<String, String> leaseSubTypeMap = leaseSubTypeR.getData().stream().collect(Collectors.toMap(e->e.getDictValue(), e->e.getDictLabel()));
+        R<List<SysDictData>> assetCategoryR = remoteDictService.listDictData("HTQZ_ASSET_CATEGORY");
+        Map<String, String> assetCategoryMap = assetCategoryR.getData().stream()
+                .collect(Collectors.toMap(e->e.getDictValue(), e->e.getDictLabel()));
         List<TaxRateDTO> taxRateDTOList = ListBeanUtil.copyList(entityList, TaxRateDTO.class);
         taxRateDTOList.forEach(e->{
             e.setBusinessCode(businessMap.get(e.getBusinessCode()));
             e.setFundType(fundTypeMap.get(e.getFundType()));
             e.setLeaseType(leaseTypeMap.get(e.getLeaseType()));
             e.setLeaseSubType(leaseSubTypeMap.get(e.getLeaseSubType()));
+            if (StrUtil.isNotBlank(e.getAssetCategory())) {
+                e.setAssetCategory(assetCategoryMap.get(e.getAssetCategory()));
+            }
             e.setTaxRate(NumberUtil.div(e.getTaxRate(), 100));
         });
         return taxRateDTOList;

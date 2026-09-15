@@ -1,0 +1,44 @@
+-- 依据交付的会计科目体系工作表，统一在用科目的显示名称；不变更金额类型或业务类型。
+-- 原始名称已留在备份表，历史凭证不受影响。
+USE financehub_lease;
+CREATE TABLE IF NOT EXISTS bak_20260915_subject_master_name AS
+SELECT id,business_code,fund_type,account_code,account_name FROM eg_account WHERE del_flag='0';
+START TRANSACTION;
+UPDATE eg_account SET account_name='手续费及佣金支出_华夏银行手续费及佣金支出',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700012 AND account_code='642101' AND del_flag='0';
+UPDATE eg_account SET account_name='其他应付款_车辆零售清分款项',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700011 AND account_code='224113' AND del_flag='0';
+UPDATE eg_account SET account_name='金融机构往来利息收入_存放同业利息收入_境内银行业存款类金融机构',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609106000004 AND account_code='60110102' AND del_flag='0';
+UPDATE eg_account SET account_name='金融机构往来利息收入_存放同业利息收入_华夏银行',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609106000003 AND account_code='60110101' AND del_flag='0';
+UPDATE eg_account SET account_name='应收利息_存放同业应收利息_华夏银行',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609106000001 AND account_code='11240101' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人利息（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700005 AND account_code='15310401' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人利息部分增值税（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700006 AND account_code='15311101' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人本金（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700004 AND account_code='15310301' AND del_flag='0';
+UPDATE eg_account SET account_name='手续费及佣金支出_项目手续费_车辆资产管理费',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700013 AND account_code='64210409' AND del_flag='0';
+UPDATE eg_account SET account_name='应交税费_应交增值税_销项税额_一般销售（6%-其他）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609096000007 AND account_code='2221010208' AND del_flag='0';
+UPDATE eg_account SET account_name='应交税费_应交增值税_销项税额_即征即退（6%-贷款服务）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609106000006 AND account_code='2221010210' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人逾期利息部分增值税（动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609096000010 AND account_code='153114' AND del_flag='0';
+UPDATE eg_account SET account_name='手续费及佣金支出_项目手续费_其他机构',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700014 AND account_code='64210401' AND del_flag='0';
+UPDATE eg_account SET account_name='应收利息_拆放同业应收利息_华夏银行',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609106000002 AND account_code='11240201' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_留购价（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609075700001 AND account_code='15310801' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人留购价部分增值税（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609075700002 AND account_code='15311201' AND del_flag='0';
+UPDATE eg_account SET account_name='未实现融资收益_利息部分增值税（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609096000013 AND account_code='15320501' AND del_flag='0';
+UPDATE eg_account SET account_name='未实现融资收益_留购价（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609096000014 AND account_code='15320401' AND del_flag='0';
+UPDATE eg_account SET account_name='未实现融资收益_留购价部分增值税（动产项目）_回租',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609096000015 AND account_code='15320601' AND del_flag='0';
+UPDATE eg_account SET account_name='应收账款_车辆',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=202609070700010 AND account_code='112503' AND del_flag='0';
+UPDATE eg_account SET account_name='预收账款_预收租金（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000003 AND account_code='220301' AND del_flag='0';
+UPDATE eg_account SET account_name='预收账款_预收租金（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000068 AND account_code='220301' AND del_flag='0';
+UPDATE eg_account SET account_name='租赁收入_延期收款收入（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000083 AND account_code='604103' AND del_flag='0';
+UPDATE eg_account SET account_name='应付账款_应付经营租赁设备款（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000071 AND account_code='220203' AND del_flag='0';
+UPDATE eg_account SET account_name='预收账款_预收租金（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000020 AND account_code='220301' AND del_flag='0';
+UPDATE eg_account SET account_name='已减值租赁收入_利息收入（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000062 AND account_code='604201' AND del_flag='0';
+UPDATE eg_account SET account_name='已减值融资租赁款_应收承租人本金（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000061 AND account_code='153301' AND del_flag='0';
+UPDATE eg_account SET account_name='租赁收入_利息收入（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000042 AND account_code='604101' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人逾期利息（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000038 AND account_code='153109' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人逾期利息部分增值税（动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000039 AND account_code='153114' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人逾期本金（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000037 AND account_code='153105' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_逾期留购价（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000040 AND account_code='153127' AND del_flag='0';
+UPDATE eg_account SET account_name='应收融资租赁款_应收承租人逾期留购价部分增值税（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000041 AND account_code='153129' AND del_flag='0';
+UPDATE eg_account SET account_name='租赁收入_延期收款收入（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000043 AND account_code='604103' AND del_flag='0';
+UPDATE eg_account SET account_name='应付账款_应付融资租赁设备款（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000023 AND account_code='220201' AND del_flag='0';
+UPDATE eg_account SET account_name='已核销融资租赁款_已核销融资租赁款本金（不动产项目）',update_by='subject-master-sync-v1',update_time=NOW() WHERE id=2101000000000000063 AND account_code='911201' AND del_flag='0';
+COMMIT;
+SELECT COUNT(*) AS subject_name_synced FROM eg_account WHERE del_flag='0' AND update_by='subject-master-sync-v1';

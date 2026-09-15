@@ -75,8 +75,8 @@ INSERT INTO eg_account
 VALUES
  (202609075700001,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','residual_value_receivable','15310801','应收融资租赁款-留购价','资产','retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','DR','1','0','0,1','intra','0'),
  (202609075700002,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','residual_value_vat_receivable','15311201','应收融资租赁款-留购价增值税','资产','retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','DR','1','0','0,1','intra','0'),
- (202609075700003,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_residual_value','153127','应收融资租赁款-逾期留购价','资产','retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','DR','1','0','0,1','intra','0'),
- (202609075700004,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_residual_value_vat','153129','应收融资租赁款-逾期留购价增值税','资产','retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','DR','1','0','0,1','intra','0');
+ (202609075700003,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_residual_value','15312801','应收融资租赁款_逾期留购价（动产项目）_回租','资产','retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','DR','1','0','0,1','intra','0'),
+ (202609075700004,'CYC_RETAIL_LEASEBACK','融资租赁业务-回租-乘用车','overdue_residual_value_vat','15313001','应收融资租赁款_应收承租人逾期留购价部分增值税（动产项目）_回租','资产','retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','DR','1','0','0,1','intra','0');
 
 -- 银行到账类事件：统一使用收款凭证。
 INSERT INTO eg_scene_voucher (id,scene_id,source,voucher_type,company,business_date,currency,voucher_summary,create_by,create_time,update_by,update_time,del_flag,script_condition,scene_voucher_name,sub_scene_type)
@@ -90,7 +90,7 @@ VALUES (202609075300002,202609075100001,'systemCode','01','orgId','businessDate'
 INSERT INTO eg_scene_voucher_entry (id,scene_voucher_id,fund_type,relate_bank_flag,bank_account,voucher_summary,create_by,create_time,update_by,update_time,del_flag,cash_attribute_flag,assist_flags)
 VALUES
  (202609075400001,202609075300001,'bank_deposit','1','bankNo',"contractCode + '-' + sourceEventCode + '-银行到账'",'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','0','2'),
- (202609075400002,202609075300001,'lease_asset_movable_leaseback','0',NULL,"contractCode + '-收到现金折扣'",'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','0','0,1'),
+ (202609075400002,202609075300001,'lease_asset_cost','0',NULL,"contractCode + '-收到现金折扣'",'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','0','0,1'),
  (202609075400003,202609075300001,'customer_deposit_payable','0',NULL,"contractCode + '-收取保证金'",'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','0','0,1'),
  (202609075400004,202609075300001,'unidentified_receipts','0',NULL,"contractCode + '-款项无法确认'",'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','0','0,1'),
  (202609075400005,202609075300001,'lease_principal_receivable','0',NULL,"contractCode + '-核销租赁本金'",'retail-collection-config',NOW(),'retail-collection-config',NOW(),'0','0','0,1'),

@@ -150,6 +150,16 @@ export const optionsConfig = (router, dictData = {}) => ({
     }
   },
   {
+    prop: 'assetCategory',
+    label: '资产类别',
+    type: 'select',
+    search: true,
+    option: dictMappingToArray(dictData, 'HTQZ_ASSET_CATEGORY'),
+    render (row) {
+      return (row.assetCategory && h(ElTag, () => dictMappingLabel(dictData, 'HTQZ_ASSET_CATEGORY', row.assetCategory))) || ''
+    }
+  },
+  {
     prop: 'taxRate',
     label: '税率(%)',
     type: 'inputNumber',

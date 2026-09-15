@@ -24,6 +24,9 @@ public class TaxRateSaveDTO implements Serializable{
     @ApiModelProperty(value = "金额类型")
     private String fundType;
 
+    @ApiModelProperty(value = "资产类别（可选：动产/不动产）")
+    private String assetCategory;
+
     @ApiModelProperty(value = "生效时间")
     private LocalDate enableDate;
 

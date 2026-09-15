@@ -121,9 +121,7 @@ INSERT INTO sys_dict_data
 SELECT x.dict_sort, x.dict_label, x.dict_value, 'sys_cash_type', '0',
        'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '零售回租付款场景'
 FROM (
-    SELECT 201 dict_sort, '融资租赁资产-动产项目-回租' dict_label, 'lease_asset_movable_leaseback' dict_value
-    UNION ALL SELECT 202, '融资租赁资产-在建动产项目-回租', 'lease_asset_construction_leaseback'
-    UNION ALL SELECT 203, '应付票据-银行承兑汇票', 'bank_acceptance_payable'
+    SELECT 203 dict_sort, '应付票据-银行承兑汇票' dict_label, 'bank_acceptance_payable' dict_value
     UNION ALL SELECT 204, '渠道商分成应付款', 'channel_commission_payable'
     UNION ALL SELECT 205, '抵押服务费支出', 'mortgage_service_fee_expense'
 ) x
@@ -157,7 +155,7 @@ WHERE NOT EXISTS (
 -- 科目集中配置：只重建付款脚本负责的金额类型，不删除其他场景后来补充的科目。
 DELETE FROM eg_account
 WHERE business_code = 'CYC_RETAIL_LEASEBACK'
-  AND fund_type IN ('lease_asset_movable_leaseback','lease_asset_construction_leaseback',
+  AND fund_type IN ('lease_asset_cost',
                     'bank_acceptance_payable','lease_principal_receivable','lease_interest_receivable',
                     'lease_interest_vat_receivable','vehicle_management_fee_payable',
                     'input_vat_pending_certification','vehicle_profit_sharing_payable',
@@ -168,8 +166,7 @@ INSERT INTO eg_account
      create_by, create_time, update_by, update_time, del_flag, debit_credit_type,
      client_flag, contract_flag, assist_flags, settlement_type, check_flag)
 VALUES
-    (202609070700001, 'CYC_RETAIL_LEASEBACK', '融资租赁业务-回租-乘用车', 'lease_asset_movable_leaseback', '1541001', '融资租赁资产-动产项目-回租', '资产', 'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '0', 'DR', '0', '1', '1', 'intra', '0'),
-    (202609070700002, 'CYC_RETAIL_LEASEBACK', '融资租赁业务-回租-乘用车', 'lease_asset_construction_leaseback', '15410201', '融资租赁资产-在建动产项目-回租', '资产', 'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '0', 'DR', '0', '1', '1', 'intra', '0'),
+    (202609070700001, 'CYC_RETAIL_LEASEBACK', '融资租赁业务-回租-乘用车', 'lease_asset_cost', '15410201', '融资租赁资产_动产项目_回租', '资产', 'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '0', 'DR', '0', '1', '1', 'intra', '0'),
     (202609070700003, 'CYC_RETAIL_LEASEBACK', '融资租赁业务-回租-乘用车', 'bank_acceptance_payable', '220101', '应付票据-银行承兑汇票', '负债', 'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '0', 'CR', '0', '1', '1', 'intra', '0'),
     (202609070700004, 'CYC_RETAIL_LEASEBACK', '融资租赁业务-回租-乘用车', 'lease_principal_receivable', '15310301', '应收融资租赁款-应收承租人本金（动产项目）', '资产', 'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '0', 'DR', '1', '1', '0,1', 'intra', '0'),
     (202609070700005, 'CYC_RETAIL_LEASEBACK', '融资租赁业务-回租-乘用车', 'lease_interest_receivable', '15310401', '应收融资租赁款-应收承租人利息（动产项目）', '资产', 'retail-payment-config', NOW(), 'retail-payment-config', NOW(), '0', 'DR', '1', '1', '0,1', 'intra', '0'),
@@ -199,8 +196,7 @@ INSERT INTO eg_scene_voucher_entry
      voucher_summary, create_by, create_time, update_by, update_time, del_flag,
      cash_attribute_flag, assist_flags)
 VALUES
-    (202609070500001,202609070400001,'lease_asset_movable_leaseback','0',NULL,NULL,'购入租赁资产','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0','0','1'),
-    (202609070500002,202609070400001,'lease_asset_construction_leaseback','0',NULL,NULL,'购入在建租赁资产','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0','0','1'),
+    (202609070500001,202609070400001,'lease_asset_cost','0',NULL,NULL,'购入租赁资产','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0','0','1'),
     (202609070500003,202609070400001,'bank_acceptance_payable','0',NULL,NULL,'银行承兑汇票支付','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0','0','1'),
     (202609070500004,202609070400001,'bank_deposit','1','bankNo',NULL,'银行收付款','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0','0','2'),
     (202609070500005,202609070400001,'lease_principal_receivable','0',NULL,NULL,'收到承租人首付款','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0','0','0,1'),
@@ -221,7 +217,7 @@ INSERT INTO eg_scene_voucher_condition
      create_by, create_time, update_by, update_time, del_flag)
 VALUES
     (202609070600001,202609070500001,1,"eventCode == 'CR003' && assetStage == 'COMPLETED'",'CR003已完工动产项目','paymentAmount','实际支付金额','DR','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0'),
-    (202609070600002,202609070500002,1,"eventCode == 'CR003' && assetStage == 'CONSTRUCTION'",'CR003在建动产项目','paymentAmount','实际支付金额','DR','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0'),
+    (202609070600002,202609070500001,2,"eventCode == 'CR003' && assetStage == 'CONSTRUCTION'",'CR003在建动产项目','paymentAmount','实际支付金额','DR','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0'),
     (202609070600003,202609070500003,1,"eventCode == 'CR003' && paymentMethod == 'BANK_ACCEPTANCE'",'CR003银行承兑汇票','paymentAmount','票据支付金额','CR','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0'),
     (202609070600004,202609070500004,1,"eventCode == 'CR003' && paymentMethod == 'BANK_TRANSFER'",'CR003银行转账','paymentAmount','银行支付金额','CR','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0'),
     (202609070600005,202609070500005,1,"eventCode == 'CR003' && initialPaymentAmount > 0",'CR003存在首付款','initialPaymentAmount','首付款','CR','retail-payment-config',NOW(),'retail-payment-config',NOW(),'0'),

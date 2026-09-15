@@ -43,6 +43,9 @@ public interface ITaxRateService extends IService<TaxRateEntity> {
     BigDecimal getValidTaxRateByCode(String businessCode, String fundType,
                                      String leaseType, String leaseMethod);
 
+    BigDecimal getValidTaxRateByCode(String businessCode, String fundType,
+                                     String leaseType, String leaseMethod, String assetCategory);
+
     BigDecimal getGeneralValidTaxRateByLeaseType(String businessCode, String leaseType);
 
     List<TaxRateDTO> queryAllForEditor();

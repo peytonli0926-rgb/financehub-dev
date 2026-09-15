@@ -1,17 +1,7 @@
 -- 零售回租凭证模板复核修正：统一起租结转科目及关键科目方向。
 START TRANSACTION;
 
--- 购入租赁资产时借记动产回租资产，起租时应贷记同一科目；
--- 不能继续使用未在零售回租业务配置中的历史 lease_asset_cost。
-UPDATE eg_scene_voucher_entry e
-JOIN eg_scene_voucher v ON v.id=e.scene_voucher_id AND v.del_flag='0'
-JOIN eg_scene s ON s.id=v.scene_id AND s.del_flag='0'
-SET e.fund_type='lease_asset_movable_leaseback',
-    e.voucher_summary="'结转融资租赁资产-动产项目-回租'",
-    e.update_by='retail-template-audit',e.update_time=NOW()
-WHERE s.scene_code='HTQZ'
-  AND e.fund_type='lease_asset_cost'
-  AND e.del_flag='0';
+-- 起租资产结转统一使用 lease_asset_cost；业务类型决定15410201等科目。
 
 UPDATE eg_account
 SET account_name='未实现融资收益_利息（动产项目）_回租',debit_credit_type='CR',

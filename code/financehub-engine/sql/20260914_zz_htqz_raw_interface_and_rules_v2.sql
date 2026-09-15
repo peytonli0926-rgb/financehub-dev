@@ -71,8 +71,8 @@ CREATE TEMPORARY TABLE tmp_htqz_v2_rule (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO tmp_htqz_v2_rule VALUES
- ('lease_asset_cost',1,"{起租接口表.本金结转方式}=='LEASE_ASSET'&&{起租接口表.起租不含税本金}!=0",'系统判定结转融资租赁资产','{起租接口表.起租不含税本金}','系统计算不含税本金','CR'),
- ('lease_asset_movable_leaseback',1,"{起租接口表.系统来源}=='RETAIL_FINANCE_LEASE'&&{起租接口表.实际投放金额}!=0",'零售乘用车回租资产结转','{起租接口表.实际投放金额}','实际投放金额','CR'),
+ ('lease_asset_cost',1,"{起租接口表.系统来源}!='RETAIL_FINANCE_LEASE'&&{起租接口表.本金结转方式}=='LEASE_ASSET'&&{起租接口表.起租不含税本金}!=0",'系统判定结转融资租赁资产','{起租接口表.起租不含税本金}','系统计算不含税本金','CR'),
+ ('lease_asset_cost',2,"{起租接口表.系统来源}=='RETAIL_FINANCE_LEASE'&&{起租接口表.实际投放金额}!=0",'零售乘用车回租资产结转','{起租接口表.实际投放金额}','实际投放金额','CR'),
  ('lease_interest_receivable',1,'{起租接口表.起租不含税利息}!=0','确认应收租赁利息','{起租接口表.起租不含税利息}','系统计算不含税利息','DR'),
  ('lease_interest_vat_receivable',1,'{起租接口表.起租利息税额}!=0','确认应收租赁利息税额','{起租接口表.起租利息税额}','系统计算利息税额','DR'),
  ('lease_principal_receivable',1,'{起租接口表.起租不含税本金}!=0','确认应收租赁本金','{起租接口表.起租不含税本金}','系统计算不含税本金','DR'),
