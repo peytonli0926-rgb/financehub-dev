@@ -1484,6 +1484,8 @@ public class RuleServiceImpl implements IRuleService {
         // Only raw business attributes are accepted from upstream. Event and
         // accounting variants are always derived internally.
         copyLeaseStartAlias(dataMap, "asset_category", "assetCategory");
+        copyLeaseStartAlias(dataMap, "lease_category", "leaseCategory");
+        copyLeaseStartAlias(dataMap, "lease_method", "leaseMethod");
         copyLeaseStartAlias(dataMap, "received_service_fee", "receivedServiceFee");
         copyLeaseStartAlias(dataMap, "amortized_service_fee", "amortizedServiceFee");
 
@@ -1512,22 +1514,25 @@ public class RuleServiceImpl implements IRuleService {
             dataMap.put("start_event_variant", eventVariant);
         }
 
-        String accountingVariant = null;
+        sourceSystem = normalizeLeaseStartSourceSystem(sourceSystem);
+        leaseMethod = normalizeLeaseStartLeaseMethod(leaseMethod);
+        leaseCategory = normalizeLeaseStartLeaseCategory(leaseCategory);
+        assetCategory = normalizeLeaseStartAssetCategory(assetCategory);
+        dataMap.put("source_system", sourceSystem);
+        if (leaseMethod != null) dataMap.put("lease_method", leaseMethod);
+        if (leaseCategory != null) dataMap.put("lease_category", leaseCategory);
+        if (assetCategory != null) dataMap.put("asset_category", assetCategory);
+
+        String accountingVariant;
         if ("FINANCE_LEASE".equals(sourceSystem)) {
-            String assetSuffix = assetCategory != null
-                    && (assetCategory.contains("不动产") || "REAL_ESTATE".equalsIgnoreCase(assetCategory))
-                    ? "REAL_ESTATE" : (assetCategory != null
-                    && (assetCategory.contains("动产") || "MOVABLE".equalsIgnoreCase(assetCategory)) ? "MOVABLE" : null);
-            if (assetSuffix == null) {
+            if (assetCategory == null) {
                 throw new ServiceException("融资租赁合同起租事件缺少有效资产类别[asset_category]，可选值：REAL_ESTATE、MOVABLE");
             }
-            if (assetSuffix != null) {
-                boolean leaseback = leaseMethod != null && (leaseMethod.contains("回租")
-                        || "SALE_AND_LEASEBACK".equalsIgnoreCase(leaseMethod)
-                        || "LEASEBACK".equalsIgnoreCase(leaseMethod));
-                accountingVariant = leaseback
-                        ? "ZLYW_LEASEBACK_" + assetSuffix : "ZLYW_DIRECT_" + assetSuffix;
+            if (leaseMethod == null) {
+                throw new ServiceException("融资租赁合同起租事件缺少有效租赁方式[lease_method]，可选值：DIRECT_LEASE、SALE_AND_LEASEBACK");
             }
+            accountingVariant = "SALE_AND_LEASEBACK".equals(leaseMethod)
+                    ? "ZLYW_LEASEBACK_" + assetCategory : "ZLYW_DIRECT_" + assetCategory;
             if (StringUtils.isEmpty(MapUtil.getStr(dataMap, "principal_offset_type"))) {
                 dataMap.put("principal_offset_type", "LEASE_ASSET");
             }
@@ -1546,15 +1551,58 @@ public class RuleServiceImpl implements IRuleService {
                 }
             }
         } else if ("OPERATING_LEASE".equals(sourceSystem)) {
+            // The only OPERATING_LEASE start event currently defined by the
+            // accounting template is JY003 (household-PV asset transfer).
             accountingVariant = "JYZL_HOUSEHOLD_PV";
         } else if ("RETAIL_FINANCE_LEASE".equals(sourceSystem)) {
             accountingVariant = "CYC_RETAIL_LEASEBACK";
+        } else {
+            throw new ServiceException("合同起租事件缺少有效系统来源[systemCode]，可选值：FINANCE_LEASE、HOUSEHOLD_PV、OPERATING_LEASE、RETAIL_FINANCE_LEASE");
         }
 
         if (StringUtils.isNotEmpty(accountingVariant)) {
             dataMap.put("accounting_variant", accountingVariant);
             dataMap.put(RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE, accountingVariant);
         }
+    }
+
+    private String normalizeLeaseStartSourceSystem(String value) {
+        if (StringUtils.isEmpty(value)) return null;
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if ("融资租赁业务系统".equals(value)) return "FINANCE_LEASE";
+        if ("户用光伏业务系统".equals(value)) return "HOUSEHOLD_PV";
+        if ("经营租赁业务系统".equals(value)) return "OPERATING_LEASE";
+        if ("零售融资租赁业务系统".equals(value)) return "RETAIL_FINANCE_LEASE";
+        return normalized;
+    }
+
+    private String normalizeLeaseStartLeaseMethod(String value) {
+        if (StringUtils.isEmpty(value)) return null;
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if ("直租".equals(value) || "DIRECT".equals(normalized) || "DIRECT_LEASE".equals(normalized)) {
+            return "DIRECT_LEASE";
+        }
+        if ("回租".equals(value) || "LEASEBACK".equals(normalized)
+                || "SALE_AND_LEASEBACK".equals(normalized)) {
+            return "SALE_AND_LEASEBACK";
+        }
+        return null;
+    }
+
+    private String normalizeLeaseStartLeaseCategory(String value) {
+        if (StringUtils.isEmpty(value)) return null;
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if ("融资性租赁".equals(value) || "FINANCE_LEASE".equals(normalized)) return "FINANCE_LEASE";
+        if ("经营性租赁".equals(value) || "OPERATING_LEASE".equals(normalized)) return "OPERATING_LEASE";
+        return normalized;
+    }
+
+    private String normalizeLeaseStartAssetCategory(String value) {
+        if (StringUtils.isEmpty(value)) return null;
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if ("动产".equals(value) || "MOVABLE".equals(normalized)) return "MOVABLE";
+        if ("不动产".equals(value) || "REAL_ESTATE".equals(normalized)) return "REAL_ESTATE";
+        return null;
     }
 
     private void copyLeaseStartAlias(Map<String, Object> dataMap, String target, String alias) {
@@ -1589,6 +1637,7 @@ public class RuleServiceImpl implements IRuleService {
 
     private Map<String, Object> leaseStartCalculatedRuleFields() {
         Map<String, Object> fields = new HashMap<>();
+        fields.put("起租计算结果表.核算业务类型", RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE);
         fields.put("起租计算结果表.本金结转方式", "principal_offset_type");
         fields.put("起租计算结果表.起租不含税本金", "lease_principal_net");
         fields.put("起租计算结果表.起租不含税利息", "lease_interest_net");

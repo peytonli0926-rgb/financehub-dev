@@ -9,6 +9,7 @@ import com.alibaba.nacos.common.utils.StringUtils;
 import com.utfinancing.financehub.common.core.constant.CacheConstants;
 import com.utfinancing.financehub.common.redis.service.RedisService;
 import com.utfinancing.financehub.engine.enums.DRCREnum;
+import com.utfinancing.financehub.engine.enums.SceneEnum;
 import com.utfinancing.financehub.engine.enums.SystemEnum;
 import com.utfinancing.financehub.engine.enums.VoucherValidFlagEnum;
 import com.utfinancing.financehub.engine.enums.VoucherWayEnum;
@@ -115,9 +116,16 @@ public class VoucherExtServiceImpl implements IVoucherExtService {
         }
         entrySaveDTO.setDebitCreditType(sceneVoucherConditionDTO.getDebitCreditType());
         //查询科目编码及科目名称
-        String accountBusinessCode = StringUtils.isNotEmpty(interfaceDataDTO.getAccountingBusinessCode())
-                ? interfaceDataDTO.getAccountingBusinessCode() : interfaceDataDTO.getBusinessCode();
-        AccountDTO accountDTO = accountService.getAccountByFundTypeFromRedis(accountBusinessCode, sceneVoucherEntryDTO.getFundType());
+        String fundType = sceneVoucherEntryDTO.getFundType();
+        AccountDTO accountDTO;
+        if (SceneEnum.HTQZ.getCode().equals(interfaceDataDTO.getSceneCode())) {
+            accountDTO = accountService.getAccountByFundTypeFromRedisStrict(
+                    fundType, interfaceDataDTO.getAccountingBusinessCode());
+        } else {
+            String accountBusinessCode = StringUtils.isNotEmpty(interfaceDataDTO.getAccountingBusinessCode())
+                    ? interfaceDataDTO.getAccountingBusinessCode() : interfaceDataDTO.getBusinessCode();
+            accountDTO = accountService.getAccountByFundTypeFromRedis(accountBusinessCode, fundType);
+        }
 
         entrySaveDTO.setAccountCode(accountDTO.getAccountCode());
         entrySaveDTO.setAccountName(accountDTO.getAccountName());

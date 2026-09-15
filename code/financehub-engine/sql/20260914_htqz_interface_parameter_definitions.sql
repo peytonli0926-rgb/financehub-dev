@@ -14,6 +14,7 @@ INSERT INTO tmp_htqz_dict_type VALUES
  ('数据库字段类型','sys_database_column_type','接口配置字段类型'),
  ('租赁类型','LEASE_TYPE','合同起租事件租赁类型'),
  ('租赁方式','LEASE_METHOD','合同起租事件租赁方式'),
+ ('起租资产类别','HTQZ_ASSET_CATEGORY','融资租赁起租科目路由：动产/不动产'),
  ('系统来源','sys_form_source','合同起租事件来源系统'),
  ('细分场景','sys_sub_scene_type','凭证模板细分场景'),
  ('凭证类型','sys_voucher_type','凭证模板凭证类型');
@@ -47,6 +48,8 @@ INSERT INTO tmp_htqz_dict_data VALUES
  (2,'经营性租赁','OPERATING_LEASE','LEASE_TYPE','经营租赁起租'),
  (1,'直租','DIRECT_LEASE','LEASE_METHOD','融资租赁直租'),
  (2,'回租','SALE_AND_LEASEBACK','LEASE_METHOD','融资租赁回租'),
+ (1,'动产','MOVABLE','HTQZ_ASSET_CATEGORY','融资租赁起租科目路由'),
+ (2,'不动产','REAL_ESTATE','HTQZ_ASSET_CATEGORY','融资租赁起租科目路由'),
  (1,'零售融资租赁业务系统','RETAIL_FINANCE_LEASE','sys_form_source','零售融资租赁业务系统'),
  (2,'融资租赁业务系统','FINANCE_LEASE','sys_form_source','融资租赁业务系统'),
  (3,'户用光伏业务系统','HOUSEHOLD_PV','sys_form_source','户用光伏业务系统'),
@@ -94,7 +97,7 @@ INSERT INTO tmp_htqz_required_field VALUES
  (0,'租赁方式','lease_method','String'),(0,'融资租赁合同号','contract_no','String'),
  (0,'币种','currency','String'),(0,'实际投放金额','actual_disbursement','Number'),
  (0,'应收利息总额（含税）','interest_tax_inclusive','Number'),(0,'留购价（含税）','residual_value','Number'),
- (100,'资产类别','asset_category','String'),
+ (100,'资产类别（融资租赁系统必填）','asset_category','String'),
  (102,'手续费总额（含税）','service_fee','Number'),
  (103,'累计已收手续费（含税）','received_service_fee','Number'),
  (104,'累计已摊销手续费（含税）','amortized_service_fee','Number');
@@ -134,6 +137,6 @@ LEFT JOIN financehub_lease.eg_scene_fields x
 WHERE x.id IS NULL;
 SELECT dict_type,COUNT(*) AS definition_count
 FROM financialdb4.sys_dict_data
-WHERE dict_type IN ('sys_database_column_type','LEASE_TYPE','LEASE_METHOD','sys_form_source',
+WHERE dict_type IN ('sys_database_column_type','LEASE_TYPE','LEASE_METHOD','HTQZ_ASSET_CATEGORY','sys_form_source',
  'sys_sub_scene_type','sys_voucher_type') AND status='0'
 GROUP BY dict_type ORDER BY dict_type;

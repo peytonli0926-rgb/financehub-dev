@@ -853,9 +853,18 @@ public class VoucherServiceImpl extends MPJBaseServiceImpl<VoucherMapper, Vouche
             setAccountCodeAndName(entrySaveDTO, entrySaveDTO.getBankAccount(), sceneVoucherEntryDTO.getFundType());
         } else {
             //查询科目编码及科目名称
-            String accountBusinessCode = StringUtils.isNotEmpty(interfaceDataDTO.getAccountingBusinessCode())
-                    ? interfaceDataDTO.getAccountingBusinessCode() : interfaceDataDTO.getBusinessCode();
-            AccountDTO accountDTO = accountService.getAccountByFundType(accountBusinessCode, sceneVoucherEntryDTO.getFundType());
+            String fundType = sceneVoucherEntryDTO.getFundType();
+            AccountDTO accountDTO;
+            if (SceneEnum.HTQZ.getCode().equals(interfaceDataDTO.getSceneCode())) {
+                // HTQZ closes the configuration loop in this order:
+                // amount type -> derived accounting business -> exact subject.
+                accountDTO = accountService.getAccountByFundTypeStrict(
+                        fundType, interfaceDataDTO.getAccountingBusinessCode());
+            } else {
+                String accountBusinessCode = StringUtils.isNotEmpty(interfaceDataDTO.getAccountingBusinessCode())
+                        ? interfaceDataDTO.getAccountingBusinessCode() : interfaceDataDTO.getBusinessCode();
+                accountDTO = accountService.getAccountByFundType(accountBusinessCode, fundType);
+            }
             entrySaveDTO.setAccountCode(accountDTO.getAccountCode());
             entrySaveDTO.setAccountName(accountDTO.getAccountName());
         }

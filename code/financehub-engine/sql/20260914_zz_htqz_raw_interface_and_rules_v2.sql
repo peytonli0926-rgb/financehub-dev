@@ -35,7 +35,7 @@ CREATE TEMPORARY TABLE tmp_htqz_raw_field (
  PRIMARY KEY(field_code)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 INSERT INTO tmp_htqz_raw_field VALUES
- (100,'资产类别','asset_category','String'),
+ (100,'资产类别（融资租赁系统必填）','asset_category','String'),
  (102,'手续费总额（含税）','service_fee','Number'),
  (103,'累计已收手续费（含税）','received_service_fee','Number'),
  (104,'累计已摊销手续费（含税）','amortized_service_fee','Number');

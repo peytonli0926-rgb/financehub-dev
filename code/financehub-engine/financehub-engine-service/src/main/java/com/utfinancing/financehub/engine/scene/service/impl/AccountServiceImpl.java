@@ -167,6 +167,26 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, AccountEntity
     }
 
     @Override
+    public AccountDTO getAccountByFundTypeFromRedisStrict(String fundType, String accountingBusinessCode) {
+        if (StrUtil.isBlank(fundType)) {
+            throw new ServiceException("金额类型不能为空");
+        }
+        if (StrUtil.isBlank(accountingBusinessCode)) {
+            throw new ServiceException(StrUtil.format("金额类型[{}]缺少核算业务类型，无法匹配科目", fundType));
+        }
+        AccountEntity accountParam = new AccountEntity();
+        accountParam.setFundType(fundType);
+        accountParam.setBusinessCode(accountingBusinessCode);
+        AccountEntity entity = getAccountEntityMapFromRedis().get(getBusKey(accountParam));
+        if (entity == null) {
+            throw new ServiceException(StrUtil.format(
+                    "科目配置不完整：金额类型[{}]、核算业务类型[{}]未配置对应科目",
+                    fundType, accountingBusinessCode));
+        }
+        return BeanUtil.copyProperties(entity, AccountDTO.class);
+    }
+
+    @Override
     public String getFundTypeString(List<String> accountCodeList) {
         return accountMapper.getFundTypeString(accountCodeList);
     }
@@ -206,6 +226,25 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, AccountEntity
         }
         if (entity == null){
             throw new ServiceException(StrUtil.format("科目不存在[{}-{}]", businessCode, fundType));
+        }
+        return BeanUtil.copyProperties(entity, AccountDTO.class);
+    }
+
+    @Override
+    public AccountDTO getAccountByFundTypeStrict(String fundType, String accountingBusinessCode) {
+        if (StrUtil.isBlank(fundType)) {
+            throw new ServiceException("金额类型不能为空");
+        }
+        if (StrUtil.isBlank(accountingBusinessCode)) {
+            throw new ServiceException(StrUtil.format("金额类型[{}]缺少核算业务类型，无法匹配科目", fundType));
+        }
+        AccountEntity entity = this.getOne(Wrappers.<AccountEntity>lambdaQuery()
+                .eq(AccountEntity::getFundType, fundType)
+                .eq(AccountEntity::getBusinessCode, accountingBusinessCode), false);
+        if (entity == null) {
+            throw new ServiceException(StrUtil.format(
+                    "科目配置不完整：金额类型[{}]、核算业务类型[{}]未配置对应科目",
+                    fundType, accountingBusinessCode));
         }
         return BeanUtil.copyProperties(entity, AccountDTO.class);
     }

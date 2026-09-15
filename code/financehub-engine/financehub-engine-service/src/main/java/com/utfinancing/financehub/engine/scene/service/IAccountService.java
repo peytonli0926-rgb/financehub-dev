@@ -36,6 +36,14 @@ public interface IAccountService extends IService<AccountEntity> {
      */
     AccountDTO getAccountByFundType(String businessCode, String fundType);
 
+    /**
+     * Resolve an account from the specified accounting business only.
+     * This is used by HTQZ after the engine has derived the exact lease
+     * business variant; falling back to default would hide incomplete subject
+     * configuration and could post to the wrong account.
+     */
+    AccountDTO getAccountByFundTypeStrict(String fundType, String accountingBusinessCode);
+
 
     List<AccountVO> queryAllAccount();
 
@@ -46,6 +54,8 @@ public interface IAccountService extends IService<AccountEntity> {
     public Map<String, AccountEntity> getAccountEntityMapFromRedis();
 
     public AccountDTO getAccountByFundTypeFromRedis(String businessCode, String fundType);
+
+    public AccountDTO getAccountByFundTypeFromRedisStrict(String fundType, String accountingBusinessCode);
 
     public String getFundTypeString(List<String> accountCodeList);
 
