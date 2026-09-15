@@ -1172,12 +1172,7 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
             throw new ServiceException("起租接口实际投放金额必须大于0");
         }
 
-        BigDecimal taxRate = firstDecimal(payload, "tax_rate");
-        if (taxRate == null) {
-            taxRate = new BigDecimal("0.06");
-        } else if (taxRate.compareTo(BigDecimal.ONE) > 0) {
-            taxRate = taxRate.divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP);
-        }
+        BigDecimal taxRate = resolveLeaseStartTaxRate(payload);
         BigDecimal taxFactor = BigDecimal.ONE.add(taxRate);
         BigDecimal serviceFee = defaultZero(firstDecimal(payload, "service_fee"));
 
@@ -1237,10 +1232,7 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         BigDecimal totalIncome = calculatedPlans.stream().map(RepaymentPlanSaveDTO::getRentalIncome)
                 .filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal incomeBefore = BigDecimal.ZERO;
-        BigDecimal sourceIrr = defaultZero(firstDecimal(payload, "irr"));
-        if (sourceIrr.abs().compareTo(BigDecimal.ONE) <= 0) {
-            sourceIrr = sourceIrr.multiply(new BigDecimal("100"));
-        }
+        BigDecimal sourceIrr = BigDecimal.valueOf(xirr).multiply(new BigDecimal("100"));
         for (RepaymentPlanSaveDTO plan : calculatedPlans) {
             plan.setContractCode(contractCode);
             plan.setContractName(contractCode);
@@ -1276,6 +1268,169 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
                 leaseStartDate, taxRate);
         log.info("Huaxia lease-start repayment plan saved: contractCode={}, sourceRows={}, calculatedRows={}, xirr={}",
                 contractCode, planArray.size(), calculatedPlans.size(), xirr);
+    }
+
+    @Override
+    public void prepareLeaseStartCalculatedFields(Map<String, Object> dataMap) {
+        String sceneCode = MapUtil.getStr(dataMap, RuleConstant.FIELD_SCENE_CODE);
+        if (!SceneEnum.HTQZ.getCode().equals(sceneCode)) {
+            return;
+        }
+
+        JSONObject payload = JSONObject.parseObject(JSON.toJSONString(dataMap));
+        JSONArray planArray = payload.getJSONArray("repayment_plan");
+        if (CollectionUtils.isEmpty(planArray)) {
+            planArray = payload.getJSONArray("repaymentPlan");
+        }
+        if (CollectionUtils.isEmpty(planArray)) {
+            throw new ServiceException("起租接口 repayment_plan 不能为空");
+        }
+
+        BigDecimal taxRate = resolveLeaseStartTaxRate(payload);
+        BigDecimal taxFactor = BigDecimal.ONE.add(taxRate);
+        String accountingVariant = firstNotBlank(payload.getString("accounting_variant"),
+                payload.getString(RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
+        boolean leaseback = accountingVariant != null
+                && (accountingVariant.contains("LEASEBACK") || accountingVariant.contains("CYC_RETAIL"));
+
+        BigDecimal principalGross = defaultZero(firstDecimal(payload,
+                "actual_disbursement", "finance_amount", "lease_principal"));
+        BigDecimal interestGross = firstDecimal(payload, "interest_tax_inclusive");
+        BigDecimal residualGross = firstDecimal(payload, "residual_value");
+        BigDecimal planInterestGross = BigDecimal.ZERO;
+        BigDecimal planResidualGross = BigDecimal.ZERO;
+        int maxTerm = 0;
+        Date lastDueDate = null;
+        for (int i = 0; i < planArray.size(); i++) {
+            JSONObject row = planArray.getJSONObject(i);
+            planInterestGross = planInterestGross.add(defaultZero(row.getBigDecimal("interest_amount")));
+            planResidualGross = planResidualGross.add(defaultZero(row.getBigDecimal("residual_value")));
+            Integer termNo = row.getInteger("term_no");
+            if (termNo != null) {
+                maxTerm = Math.max(maxTerm, termNo);
+            }
+            Date dueDate = parseOptionalDate(row, "due_date");
+            if (dueDate != null && (lastDueDate == null || dueDate.after(lastDueDate))) {
+                lastDueDate = dueDate;
+            }
+        }
+        if (interestGross == null) {
+            interestGross = planInterestGross;
+        }
+        if (residualGross == null) {
+            residualGross = planResidualGross;
+        }
+        interestGross = defaultZero(interestGross);
+        residualGross = defaultZero(residualGross);
+
+        BigDecimal principalNet = leaseback ? principalGross.setScale(2, RoundingMode.HALF_UP)
+                : netOfTax(principalGross, taxFactor);
+        BigDecimal interestNet = netOfTax(interestGross, taxFactor);
+        BigDecimal residualNet = netOfTax(residualGross, taxFactor);
+        putCalculatedAmount(dataMap, "lease_principal_net", principalNet);
+        putCalculatedAmount(dataMap, "lease_interest_net", interestNet);
+        putCalculatedAmount(dataMap, "residual_value_net", residualNet);
+        putCalculatedAmount(dataMap, "lease_interest_vat", interestGross.subtract(interestNet));
+        putCalculatedAmount(dataMap, "residual_value_vat", residualGross.subtract(residualNet));
+        putCalculatedAmount(dataMap, "unearned_finance_income", interestNet.add(residualNet));
+
+        BigDecimal serviceFeeGross = nonNegative(firstDecimal(payload, "service_fee"));
+        BigDecimal receivedFeeGross = nonNegative(firstDecimal(payload,
+                "received_service_fee", "service_fee_received"));
+        BigDecimal amortizedFeeGross = nonNegative(firstDecimal(payload,
+                "amortized_service_fee", "service_fee_amortized"));
+        receivedFeeGross = receivedFeeGross.min(serviceFeeGross);
+        amortizedFeeGross = amortizedFeeGross.min(serviceFeeGross);
+        BigDecimal unreceivedFeeGross = serviceFeeGross.subtract(receivedFeeGross).max(BigDecimal.ZERO);
+        BigDecimal totalUnamortizedGross = serviceFeeGross.subtract(amortizedFeeGross).max(BigDecimal.ZERO);
+        BigDecimal receivedUnamortizedGross = receivedFeeGross.subtract(amortizedFeeGross)
+                .max(BigDecimal.ZERO).min(totalUnamortizedGross);
+        BigDecimal unreceivedUnamortizedGross = totalUnamortizedGross
+                .subtract(receivedUnamortizedGross).max(BigDecimal.ZERO);
+
+        BigDecimal receivedUnamortizedNet = netOfTax(receivedUnamortizedGross, taxFactor);
+        BigDecimal unreceivedNet = netOfTax(unreceivedFeeGross, taxFactor);
+        BigDecimal unreceivedUnamortizedNet = netOfTax(unreceivedUnamortizedGross, taxFactor);
+        BigDecimal serviceFeeNet = netOfTax(serviceFeeGross, taxFactor);
+        putCalculatedAmount(dataMap, "received_fee_unamortized_net", receivedUnamortizedNet);
+        putCalculatedAmount(dataMap, "unreceived_fee_net", unreceivedNet);
+        putCalculatedAmount(dataMap, "unreceived_fee_unamortized_net", unreceivedUnamortizedNet);
+        putCalculatedAmount(dataMap, "unreceived_fee_vat", unreceivedFeeGross.subtract(unreceivedNet));
+        putCalculatedAmount(dataMap, "unreceived_fee_unamortized_vat",
+                unreceivedUnamortizedGross.subtract(unreceivedUnamortizedNet));
+        putCalculatedAmount(dataMap, "unreceived_fee_gross", unreceivedFeeGross);
+        putCalculatedAmount(dataMap, "fee_unamortized_net_total", netOfTax(totalUnamortizedGross, taxFactor));
+        putCalculatedAmount(dataMap, "service_fee_net", serviceFeeNet);
+        putCalculatedAmount(dataMap, "service_fee_vat", serviceFeeGross.subtract(serviceFeeNet));
+
+        BigDecimal assetCostGross = sumRecognizedAssetValue(payload.getJSONArray("assets"));
+        if (assetCostGross.signum() == 0) {
+            assetCostGross = principalGross;
+        }
+        putCalculatedAmount(dataMap, "operating_asset_cost_net", netOfTax(assetCostGross, taxFactor));
+        BigDecimal customerFinanceGross = defaultZero(firstDecimal(payload,
+                "customer_finance_amount", "finance_amount", "actual_disbursement"));
+        putCalculatedAmount(dataMap, "customer_finance_net", netOfTax(customerFinanceGross, taxFactor));
+
+        dataMap.put("total_terms", maxTerm > 0 ? maxTerm : planArray.size());
+        dataMap.put("term_unit", "MONTH");
+        Date startDate = parseOptionalDate(payload, "lease_start_date", "businessDate", "business_date");
+        if (startDate != null && lastDueDate != null) {
+            Calendar start = Calendar.getInstance();
+            start.setTime(startDate);
+            Calendar end = Calendar.getInstance();
+            end.setTime(lastDueDate);
+            int months = (end.get(Calendar.YEAR) - start.get(Calendar.YEAR)) * 12
+                    + end.get(Calendar.MONTH) - start.get(Calendar.MONTH);
+            if (end.get(Calendar.DAY_OF_MONTH) > start.get(Calendar.DAY_OF_MONTH)) {
+                months++;
+            }
+            dataMap.put("finance_term", Math.max(months, 0));
+        }
+    }
+
+    private BigDecimal resolveLeaseStartTaxRate(JSONObject payload) {
+        BigDecimal taxRate = firstDecimal(payload, "vat_rate", "tax_rate");
+        if (taxRate != null) {
+            if (taxRate.compareTo(BigDecimal.ONE) > 0) {
+                taxRate = taxRate.divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP);
+            }
+            return taxRate.max(BigDecimal.ZERO);
+        }
+        String variant = firstNotBlank(payload.getString("accounting_variant"),
+                payload.getString(RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
+        if (variant != null && (variant.contains("LEASEBACK") || variant.contains("CYC_RETAIL"))) {
+            return new BigDecimal("0.06");
+        }
+        if (variant != null && variant.contains("REAL_ESTATE")) {
+            return new BigDecimal("0.09");
+        }
+        return new BigDecimal("0.13");
+    }
+
+    private BigDecimal netOfTax(BigDecimal gross, BigDecimal taxFactor) {
+        return defaultZero(gross).divide(taxFactor, 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal nonNegative(BigDecimal value) {
+        return defaultZero(value).max(BigDecimal.ZERO);
+    }
+
+    private void putCalculatedAmount(Map<String, Object> dataMap, String field, BigDecimal value) {
+        dataMap.put(field, defaultZero(value).setScale(2, RoundingMode.HALF_UP));
+    }
+
+    private BigDecimal sumRecognizedAssetValue(JSONArray assets) {
+        if (CollectionUtils.isEmpty(assets)) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (int i = 0; i < assets.size(); i++) {
+            JSONObject asset = assets.getJSONObject(i);
+            BigDecimal amount = firstDecimal(asset, "recognized_asset_value", "original_asset_value");
+            total = total.add(defaultZero(amount));
+        }
+        return total;
     }
 
     private void syncHuaxiaContractForAccrual(JSONObject payload, String contractCode, String orgId,

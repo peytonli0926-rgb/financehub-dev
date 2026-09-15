@@ -33,6 +33,11 @@ public interface IRepaymentPlanService extends IService<RepaymentPlanEntity> {
     /** Save the repayment plan carried by a Huaxia lease-start event. */
     void saveLeaseStartPlanFromInterfaceData(Map<String, Object> dataMap);
 
+    /**
+     * Calculates HTQZ rule variables from raw contract, asset and repayment-plan data.
+     */
+    void prepareLeaseStartCalculatedFields(Map<String, Object> dataMap);
+
     void saveRepaymentPlanAndHisBatch(List<RepaymentPlanSaveDTO> dtos);
 
     Long updateRepaymentPlan(Long id, RepaymentPlanDTO dto);

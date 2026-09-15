@@ -164,6 +164,12 @@ public class RuleServiceImpl implements IRuleService {
         //接口字段
         Map<String, Object> sceneFieldsMap = sceneFieldsService.selectSceneFieldsMapByCode(sceneCode);
         ruleKeyMap.putAll(sceneFieldsMap);
+        if (SceneEnum.HTQZ.getCode().equals(sceneCode)) {
+            // These values are produced by the accounting engine from raw lease-start
+            // data. They remain available to the rule editor without being exposed as
+            // fields that an upstream business system must provide.
+            ruleKeyMap.putAll(leaseStartCalculatedRuleFields());
+        }
 
         //金额类型参数
         R<List<SysDictData>> dictListR = listDictTypeData(DictTypeEnum.CASH_TYPE.getCode());
@@ -1103,6 +1109,10 @@ public class RuleServiceImpl implements IRuleService {
             dataMap.put(name, taxRateDTO.getTaxRate());
         }
 
+        if (SceneEnum.HTQZ.getCode().equals(sceneCode)) {
+            repaymentPlanService.prepareLeaseStartCalculatedFields(dataMap);
+        }
+
         //获取翻译后的规则
         List<SceneRuleDTO> ruleDTOList = getTranslateRule(sceneCode, interfaceDataDTO, dataMap);
 
@@ -1471,29 +1481,12 @@ public class RuleServiceImpl implements IRuleService {
     private void prepareLeaseStartAccountingVariant(Map<String, Object> dataMap,
                                                      String systemCode,
                                                      String sceneCodeOriginal) {
-        // The interface contract uses snake_case field codes. Accept camelCase
-        // aliases as well so upstream systems can migrate without producing a
-        // silently non-executable condition.
+        // Only raw business attributes are accepted from upstream. Event and
+        // accounting variants are always derived internally.
         copyLeaseStartAlias(dataMap, "asset_category", "assetCategory");
-        copyLeaseStartAlias(dataMap, "start_event_variant", "startEventVariant");
-        copyLeaseStartAlias(dataMap, "principal_offset_type", "principalOffsetType");
-        copyLeaseStartAlias(dataMap, "accounting_variant", "accountingVariant");
-        copyLeaseStartAlias(dataMap, "lease_principal_net", "leasePrincipalNet");
-        copyLeaseStartAlias(dataMap, "lease_interest_net", "leaseInterestNet");
-        copyLeaseStartAlias(dataMap, "residual_value_net", "residualValueNet");
-        copyLeaseStartAlias(dataMap, "lease_interest_vat", "leaseInterestVat");
-        copyLeaseStartAlias(dataMap, "residual_value_vat", "residualValueVat");
-        copyLeaseStartAlias(dataMap, "received_fee_unamortized_net", "receivedFeeUnamortizedNet");
-        copyLeaseStartAlias(dataMap, "unreceived_fee_net", "unreceivedFeeNet");
-        copyLeaseStartAlias(dataMap, "unreceived_fee_unamortized_net", "unreceivedFeeUnamortizedNet");
-        copyLeaseStartAlias(dataMap, "unreceived_fee_vat", "unreceivedFeeVat");
-        copyLeaseStartAlias(dataMap, "unreceived_fee_unamortized_vat", "unreceivedFeeUnamortizedVat");
-        copyLeaseStartAlias(dataMap, "unreceived_fee_gross", "unreceivedFeeGross");
-        copyLeaseStartAlias(dataMap, "fee_unamortized_net_total", "feeUnamortizedNetTotal");
-        copyLeaseStartAlias(dataMap, "service_fee_net", "serviceFeeNet");
-        copyLeaseStartAlias(dataMap, "service_fee_vat", "serviceFeeVat");
-        copyLeaseStartAlias(dataMap, "operating_asset_cost_net", "operatingAssetCostNet");
-        copyLeaseStartAlias(dataMap, "customer_finance_net", "customerFinanceNet");
+        copyLeaseStartAlias(dataMap, "received_service_fee", "receivedServiceFee");
+        copyLeaseStartAlias(dataMap, "amortized_service_fee", "amortizedServiceFee");
+        copyLeaseStartAlias(dataMap, "vat_rate", "vatRate");
 
         String sourceSystem = firstNonBlank(systemCode,
                 MapUtil.getStr(dataMap, "source_system"),
@@ -1520,9 +1513,8 @@ public class RuleServiceImpl implements IRuleService {
             dataMap.put("start_event_variant", eventVariant);
         }
 
-        String accountingVariant = firstNonBlank(MapUtil.getStr(dataMap, "accounting_variant"),
-                MapUtil.getStr(dataMap, RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
-        if (StringUtils.isEmpty(accountingVariant) && "FINANCE_LEASE".equals(sourceSystem)) {
+        String accountingVariant = null;
+        if ("FINANCE_LEASE".equals(sourceSystem)) {
             String assetSuffix = assetCategory != null
                     && (assetCategory.contains("不动产") || "REAL_ESTATE".equalsIgnoreCase(assetCategory))
                     ? "REAL_ESTATE" : (assetCategory != null
@@ -1540,7 +1532,7 @@ public class RuleServiceImpl implements IRuleService {
             if (StringUtils.isEmpty(MapUtil.getStr(dataMap, "principal_offset_type"))) {
                 dataMap.put("principal_offset_type", "LEASE_ASSET");
             }
-        } else if (StringUtils.isEmpty(accountingVariant) && "HOUSEHOLD_PV".equals(sourceSystem)) {
+        } else if ("HOUSEHOLD_PV".equals(sourceSystem)) {
             accountingVariant = leaseCategory != null && (leaseCategory.contains("经营")
                     || "OPERATING_LEASE".equalsIgnoreCase(leaseCategory))
                     || "JY003".equals(eventVariant)
@@ -1554,8 +1546,10 @@ public class RuleServiceImpl implements IRuleService {
                     dataMap.put("principal_offset_type", "LEASE_ASSET");
                 }
             }
-        } else if (StringUtils.isEmpty(accountingVariant) && "OPERATING_LEASE".equals(sourceSystem)) {
+        } else if ("OPERATING_LEASE".equals(sourceSystem)) {
             accountingVariant = "JYZL_HOUSEHOLD_PV";
+        } else if ("RETAIL_FINANCE_LEASE".equals(sourceSystem)) {
+            accountingVariant = "CYC_RETAIL_LEASEBACK";
         }
 
         if (StringUtils.isNotEmpty(accountingVariant)) {
@@ -1592,6 +1586,28 @@ public class RuleServiceImpl implements IRuleService {
             }
         }
         return null;
+    }
+
+    private Map<String, Object> leaseStartCalculatedRuleFields() {
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("起租计算结果表.本金结转方式", "principal_offset_type");
+        fields.put("起租计算结果表.起租不含税本金", "lease_principal_net");
+        fields.put("起租计算结果表.起租不含税利息", "lease_interest_net");
+        fields.put("起租计算结果表.起租不含税留购价", "residual_value_net");
+        fields.put("起租计算结果表.起租利息税额", "lease_interest_vat");
+        fields.put("起租计算结果表.起租留购价税额", "residual_value_vat");
+        fields.put("起租计算结果表.已收手续费未摊销不含税金额", "received_fee_unamortized_net");
+        fields.put("起租计算结果表.未收取手续费不含税金额", "unreceived_fee_net");
+        fields.put("起租计算结果表.未收手续费未摊销不含税金额", "unreceived_fee_unamortized_net");
+        fields.put("起租计算结果表.未收取手续费税额", "unreceived_fee_vat");
+        fields.put("起租计算结果表.未收取手续费未摊销税额", "unreceived_fee_unamortized_vat");
+        fields.put("起租计算结果表.未收取手续费含税金额", "unreceived_fee_gross");
+        fields.put("起租计算结果表.未摊销手续费不含税合计", "fee_unamortized_net_total");
+        fields.put("起租计算结果表.应收手续费不含税金额", "service_fee_net");
+        fields.put("起租计算结果表.应收手续费税额", "service_fee_vat");
+        fields.put("起租计算结果表.经营租赁资产成本不含税金额", "operating_asset_cost_net");
+        fields.put("起租计算结果表.客户融资不含税总额", "customer_finance_net");
+        return fields;
     }
 
     public void fillValues(Map<String, Object> dataMap) {

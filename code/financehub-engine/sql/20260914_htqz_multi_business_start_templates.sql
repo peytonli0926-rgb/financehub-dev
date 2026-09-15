@@ -7,47 +7,9 @@ START TRANSACTION;
 
 SET @htqz_scene_id := (SELECT id FROM eg_scene WHERE scene_code = 'HTQZ' AND del_flag = '0' LIMIT 1);
 
--- Interface discriminator and canonical amount fields.
-DROP TEMPORARY TABLE IF EXISTS tmp_htqz_fields;
-CREATE TEMPORARY TABLE tmp_htqz_fields (
-    sort_no INT NOT NULL,
-    field_name VARCHAR(100) COLLATE utf8mb4_0900_ai_ci NOT NULL,
-    field_code VARCHAR(100) COLLATE utf8mb4_0900_ai_ci NOT NULL,
-    data_type VARCHAR(50) COLLATE utf8mb4_0900_ai_ci NOT NULL
-) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-INSERT INTO tmp_htqz_fields VALUES
- (100, '资产类别', 'asset_category', 'String'),
- (101, '起租事件变体', 'start_event_variant', 'String'),
- (102, '本金结转方式', 'principal_offset_type', 'String'),
- (103, '核算配置变体', 'accounting_variant', 'String'),
- (110, '起租不含税本金', 'lease_principal_net', 'Number'),
- (111, '起租不含税利息', 'lease_interest_net', 'Number'),
- (112, '起租不含税留购价', 'residual_value_net', 'Number'),
- (113, '起租利息税额', 'lease_interest_vat', 'Number'),
- (114, '起租留购价税额', 'residual_value_vat', 'Number'),
- (120, '已收手续费未摊销不含税金额', 'received_fee_unamortized_net', 'Number'),
- (121, '未收取手续费不含税金额', 'unreceived_fee_net', 'Number'),
- (122, '未收手续费未摊销不含税金额', 'unreceived_fee_unamortized_net', 'Number'),
- (123, '未收取手续费税额', 'unreceived_fee_vat', 'Number'),
- (124, '未收取手续费未摊销税额', 'unreceived_fee_unamortized_vat', 'Number'),
- (125, '未收取手续费含税金额', 'unreceived_fee_gross', 'Number'),
- (126, '未摊销手续费不含税合计', 'fee_unamortized_net_total', 'Number'),
- (127, '应收手续费不含税金额', 'service_fee_net', 'Number'),
- (128, '应收手续费税额', 'service_fee_vat', 'Number'),
- (130, '经营租赁资产成本不含税金额', 'operating_asset_cost_net', 'Number'),
- (131, '客户融资不含税总额', 'customer_finance_net', 'Number');
-
-SET @field_id := 2110000000000030000;
-INSERT INTO eg_scene_fields
- (id, scene_id, scene_code, scene_name, field_name, field_code, data_type,
-  create_by, create_time, update_by, update_time, del_flag, parent_id, required_flag, sort_no)
-SELECT (@field_id := @field_id + 1), @htqz_scene_id, 'HTQZ', '起租', f.field_name, f.field_code,
-       f.data_type, 'htqz-multi-business-v1', NOW(), 'htqz-multi-business-v1', NOW(), '0', NULL, '0', f.sort_no
-FROM tmp_htqz_fields f
-WHERE NOT EXISTS (
-    SELECT 1 FROM eg_scene_fields x
-    WHERE x.scene_code='HTQZ' AND x.field_code=f.field_code AND x.del_flag='0'
-);
+-- Calculated voucher amounts and routing variants are deliberately not stored
+-- as interface fields. The accounting engine derives them from the raw event,
+-- contract, asset and repayment-plan data before executing these rules.
 
 -- Map every workbook lease-start source event to the real HTQZ scene.
 DELETE FROM eg_field_mapping

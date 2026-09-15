@@ -182,12 +182,49 @@ public class SceneFieldsServiceImpl extends ServiceImpl<SceneFieldsMapper, Scene
 
         //接口表字段
         optionDTOList.addAll(this.optionListInterfaceFields(sceneId));
+        //起租场景的税额、不含税金额和内部路由变量由引擎计算，
+        //在编辑器中单列展示，避免被误认为业务接口入参。
+        optionDTOList.addAll(this.optionListLeaseStartCalculatedFields(sceneId));
         //合同表
         optionDTOList.addAll(this.optionListContractFields());
         //客户表
         optionDTOList.addAll(this.optionListClientFields());
 
         return optionDTOList;
+    }
+
+    private List<EditorOptionDTO> optionListLeaseStartCalculatedFields(Long sceneId) {
+        SceneEntity scene = sceneMapper.selectById(sceneId);
+        if (scene == null || !"HTQZ".equals(scene.getSceneCode())) {
+            return ListUtil.empty();
+        }
+        EditorOptionDTO option = new EditorOptionDTO();
+        option.setName("起租计算结果表");
+        List<EditorOptionItemDTO> children = new ArrayList<>();
+        addCalculatedField(children, option.getName(), "本金结转方式", DataTypeEnum.STRING.getCode());
+        String[] amountFields = {
+                "起租不含税本金", "起租不含税利息", "起租不含税留购价", "起租利息税额", "起租留购价税额",
+                "已收手续费未摊销不含税金额", "未收取手续费不含税金额", "未收手续费未摊销不含税金额",
+                "未收取手续费税额", "未收取手续费未摊销税额", "未收取手续费含税金额",
+                "未摊销手续费不含税合计", "应收手续费不含税金额", "应收手续费税额",
+                "经营租赁资产成本不含税金额", "客户融资不含税总额"
+        };
+        for (String field : amountFields) {
+            addCalculatedField(children, option.getName(), field, DataTypeEnum.NUMBER.getCode());
+        }
+        option.setChildren(children);
+        return ListUtil.toList(option);
+    }
+
+    private void addCalculatedField(List<EditorOptionItemDTO> children, String tableName,
+                                    String fieldName, String dataType) {
+        EditorOptionItemDTO item = new EditorOptionItemDTO();
+        item.setType(EditorOptionTypeEnum.FIELD.getCode());
+        item.setName(fieldName);
+        item.setCode(tableName + "." + fieldName);
+        item.setDesc("会计引擎根据起租原始数据计算，不作为业务接口入参");
+        item.setDataType(dataType);
+        children.add(item);
     }
 
 
@@ -198,6 +235,8 @@ public class SceneFieldsServiceImpl extends ServiceImpl<SceneFieldsMapper, Scene
         optionDTOList.addAll(optionListFunction());
         //接口表字段
         optionDTOList.addAll(this.optionListInterfaceFields(sceneId));
+        //内部计算结果可参与规则编辑，但不属于业务接口入参。
+        optionDTOList.addAll(this.optionListLeaseStartCalculatedFields(sceneId));
         //金额类型参数
 //        optionDTOList.addAll(this.optionListCashType());
         //合同余额表
