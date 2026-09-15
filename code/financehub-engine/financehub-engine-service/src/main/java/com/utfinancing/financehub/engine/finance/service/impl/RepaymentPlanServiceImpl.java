@@ -39,6 +39,7 @@ import com.utfinancing.financehub.engine.finance.service.*;
 import com.utfinancing.financehub.engine.rule.constant.RuleConstant;
 import com.utfinancing.financehub.engine.rule.entity.InterfaceDataEntity;
 import com.utfinancing.financehub.engine.rule.service.IInterfaceDataService;
+import com.utfinancing.financehub.engine.scene.service.ITaxRateService;
 import com.utfinancing.financehub.engine.utils.IRRUtils;
 import com.utfinancing.financehub.engine.utils.XirrUtils;
 import com.utfinancing.financehub.etl.api.*;
@@ -123,6 +124,9 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
 
     @Resource
     private IInterfaceDataService interfaceDataService;
+
+    @Resource
+    private ITaxRateService taxRateService;
 
     @Autowired
     @Qualifier("asyncTaskExecutor")
@@ -1172,15 +1176,18 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
             throw new ServiceException("起租接口实际投放金额必须大于0");
         }
 
-        BigDecimal taxRate = resolveLeaseStartTaxRate(payload);
-        BigDecimal taxFactor = BigDecimal.ONE.add(taxRate);
+        LeaseStartTaxContext taxContext = resolveLeaseStartTaxContext(payload);
+        BigDecimal interestTaxRate = resolveLeaseStartTaxRate(taxContext, "lease_interest_receivable");
+        BigDecimal feeTaxRate = resolveLeaseStartTaxRate(taxContext, "receivable_service");
+        BigDecimal interestTaxFactor = BigDecimal.ONE.add(interestTaxRate);
+        BigDecimal feeTaxFactor = BigDecimal.ONE.add(feeTaxRate);
         BigDecimal serviceFee = defaultZero(firstDecimal(payload, "service_fee"));
 
         List<RepaymentPlanSaveDTO> sourcePlans = new ArrayList<>();
         RepaymentPlanSaveDTO initialPlan = initRepaymentPlan(leaseStartDate);
         initialPlan.setPeriods(0);
         initialPlan.setOutflowAmount(actualDisbursement);
-        initialPlan.setCashFlow(actualDisbursement.negate().add(serviceFee.divide(taxFactor, 2, RoundingMode.HALF_UP)));
+        initialPlan.setCashFlow(actualDisbursement.negate().add(serviceFee.divide(feeTaxFactor, 2, RoundingMode.HALF_UP)));
         sourcePlans.add(initialPlan);
 
         Set<Integer> termNumbers = new HashSet<>();
@@ -1210,12 +1217,15 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
             plan.setPrincipalAmount(principalAmount);
             plan.setInterestAmount(interestAmount);
             plan.setPlannedPrincipal(principalAmount);
-            BigDecimal interestTax = interestAmount.multiply(taxRate).divide(taxFactor, 2, RoundingMode.HALF_UP);
+            BigDecimal interestTax = interestAmount.multiply(interestTaxRate)
+                    .divide(interestTaxFactor, 2, RoundingMode.HALF_UP);
             plan.setInterestTax(interestTax);
             BigDecimal plannedInterest = interestAmount.subtract(interestTax);
             plan.setPlannedInterest(plannedInterest);
-            BigDecimal netResidual = residualValue.divide(taxFactor, 2, RoundingMode.HALF_UP);
-            BigDecimal netOther = otherAmount.divide(taxFactor, 2, RoundingMode.HALF_UP);
+            BigDecimal residualTaxFactor = BigDecimal.ONE.add(
+                    resolveLeaseStartTaxRate(taxContext, "residual_value_receivable"));
+            BigDecimal netResidual = residualValue.divide(residualTaxFactor, 2, RoundingMode.HALF_UP);
+            BigDecimal netOther = otherAmount.divide(feeTaxFactor, 2, RoundingMode.HALF_UP);
             plan.setCashFlow(principalAmount.add(plannedInterest).add(netResidual).add(netOther));
             sourcePlans.add(plan);
             previousDate = dueDate;
@@ -1265,7 +1275,7 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
                 .eq(RepaymentPlanEntity::getSystemCode, systemCode));
         this.saveBatch(BeanUtil.copyToList(calculatedPlans, RepaymentPlanEntity.class));
         syncHuaxiaContractForAccrual(payload, contractCode, orgId, systemCode, clientCode, clientName,
-                leaseStartDate, taxRate);
+                leaseStartDate, interestTaxRate);
         log.info("Huaxia lease-start repayment plan saved: contractCode={}, sourceRows={}, calculatedRows={}, xirr={}",
                 contractCode, planArray.size(), calculatedPlans.size(), xirr);
     }
@@ -1286,12 +1296,19 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
             throw new ServiceException("起租接口 repayment_plan 不能为空");
         }
 
-        BigDecimal taxRate = resolveLeaseStartTaxRate(payload);
-        BigDecimal taxFactor = BigDecimal.ONE.add(taxRate);
-        String accountingVariant = firstNotBlank(payload.getString("accounting_variant"),
-                payload.getString(RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
-        boolean leaseback = accountingVariant != null
-                && (accountingVariant.contains("LEASEBACK") || accountingVariant.contains("CYC_RETAIL"));
+        LeaseStartTaxContext taxContext = resolveLeaseStartTaxContext(payload);
+        String principalFundType = isRealEstate(payload)
+                ? "lease_principal_real_estate" : "lease_principal_receivable";
+        BigDecimal principalTaxFactor = BigDecimal.ONE.add(
+                resolveLeaseStartTaxRate(taxContext, principalFundType));
+        BigDecimal interestTaxFactor = BigDecimal.ONE.add(
+                resolveLeaseStartTaxRate(taxContext, "lease_interest_receivable"));
+        BigDecimal residualTaxFactor = BigDecimal.ONE.add(
+                resolveLeaseStartTaxRate(taxContext, "residual_value_receivable"));
+        BigDecimal feeTaxFactor = BigDecimal.ONE.add(
+                resolveLeaseStartTaxRate(taxContext, "receivable_service"));
+        BigDecimal operatingTaxFactor = BigDecimal.ONE.add(
+                resolveLeaseStartTaxRate(taxContext, "lease_rent_receivable"));
 
         BigDecimal principalGross = defaultZero(firstDecimal(payload,
                 "actual_disbursement", "finance_amount", "lease_principal"));
@@ -1323,10 +1340,9 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         interestGross = defaultZero(interestGross);
         residualGross = defaultZero(residualGross);
 
-        BigDecimal principalNet = leaseback ? principalGross.setScale(2, RoundingMode.HALF_UP)
-                : netOfTax(principalGross, taxFactor);
-        BigDecimal interestNet = netOfTax(interestGross, taxFactor);
-        BigDecimal residualNet = netOfTax(residualGross, taxFactor);
+        BigDecimal principalNet = netOfTax(principalGross, principalTaxFactor);
+        BigDecimal interestNet = netOfTax(interestGross, interestTaxFactor);
+        BigDecimal residualNet = netOfTax(residualGross, residualTaxFactor);
         putCalculatedAmount(dataMap, "lease_principal_net", principalNet);
         putCalculatedAmount(dataMap, "lease_interest_net", interestNet);
         putCalculatedAmount(dataMap, "residual_value_net", residualNet);
@@ -1348,10 +1364,10 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         BigDecimal unreceivedUnamortizedGross = totalUnamortizedGross
                 .subtract(receivedUnamortizedGross).max(BigDecimal.ZERO);
 
-        BigDecimal receivedUnamortizedNet = netOfTax(receivedUnamortizedGross, taxFactor);
-        BigDecimal unreceivedNet = netOfTax(unreceivedFeeGross, taxFactor);
-        BigDecimal unreceivedUnamortizedNet = netOfTax(unreceivedUnamortizedGross, taxFactor);
-        BigDecimal serviceFeeNet = netOfTax(serviceFeeGross, taxFactor);
+        BigDecimal receivedUnamortizedNet = netOfTax(receivedUnamortizedGross, feeTaxFactor);
+        BigDecimal unreceivedNet = netOfTax(unreceivedFeeGross, feeTaxFactor);
+        BigDecimal unreceivedUnamortizedNet = netOfTax(unreceivedUnamortizedGross, feeTaxFactor);
+        BigDecimal serviceFeeNet = netOfTax(serviceFeeGross, feeTaxFactor);
         putCalculatedAmount(dataMap, "received_fee_unamortized_net", receivedUnamortizedNet);
         putCalculatedAmount(dataMap, "unreceived_fee_net", unreceivedNet);
         putCalculatedAmount(dataMap, "unreceived_fee_unamortized_net", unreceivedUnamortizedNet);
@@ -1359,7 +1375,7 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         putCalculatedAmount(dataMap, "unreceived_fee_unamortized_vat",
                 unreceivedUnamortizedGross.subtract(unreceivedUnamortizedNet));
         putCalculatedAmount(dataMap, "unreceived_fee_gross", unreceivedFeeGross);
-        putCalculatedAmount(dataMap, "fee_unamortized_net_total", netOfTax(totalUnamortizedGross, taxFactor));
+        putCalculatedAmount(dataMap, "fee_unamortized_net_total", netOfTax(totalUnamortizedGross, feeTaxFactor));
         putCalculatedAmount(dataMap, "service_fee_net", serviceFeeNet);
         putCalculatedAmount(dataMap, "service_fee_vat", serviceFeeGross.subtract(serviceFeeNet));
 
@@ -1367,10 +1383,10 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         if (assetCostGross.signum() == 0) {
             assetCostGross = principalGross;
         }
-        putCalculatedAmount(dataMap, "operating_asset_cost_net", netOfTax(assetCostGross, taxFactor));
+        putCalculatedAmount(dataMap, "operating_asset_cost_net", netOfTax(assetCostGross, operatingTaxFactor));
         BigDecimal customerFinanceGross = defaultZero(firstDecimal(payload,
                 "customer_finance_amount", "finance_amount", "actual_disbursement"));
-        putCalculatedAmount(dataMap, "customer_finance_net", netOfTax(customerFinanceGross, taxFactor));
+        putCalculatedAmount(dataMap, "customer_finance_net", netOfTax(customerFinanceGross, operatingTaxFactor));
 
         dataMap.put("total_terms", maxTerm > 0 ? maxTerm : planArray.size());
         dataMap.put("term_unit", "MONTH");
@@ -1389,23 +1405,72 @@ public class RepaymentPlanServiceImpl extends ServiceImpl<RepaymentPlanMapper, R
         }
     }
 
-    private BigDecimal resolveLeaseStartTaxRate(JSONObject payload) {
-        BigDecimal taxRate = firstDecimal(payload, "vat_rate", "tax_rate");
-        if (taxRate != null) {
-            if (taxRate.compareTo(BigDecimal.ONE) > 0) {
-                taxRate = taxRate.divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP);
-            }
-            return taxRate.max(BigDecimal.ZERO);
+    private LeaseStartTaxContext resolveLeaseStartTaxContext(JSONObject payload) {
+        String sourceSystem = firstNotBlank(payload.getString("source_system"), payload.getString("systemCode"));
+        String leaseType = normalizeLeaseType(firstNotBlank(
+                payload.getString("lease_category"), payload.getString("lease_type")));
+        String leaseMethod = normalizeLeaseMethod(firstNotBlank(
+                payload.getString("lease_method"), payload.getString("lease_sub_type")));
+
+        String businessCode;
+        if ("RETAIL_FINANCE_LEASE".equalsIgnoreCase(sourceSystem)) {
+            businessCode = "CYC_RETAIL_LEASEBACK";
+        } else if ("OPERATING_LEASE".equalsIgnoreCase(sourceSystem)
+                || "OPERATING_LEASE".equals(leaseType)) {
+            businessCode = "JYZL";
+        } else {
+            businessCode = "ZLYW";
         }
-        String variant = firstNotBlank(payload.getString("accounting_variant"),
-                payload.getString(RuleConstant.FIELD_ACCOUNTING_BUSINESS_CODE));
-        if (variant != null && (variant.contains("LEASEBACK") || variant.contains("CYC_RETAIL"))) {
-            return new BigDecimal("0.06");
+        return new LeaseStartTaxContext(businessCode, leaseType, leaseMethod);
+    }
+
+    private BigDecimal resolveLeaseStartTaxRate(LeaseStartTaxContext context, String fundType) {
+        BigDecimal taxRate = taxRateService.getValidTaxRateByCode(context.businessCode, fundType,
+                context.leaseType, context.leaseMethod);
+        if (taxRate == null && !"tax_general".equals(fundType)) {
+            taxRate = taxRateService.getValidTaxRateByCode(context.businessCode, "tax_general",
+                    context.leaseType, context.leaseMethod);
         }
-        if (variant != null && variant.contains("REAL_ESTATE")) {
-            return new BigDecimal("0.09");
+        if (taxRate == null) {
+            throw new ServiceException("起租事件未配置有效税率，业务类型=" + context.businessCode
+                    + "，金额类型=" + fundType + "，租赁类型=" + context.leaseType
+                    + "，租赁方式=" + context.leaseMethod);
         }
-        return new BigDecimal("0.13");
+        return taxRate.max(BigDecimal.ZERO);
+    }
+
+    private String normalizeLeaseType(String leaseType) {
+        if ("经营性租赁".equals(leaseType) || "经营租赁".equals(leaseType)) {
+            return "OPERATING_LEASE";
+        }
+        return "OPERATING_LEASE".equalsIgnoreCase(leaseType) ? "OPERATING_LEASE" : "FINANCE_LEASE";
+    }
+
+    private String normalizeLeaseMethod(String leaseMethod) {
+        if ("回租".equals(leaseMethod) || "LEASEBACK".equalsIgnoreCase(leaseMethod)
+                || "SALE_AND_LEASEBACK".equalsIgnoreCase(leaseMethod)) {
+            return "SALE_AND_LEASEBACK";
+        }
+        return "DIRECT_LEASE";
+    }
+
+    private boolean isRealEstate(JSONObject payload) {
+        String assetCategory = firstNotBlank(payload.getString("asset_category"),
+                payload.getString("assetCategory"));
+        return assetCategory != null && (assetCategory.contains("REAL_ESTATE")
+                || assetCategory.contains("不动产"));
+    }
+
+    private static class LeaseStartTaxContext {
+        private final String businessCode;
+        private final String leaseType;
+        private final String leaseMethod;
+
+        private LeaseStartTaxContext(String businessCode, String leaseType, String leaseMethod) {
+            this.businessCode = businessCode;
+            this.leaseType = leaseType;
+            this.leaseMethod = leaseMethod;
+        }
     }
 
     private BigDecimal netOfTax(BigDecimal gross, BigDecimal taxFactor) {

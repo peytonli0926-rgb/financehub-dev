@@ -137,6 +137,24 @@ public class TaxRateServiceImpl extends ServiceImpl<TaxRateMapper, TaxRateEntity
     }
 
     @Override
+    public BigDecimal getValidTaxRateByCode(String businessCode, String fundType,
+                                            String leaseType, String leaseMethod) {
+        TaxRateEntity entity = this.getOne(Wrappers.<TaxRateEntity>lambdaQuery()
+                .eq(TaxRateEntity::getBusinessCode, businessCode)
+                .eq(TaxRateEntity::getFundType, fundType)
+                .eq(TaxRateEntity::getLeaseType, leaseType)
+                .eq(TaxRateEntity::getLeaseSubType, leaseMethod)
+                .eq(TaxRateEntity::getEnableFlag, EnableFlagEnum.ENABLE.getCode())
+                .eq(TaxRateEntity::getDelFlag, "0")
+                .le(TaxRateEntity::getEnableDate, LocalDate.now())
+                .orderByDesc(TaxRateEntity::getEnableDate), false);
+        if (entity != null) {
+            return NumberUtil.div(entity.getTaxRate(), 100);
+        }
+        return null;
+    }
+
+    @Override
     public BigDecimal getGeneralValidTaxRateByLeaseType(String businessCode, String leaseType) {
         TaxRateEntity entity = this.getOne(Wrappers.<TaxRateEntity>lambdaQuery()
                 .eq(TaxRateEntity::getBusinessCode, businessCode)

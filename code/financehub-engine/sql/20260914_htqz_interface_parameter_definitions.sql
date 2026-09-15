@@ -95,7 +95,6 @@ INSERT INTO tmp_htqz_required_field VALUES
  (0,'币种','currency','String'),(0,'实际投放金额','actual_disbursement','Number'),
  (0,'应收利息总额（含税）','interest_tax_inclusive','Number'),(0,'留购价（含税）','residual_value','Number'),
  (100,'资产类别','asset_category','String'),
- (101,'适用增值税率','vat_rate','Number'),
  (102,'手续费总额（含税）','service_fee','Number'),
  (103,'累计已收手续费（含税）','received_service_fee','Number'),
  (104,'累计已摊销手续费（含税）','amortized_service_fee','Number');

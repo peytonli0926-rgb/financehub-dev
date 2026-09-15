@@ -1486,7 +1486,6 @@ public class RuleServiceImpl implements IRuleService {
         copyLeaseStartAlias(dataMap, "asset_category", "assetCategory");
         copyLeaseStartAlias(dataMap, "received_service_fee", "receivedServiceFee");
         copyLeaseStartAlias(dataMap, "amortized_service_fee", "amortizedServiceFee");
-        copyLeaseStartAlias(dataMap, "vat_rate", "vatRate");
 
         String sourceSystem = firstNonBlank(systemCode,
                 MapUtil.getStr(dataMap, "source_system"),

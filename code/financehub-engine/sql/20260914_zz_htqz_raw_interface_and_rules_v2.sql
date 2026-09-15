@@ -23,7 +23,8 @@ WHERE scene_code='HTQZ' AND del_flag='0' AND field_code IN (
  'operating_asset_cost_net','customer_finance_net'
 );
 
--- Only original fee status and the applicable VAT rate are additional inputs.
+-- Only original fee status amounts are additional inputs; tax rates come from
+-- the tax-rate configuration and are resolved by amount type.
 -- All amounts here are tax-inclusive source values.
 DROP TEMPORARY TABLE IF EXISTS tmp_htqz_raw_field;
 CREATE TEMPORARY TABLE tmp_htqz_raw_field (
@@ -35,7 +36,6 @@ CREATE TEMPORARY TABLE tmp_htqz_raw_field (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 INSERT INTO tmp_htqz_raw_field VALUES
  (100,'资产类别','asset_category','String'),
- (101,'适用增值税率','vat_rate','Number'),
  (102,'手续费总额（含税）','service_fee','Number'),
  (103,'累计已收手续费（含税）','received_service_fee','Number'),
  (104,'累计已摊销手续费（含税）','amortized_service_fee','Number');

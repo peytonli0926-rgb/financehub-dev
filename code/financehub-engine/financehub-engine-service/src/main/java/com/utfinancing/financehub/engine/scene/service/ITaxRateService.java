@@ -36,6 +36,13 @@ public interface ITaxRateService extends IService<TaxRateEntity> {
      */
     BigDecimal getValidTaxRateByCode(String businessCode, String fundType);
 
+    /**
+     * Query an effective tax rate by the complete accounting dimensions.
+     * The result is returned as a decimal (for example, 6% is returned as 0.06).
+     */
+    BigDecimal getValidTaxRateByCode(String businessCode, String fundType,
+                                     String leaseType, String leaseMethod);
+
     BigDecimal getGeneralValidTaxRateByLeaseType(String businessCode, String leaseType);
 
     List<TaxRateDTO> queryAllForEditor();
